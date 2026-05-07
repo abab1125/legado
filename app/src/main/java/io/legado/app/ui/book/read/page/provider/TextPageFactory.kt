@@ -16,17 +16,29 @@ class TextPageFactory(dataSource: DataSource) : PageFactory<TextPage>(dataSource
 
     override fun hasPrev(): Boolean = with(dataSource) {
         if (ReadBook.showBookplate == -1) return false
-        return hasPrevChapter() || pageIndex > 0 || (currentChapter?.chapter?.index == 0 && pageIndex == 0)
+        if (currentChapter?.chapter?.index == 0 && pageIndex == 0) {
+            return appCtx.getPrefBoolean(PreferKey.showBookplate, true)
+        }
+        return hasPrevChapter() || pageIndex > 0
     }
 
     override fun hasNext(): Boolean = with(dataSource) {
         if (ReadBook.showBookplate == 1) return false
         val isLastChapter = currentChapter?.chapter?.index == (currentChapter?.chaptersSize?.minus(1) ?: 0)
-        return hasNextChapter() || (currentChapter != null && currentChapter?.isLastIndex(pageIndex) != true) || isLastChapter
+        val isLastPage = currentChapter != null && currentChapter?.isLastIndex(pageIndex) == true
+        if (isLastChapter && isLastPage && !appCtx.getPrefBoolean(PreferKey.showBookplate, true)) {
+            return false
+        }
+        return hasNextChapter() || (currentChapter != null && !isLastPage) || isLastChapter
     }
 
     override fun hasNextPlus(): Boolean = with(dataSource) {
         if (ReadBook.showBookplate == 1) return false
+        val isLastChapter = currentChapter?.chapter?.index == (currentChapter?.chaptersSize?.minus(1) ?: 0)
+        if (isLastChapter && !appCtx.getPrefBoolean(PreferKey.showBookplate, true)) {
+            val pageSize = currentChapter?.pageSize ?: 1
+            if (pageIndex >= pageSize - 2) return false
+        }
         return hasNextChapter() || pageIndex < (currentChapter?.pageSize ?: 1) - 2
     }
 
@@ -110,6 +122,12 @@ class TextPageFactory(dataSource: DataSource) : PageFactory<TextPage>(dataSource
             if (upContent) upContent(resetPageOffset = false)
             true
         } else {
+            ReadBook.book?.let {
+                if (it.finishTime <= 0) {
+                    it.finishTime = System.currentTimeMillis()
+                    io.legado.app.data.appDb.bookDao.update(it)
+                }
+            }
             ReadBook.callBack?.onBookEnd()
             false
         }
@@ -186,7 +204,10 @@ class TextPageFactory(dataSource: DataSource) : PageFactory<TextPage>(dataSource
                     return@with TextPage(title = it.title).format()
                 }
                 if (it.chapter.index == it.chaptersSize - 1) {
-                    return@with TextPage().apply { isBookplateEnd = true }
+                    if (appCtx.getPrefBoolean(PreferKey.showBookplate, true)) {
+                        return@with TextPage().apply { isBookplateEnd = true }
+                    }
+                    return@with TextPage().format()
                 }
             }
             nextChapter?.let {
@@ -217,7 +238,10 @@ class TextPageFactory(dataSource: DataSource) : PageFactory<TextPage>(dataSource
                     return@with TextPage(title = it.title).format()
                 }
                 if (it.chapter.index == 0) {
-                    return@with TextPage().apply { isBookplateStart = true }
+                    if (appCtx.getPrefBoolean(PreferKey.showBookplate, true)) {
+                        return@with TextPage().apply { isBookplateStart = true }
+                    }
+                    return@with TextPage().format()
                 }
             }
             prevChapter?.let {
@@ -245,7 +269,7 @@ class TextPageFactory(dataSource: DataSource) : PageFactory<TextPage>(dataSource
                     return@with TextPage(title = it.title).format()
                 }
                 if (it.chapter.index == it.chaptersSize - 1) {
-                    if (pageIndex == it.pageSize - 2) {
+                    if (pageIndex == it.pageSize - 2 && appCtx.getPrefBoolean(PreferKey.showBookplate, true)) {
                         return@with TextPage().apply { isBookplateEnd = true }
                     }
                     return@with TextPage().format()

@@ -2,6 +2,7 @@ package io.legado.app.model
 
 import io.legado.app.constant.AppLog
 import io.legado.app.constant.EventBus
+import io.legado.app.constant.PreferKey
 import io.legado.app.constant.PageAnim.scrollPageAnim
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
@@ -30,6 +31,7 @@ import io.legado.app.service.CacheBookService
 import io.legado.app.ui.book.read.page.entities.TextChapter
 import io.legado.app.ui.book.read.page.provider.ChapterProvider
 import io.legado.app.ui.book.read.page.provider.LayoutProgressListener
+import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.postEvent
 import io.legado.app.utils.stackTraceStr
 import io.legado.app.utils.toastOnUi
@@ -110,7 +112,8 @@ object ReadBook : CoroutineScope by MainScope() {
         contentProcessor = ContentProcessor.get(book)
         durChapterIndex = book.durChapterIndex
         durChapterPos = book.durChapterPos
-        showBookplate = if (durChapterIndex == 0 && durChapterPos == 0) -1 else 0
+        showBookplate = if (durChapterIndex == 0 && durChapterPos == 0
+            && appCtx.getPrefBoolean(PreferKey.showBookplate, true)) -1 else 0
         isLocalBook = book.isLocal
         clearTextChapter()
         callBack?.upContent()

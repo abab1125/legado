@@ -9,8 +9,25 @@ object ThoughtMarkdownGenerator {
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
-    fun generate(bookName: String, bookIntro: String?, thoughts: List<BookThought>): String {
+    fun generate(
+        bookName: String,
+        bookAuthor: String,
+        bookCover: String?,
+        bookIntro: String?,
+        thoughts: List<BookThought>
+    ): String {
         val sb = StringBuilder()
+
+        sb.appendLine("<font size=4>《$bookName》</font>")
+        sb.appendLine()
+        sb.appendLine("作者：$bookAuthor")
+        sb.appendLine()
+        if (!bookCover.isNullOrBlank()) {
+            sb.appendLine("<img src=\"$bookCover\" width=\"150\">")
+            sb.appendLine()
+        }
+        sb.appendLine("---")
+        sb.appendLine()
 
         if (!bookIntro.isNullOrBlank()) {
             sb.appendLine("### 书籍简介")

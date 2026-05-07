@@ -22,9 +22,10 @@ object ThoughtObsidianExporter {
     ): Result<Unit> = kotlin.runCatching {
         val book = appDb.bookDao.getBook(bookName, bookAuthor)
         val intro = book?.getDisplayIntro()
+        val cover = book?.coverUrl
         val bookThoughts = thoughts ?: appDb.bookThoughtDao.getByBook(bookName, bookAuthor)
         if (bookThoughts.isEmpty()) return Result.success(Unit)
-        val markdown = ThoughtMarkdownGenerator.generate(bookName, intro, bookThoughts)
+        val markdown = ThoughtMarkdownGenerator.generate(bookName, bookAuthor, cover, intro, bookThoughts)
         val fileName = generateUniqueFileName(bookName)
 
         when (AppConfig.obsidianExportMethod) {

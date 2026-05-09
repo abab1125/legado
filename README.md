@@ -6,13 +6,13 @@
 </a>
 
 <div align="center">
-<img width="125" height="125" src="https://github.com/gedoor/legado/raw/master/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="legado"/>
+<img width="125" height="125" src="https://github.com/Jingshiro/legado/raw/master/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="legado"/>
 <br>
 阅读Sigma
 <br>
 <a href="https://loyc.xyz/c/legado.html" target="_blank">软件介绍页</a>
 <br>
-阅读Sigma继承自<a href="https://github.com/gedoor/legado" target="_blank">Legado</a>，在其基础上新增更多功能。
+阅读Sigma继承自<a href="https://github.com/Jingshiro/legado" target="_blank">Legado</a>，在其基础上新增更多功能。
 </div>
 
 ## 版本说明

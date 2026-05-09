@@ -7,6 +7,9 @@ import android.graphics.Color
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -154,6 +157,104 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 noButton {
                     viewModel.confirmAction(false)
                 }
+            }
+        }
+
+        viewModel.batchConfirmationLiveData.observe(this) { request ->
+            if (request == null) return@observe
+            showBatchConfirmationDialog(request.descriptions) { confirmed ->
+                viewModel.confirmBatchAction(confirmed)
+            }
+        }
+    }
+
+    /**
+     * 展示批量确认对话框：用可滚动列表展示所有待执行的操作。
+     */
+    private fun showBatchConfirmationDialog(
+        descriptions: List<String>,
+        callback: (Boolean) -> Unit
+    ) {
+        val dp = resources.displayMetrics.density
+
+        // 外层容器
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(
+                (20 * dp).toInt(), (12 * dp).toInt(),
+                (20 * dp).toInt(), (4 * dp).toInt()
+            )
+        }
+
+        // 头部提示
+        val header = TextView(this).apply {
+            text = "以下 ${descriptions.size} 个操作将被执行，请确认是否继续："
+            textSize = 14f
+            setTextColor(Color.parseColor("#888888"))
+            setPadding(0, 0, 0, (8 * dp).toInt())
+        }
+        container.addView(header)
+
+        // 分隔线
+        container.addView(View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, (1 * dp).toInt()
+            )
+            setBackgroundColor(Color.parseColor("#22888888"))
+        })
+
+        // 操作列表内容
+        val listLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, (4 * dp).toInt(), 0, 0)
+        }
+        descriptions.forEachIndexed { index, desc ->
+            val item = TextView(this).apply {
+                text = "  ${index + 1}. $desc"
+                textSize = 15f
+                setPadding(
+                    (4 * dp).toInt(), (8 * dp).toInt(),
+                    (4 * dp).toInt(), (8 * dp).toInt()
+                )
+            }
+            listLayout.addView(item)
+            // 除最后一项外添加小分隔线
+            if (index < descriptions.size - 1) {
+                listLayout.addView(View(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, (1 * dp).toInt()
+                    ).apply { setMargins((4 * dp).toInt(), 0, (4 * dp).toInt(), 0) }
+                    setBackgroundColor(Color.parseColor("#11888888"))
+                })
+            }
+        }
+
+        // 如果内容过长则包装在 ScrollView 内
+        val maxHeightPx = (resources.displayMetrics.heightPixels * 0.45).toInt()
+        val scrollView = ScrollView(this).apply {
+            addView(listLayout)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            // 限制最大高度避免对话框过长
+            post {
+                if (height > maxHeightPx) {
+                    layoutParams = layoutParams.also {
+                        (it as LinearLayout.LayoutParams).height = maxHeightPx
+                    }
+                }
+            }
+        }
+        container.addView(scrollView)
+
+        alert("确认批量整理") {
+            setCustomView(container)
+            positiveButton("确认执行") {
+                callback(true)
+            }
+            negativeButton("全部拒绝") {
+                callback(false)
             }
         }
     }

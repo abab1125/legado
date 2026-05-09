@@ -220,7 +220,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
                 android:contentDescription="@string/ai_companion"
-                android:src="@drawable/ic_ai_companion"
+                android:src="@drawable/stars_2_24"
                 android:tint="@color/primaryText"
                 android:tooltipText="@string/ai_companion"
                 app:backgroundTint="@color/background_menu"

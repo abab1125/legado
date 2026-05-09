@@ -33,10 +33,31 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     val wordCountLiveData = MutableLiveData<Int>()
     val isGeneratingLiveData = MutableLiveData<Boolean>()
     val confirmationLiveData = MutableLiveData<ConfirmationRequest?>()
+    val batchConfirmationLiveData = MutableLiveData<BatchConfirmationRequest?>()
 
     fun confirmAction(confirmed: Boolean) {
         confirmationLiveData.value?.deferred?.complete(confirmed)
         confirmationLiveData.postValue(null)
+    }
+
+    fun confirmBatchAction(confirmed: Boolean) {
+        batchConfirmationLiveData.value?.deferred?.complete(confirmed)
+        batchConfirmationLiveData.postValue(null)
+        if (!confirmed) {
+            // 用户拒绝批量操作时，自动注入一条提示消息
+            synchronized(_messages) {
+                _messages.add(
+                    ChatMessage(
+                        "assistant",
+                        "【操作已取消】你已拒绝本次整理操作。如需调整，请告诉我：\n" +
+                        "- 哪些书籍/书源需要移动到其他分组\n" +
+                        "- 或者哪些操作需要修改"
+                    )
+                )
+            }
+            syncCache()
+            messagesLiveData.postValue(_messages.toList())
+        }
     }
 
     private val _messages = mutableListOf<ChatMessage>()
@@ -113,9 +134,14 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 append(AiConfig.persona)
                 if (AiConfig.toolEnabled) {
                     append("\n\n【工具使用指南】\n")
-                    append("你可以调用工具来查询和管理用户的书架、书源、订阅等数据。")
-                    append("写操作（如删除、修改分组、启用/禁用）会弹出确认框，请先告知用户你将要执行的操作。")
-                    append("如果用户取消了操作，请尊重用户的选择，不要重复尝试。")
+                    append("你可以调用工具来查询和管理用户的书架、书源、订阅等数据。\n")
+                    append("【确认机制】:\n")
+                    append("- 整理类操作（移动分组、启用/禁用）：同一轮的多个操作会合并为一次确认，用户统一许可或拒绝。请一次性调用所有需要的工具，不要一个一个来。\n")
+                    append("- 删除操作：风险较高，每个操作单独弹窗确认。\n")
+                    append("- 如果用户拒绝了操作，请根据系统注入的提示消息来调整方案。\n")
+                    append("【书源数量限制】：get_book_sources 每次最多返回100条，用户书源可能超过500个。")
+                    append("操作书源前请先用 get_source_groups 了解分组结构，再按分组分批查询。")
+                    append("如果要处理所有书源，请分批操作，并主动告知用户'本次处理了第X-Y个，还有Z个待处理'。")
                 }
                 if (AiConfig.memory.isNotBlank()) {
                     append("\n\n【之前的对话记忆】\n")
@@ -238,6 +264,10 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
     /**
      * 带工具调用的请求循环：AI 返回 tool_call 时执行工具并再次请求，直到返回普通文本
+     *
+     * 处理策略：
+     * - BatchConfirmation（整理操作）：同一轮所有此类操作合并收集，一次性展示给用户确认
+     * - NeedConfirmation（删除操作）：逐个弹窗确认
      */
     private suspend fun requestWithTools(
         chatMessages: List<ChatMessage>,
@@ -251,17 +281,46 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             }
             // 追加 assistant message（含 tool_calls）
             currentMessages.add(response)
-            // 执行每个 tool_call，追加 tool role messages
-            for (toolCall in response.toolCalls) {
+
+            // 先执行所有工具，收集结果
+            data class ToolCallResult(
+                val toolCallId: String,
+                val result: ToolExecuteResult
+            )
+            val toolCallResults = response.toolCalls.map { toolCall ->
                 val args = try {
                     GSON.fromJsonObject<Map<String, Any>>(toolCall.function.arguments)
                         .getOrThrow() ?: emptyMap()
                 } catch (_: Exception) {
                     emptyMap<String, Any>()
                 }
-                val toolResult = ToolRouter.execute(toolCall.function.name, args)
+                ToolCallResult(
+                    toolCallId = toolCall.id,
+                    result = ToolRouter.execute(toolCall.function.name, args)
+                )
+            }
+
+            // 收集本轮所有 BatchConfirmation 操作
+            val batchItems = toolCallResults.filter { it.result is ToolExecuteResult.BatchConfirmation }
+
+            // 批量确认：同一轮所有可合并操作一次性弹窗
+            var batchConfirmed = true
+            if (batchItems.isNotEmpty()) {
+                val descriptions = batchItems.map { (it.result as ToolExecuteResult.BatchConfirmation).description }
+                batchConfirmed = requestBatchConfirmation(descriptions)
+            }
+
+            // 处理每个 tool call 的结果
+            for ((toolCallId, toolResult) in toolCallResults) {
                 val resultJson = when (toolResult) {
                     is ToolExecuteResult.Data -> toolResult.json
+                    is ToolExecuteResult.BatchConfirmation -> {
+                        if (batchConfirmed) {
+                            toolResult.action()
+                        } else {
+                            """{"cancelled":true,"message":"用户取消了批量操作"}"""
+                        }
+                    }
                     is ToolExecuteResult.NeedConfirmation -> {
                         val confirmed = requestConfirmation(toolResult.description)
                         if (confirmed) {
@@ -275,7 +334,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                     ChatMessage(
                         role = "tool",
                         content = resultJson,
-                        toolCallId = toolCall.id
+                        toolCallId = toolCallId
                     )
                 )
             }
@@ -284,11 +343,20 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     }
 
     /**
-     * 向 Activity 发起确认请求，挂起等待用户选择
+     * 向 Activity 发起单个确认请求（用于删除等高风险操作），挂起等待用户选择
      */
     private suspend fun requestConfirmation(description: String): Boolean {
         val deferred = CompletableDeferred<Boolean>()
         confirmationLiveData.postValue(ConfirmationRequest(description, deferred))
+        return deferred.await()
+    }
+
+    /**
+     * 向 Activity 发起批量确认请求（用于整理类操作），挂起等待用户选择
+     */
+    private suspend fun requestBatchConfirmation(descriptions: List<String>): Boolean {
+        val deferred = CompletableDeferred<Boolean>()
+        batchConfirmationLiveData.postValue(BatchConfirmationRequest(descriptions, deferred))
         return deferred.await()
     }
 
@@ -409,6 +477,14 @@ data class FunctionCall(
 
 data class ConfirmationRequest(
     val description: String,
+    val deferred: CompletableDeferred<Boolean>
+)
+
+/**
+ * 批量确认请求：包含多个待确认操作的描述列表，一次性展示给用户
+ */
+data class BatchConfirmationRequest(
+    val descriptions: List<String>,
     val deferred: CompletableDeferred<Boolean>
 )
 

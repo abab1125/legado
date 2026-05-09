@@ -7,7 +7,9 @@ import io.legado.app.R
 import io.legado.app.base.BaseDialogFragment
 import io.legado.app.databinding.DialogAiConfigBinding
 import io.legado.app.help.config.AiConfig
+import io.legado.app.utils.applyTint
 import io.legado.app.utils.showDialogFragment
+import io.legado.app.utils.showHelp
 import io.legado.app.utils.setLayout
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
@@ -22,12 +24,26 @@ class AiConfigDialog : BaseDialogFragment(R.layout.dialog_ai_config) {
     }
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
+        initToolbar()
         initData()
         bindEvent()
     }
 
     fun updateMemoryLength() {
         binding.tvMemoryLength.text = AiConfig.memory.length.toString()
+    }
+
+    private fun initToolbar() {
+        binding.titleBar.toolbar.apply {
+            inflateMenu(R.menu.ai_config)
+            menu.applyTint(requireContext())
+            setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.menu_help -> showHelp("aiCompanionHelp")
+                }
+                true
+            }
+        }
     }
 
     private fun initData() {

@@ -59,7 +59,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import splitties.views.bottomPadding
 import kotlin.coroutines.resume
-import androidx.core.view.get
 import io.legado.app.help.update.AppUpdate
 import io.legado.app.ui.about.UpdateDialog
 import kotlin.time.Duration.Companion.hours
@@ -234,8 +233,8 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         if (LocalConfig.versionCode == appInfo.versionCode) {
             if (AppConfig.autoUpdateVariant) {
                 if (LocalConfig.lastCheckUpdate + 24.hours.inWholeMilliseconds < System.currentTimeMillis()) {
-                    AppUpdate.giteeUpdate.check(lifecycleScope)
-                        .onSuccess {
+                    AppUpdate.gitHubUpdate?.check(lifecycleScope)
+                        ?.onSuccess {
                             showDialogFragment(
                                 UpdateDialog(it)
                             )

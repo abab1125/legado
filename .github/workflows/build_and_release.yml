@@ -129,11 +129,20 @@ jobs:
             exit 1
           fi
 
+          # 从响应中提取 release ID（上传附件必须用 ID，不能用 tag name）
+          RELEASE_ID=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin.rsplit('\n',1)[0])['id'])" 2>/dev/null)
+          echo "Release ID: $RELEASE_ID"
+
+          if [ -z "$RELEASE_ID" ]; then
+            echo "::error::Failed to extract release ID"
+            exit 1
+          fi
+
           # 遍历 apk_output 文件夹上传 APK
           for file in apk_output/*.apk; do
-            echo "Uploading $file to Gitee..."
-            UPLOAD_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
-              -X POST "https://gitee.com/api/v5/repos/$REPO/releases/tags/$TAG/attach_files" \
+            echo "Uploading $file to Gitee (release ID: $RELEASE_ID)..."
+            UPLOAD_RESPONSE=$(curl -s --max-time 120 -w "\nHTTP_STATUS:%{http_code}" \
+              -X POST "https://gitee.com/api/v5/repos/$REPO/releases/$RELEASE_ID/attach_files" \
               -F "access_token=$TOKEN" \
               -F "file=@$file")
             echo "Upload response: $UPLOAD_RESPONSE"

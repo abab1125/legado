@@ -233,8 +233,8 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         if (LocalConfig.versionCode == appInfo.versionCode) {
             if (AppConfig.autoUpdateVariant) {
                 if (LocalConfig.lastCheckUpdate + 24.hours.inWholeMilliseconds < System.currentTimeMillis()) {
-                    AppUpdate.gitHubUpdate?.check(lifecycleScope)
-                        ?.onSuccess {
+                    AppUpdate.giteeUpdate.check(lifecycleScope)
+                        .onSuccess {
                             showDialogFragment(
                                 UpdateDialog(it)
                             )

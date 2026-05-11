@@ -70,3 +70,34 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync to Gitee
+        uses: Yikun/hub-mirror-action@master
+        with:
+          src: github/${{ github.repository_owner }}
+          dst: gitee/mirror-233
+          dst_key: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+          dst_token: ${{ secrets.GITEE_TOKEN }}
+          account_type: user
+          static_list: "legado"
+          force_update: true
+
+      - name: Create Gitee Release & Upload Assets
+        run: |
+          # 创建 Release
+          curl -X POST "https://gitee.com/api/v5/repos/mirror-233/legado/releases" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "access_token": "${{ secrets.GITEE_TOKEN }}",
+              "tag_name": "${{ env.VERSION }}",
+              "name": "Legado ${{ env.VERSION }}",
+              "body": "由 GitHub Actions 自动构建并发布\n\nGitHub 版本更新："
+            }'
+          
+          # 遍历 apk_output 文件夹上传 APK
+          for file in apk_output/*.apk; do
+            echo "Uploading $file to Gitee..."
+            curl -X POST "https://gitee.com/api/v5/repos/mirror-233/legado/releases/tags/${{ env.VERSION }}/attach_files" \
+              -F "access_token=${{ secrets.GITEE_TOKEN }}" \
+              -F "file=@$file"
+          done

@@ -52,6 +52,13 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
             val currentChapter = (ReadBook.durChapterIndex + 1).toString()
             binding.etChapterStart.setText(currentChapter)
             binding.etChapterEnd.setText(currentChapter)
+            // 标题显示书名，让用户明确当前AI关联的书籍
+            val bookName = ReadBook.book?.name
+            if (!bookName.isNullOrBlank()) {
+                binding.titleBar.title = "AI · $bookName"
+            } else {
+                binding.titleBar.title = getString(R.string.ai_assistant)
+            }
             viewModel.initMessages(
                 ReadBook.durChapterIndex + 1,
                 ReadBook.durChapterIndex + 1

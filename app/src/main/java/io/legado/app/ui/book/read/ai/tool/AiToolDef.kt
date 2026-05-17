@@ -189,15 +189,17 @@ object AiToolDef {
             ),
             tool(
                 "set_book_note",
-                "为书籍指定章节写阅读感想，以 BookThought（想法）形式写入。支持一次为多个章节写感想。所有 AI 写入的感想末尾会自动追加「——由AI助手生成」标注。调用前建议先用 get_book_content 获取章节内容，再针对内容撰写感想。",
+                "为书籍指定章节写阅读感想，以 BookThought（想法）形式写入。支持一次为多个章节写感想。所有 AI 写入的感想末尾会自动追加「——由AI助手生成」标注。" +
+                "【重要】若系统提示词中已包含【当前阅读书籍信息】（即用户在书籍阅读界面打开了AI助手），则 bookUrl 直接从该区块中获取，章节内容也已在【参考章节内容】中提供，无需再调用 get_bookshelf 或 get_book_content，直接根据已有内容撰写感想即可。" +
+                "若无上述上下文（独立模式），则需先调用 get_bookshelf 获取 bookUrl，再用 get_book_content 获取章节内容。",
                 required = listOf("bookUrl", "notes"),
                 properties = mapOf(
-                    "bookUrl" to prop("string", "书籍唯一标识 URL（从 get_bookshelf 获取）"),
+                    "bookUrl" to prop("string", "书籍唯一标识 URL。在书籍阅读上下文中可直接从系统提示词的【当前阅读书籍信息】中读取；否则从 get_bookshelf 获取"),
                     "notes" to propArray(
                         "感想列表，每条对应一个章节。支持一次写多个章节。",
                         mapOf(
-                            "chapterIndex" to prop("integer", "章节索引，从 0 开始（与 get_book_content 的 chapterIndex 一致）"),
-                            "selectedText" to prop("string", "关联的原文片段（建议取章节内关键段落，最长 500 字），留空则自动取章节前 200 字或章节标题"),
+                            "chapterIndex" to prop("integer", "章节索引，从 0 开始。在书籍阅读上下文中可从【参考章节内容】区块中确认对应章节的序号"),
+                            "selectedText" to prop("string", "关联的原文片段（建议取章节内关键段落，最长 500 字）。在书籍阅读上下文中请从【参考章节内容】中摘取，留空则自动取章节前 200 字"),
                             "thought" to prop("string", "AI 的阅读感想内容（系统会自动在末尾追加标注，无需手动添加）")
                         ),
                         listOf("chapterIndex", "thought")

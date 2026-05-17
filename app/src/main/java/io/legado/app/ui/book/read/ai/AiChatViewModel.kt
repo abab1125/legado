@@ -1,4 +1,4 @@
-﻿package io.legado.app.ui.book.read.ai
+package io.legado.app.ui.book.read.ai
 
 import android.app.Application
 import androidx.lifecycle.MutableLiveData
@@ -136,28 +136,40 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                     append("你可以调用工具来查询和管理用户的书架、书源、阅读记录等数据。\n")
                     append("【确认机制】：所有写操作（含删除）均采用批量确认——同一轮AI调用的多个写操作合并为一次弹窗，用户统一确认或拒绝。请一次性调用所有需要的工具，不要一个一个来。\n")
                     append("【静默写操作（无需确认）】：save_book_progress、rate_book、set_book_note 直接执行。\n")
-                    append("【bookUrl说明】：get_book_content、rate_book、save_book_progress、mark_book_status、set_book_note 的 bookUrl 参数需从 get_bookshelf 返回结果的 bookUrl 字段获取，请先查询书架再操作。\n")
+                    append("【bookUrl说明】：get_book_content、rate_book、save_book_progress、mark_book_status、set_book_note 的 bookUrl 参数需从 get_bookshelf 返回结果的 bookUrl 字段获取，请先查询书架再操作。例外：若系统提示词【当前阅读书籍信息】中已提供 bookUrl，则直接使用，无需再调 get_bookshelf。\n")
                     append("【书源数量限制】：get_book_sources 每次最多返回100条，用户书源可能超过500个。")
                     append("操作书源前请先用 get_source_groups 了解分组结构，再按分组分批查询。")
                     append("如果要处理所有书源，请分批操作，并主动告知用户。")
                 }
                 if (AiConfig.memory.isNotBlank()) {
-                    append("如果要处理所有书源，请分批操作，并主动告知用户'本次处理了第X-Y个，还有Z个待处理'。")
-                }
-                if (AiConfig.memory.isNotBlank()) {
                     append("\n\n【之前的对话记忆】\n")
                     append(AiConfig.memory)
                 }
-                // start/end 为 0 表示独立模式，不加载章节内容
+                // start/end 为 0 表示独立模式，不加载书籍信息和章节内容
                 if (start > 0 && end > 0) {
-                    val chapterSize = ReadBook.chapterSize
-                    val clampedStart = start.coerceIn(1, chapterSize.coerceAtLeast(1))
-                    val clampedEnd = end.coerceIn(1, chapterSize.coerceAtLeast(1))
-                    val st = minOf(clampedStart, clampedEnd)
-                    val ed = maxOf(clampedStart, clampedEnd)
-                    append("\n\n【参考章节内容】\n")
                     val book = ReadBook.book
                     if (book != null) {
+                        // 注入书籍基本信息
+                        append("\n\n【当前阅读书籍信息】\n")
+                        append("书名：${book.name}\n")
+                        if (book.author.isNotBlank()) append("作者：${book.author}\n")
+                        val intro = book.getDisplayIntro()
+                        if (!intro.isNullOrBlank()) append("简介：$intro\n")
+                        // 书源信息：originName 是书源名称，origin 是书源URL
+                        if (book.originName.isNotBlank()) append("所属书源：${book.originName}\n")
+                        append("bookUrl：${book.bookUrl}\n")
+                        val chapterSize = ReadBook.chapterSize
+                        if (chapterSize > 0) append("总章节数：$chapterSize\n")
+                        val durChapterTitle = book.durChapterTitle
+                        if (!durChapterTitle.isNullOrBlank()) append("当前阅读章节：$durChapterTitle（第${book.durChapterIndex + 1}章）\n")
+
+                        // 注入用户所选章节内容（全量）
+                        val clampedStart = start.coerceIn(1, chapterSize.coerceAtLeast(1))
+                        val clampedEnd = end.coerceIn(1, chapterSize.coerceAtLeast(1))
+                        val st = minOf(clampedStart, clampedEnd)
+                        val ed = maxOf(clampedStart, clampedEnd)
+                        val rangeDesc = if (st == ed) "第${st}章" else "第${st}章 ~ 第${ed}章"
+                        append("\n\n【参考章节内容（$rangeDesc）】\n")
                         val chapterList = appDb.bookChapterDao.getChapterList(book.bookUrl, st - 1, ed - 1)
                         for (chapter in chapterList) {
                             val content = BookHelp.getContent(book, chapter) ?: continue

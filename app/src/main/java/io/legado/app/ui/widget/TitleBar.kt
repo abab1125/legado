@@ -25,6 +25,7 @@ import io.legado.app.lib.theme.primaryColor
 import io.legado.app.lib.theme.transparentNavBar
 import io.legado.app.utils.activity
 import io.legado.app.utils.setOnApplyWindowInsetsListenerCompat
+import io.legado.app.utils.ColorUtils
 import splitties.views.bottomPadding
 import splitties.views.topPadding
 

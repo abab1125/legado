@@ -174,25 +174,23 @@ class ReadMenu @JvmOverloads constructor(
 
     private fun initView(reset: Boolean = false) = binding.run {
         if (AppConfig.isNightTheme) {
-            fabNightTheme.setImageResource(R.drawable.ic_daytime)
+            ivNightIcon.setImageResource(R.drawable.ic_daytime)
         } else {
-            fabNightTheme.setImageResource(R.drawable.ic_brightness)
+            ivNightIcon.setImageResource(R.drawable.ic_brightness)
         }
         initAnimation()
         tvCustomBtn.setColorFilter(context.accentColor)
         if (immersiveMenu) {
             val lightTextColor = ColorUtils.withAlpha(ColorUtils.lightenColor(textColor), 0.75f)
-            titleBar.setTextColor(textColor)
-            titleBar.setBackgroundColor(bgColor)
-            titleBar.setColorFilter(textColor)
+            titleBar.setCardBackgroundColor(bgColor)
+            tvBookName.setTextColor(textColor)
             tvChapterName.setTextColor(lightTextColor)
             tvChapterUrl.setTextColor(lightTextColor)
         } else if (reset) {
             val bgColor = context.primaryColor
             val textColor = context.primaryTextColor
-            titleBar.setTextColor(textColor)
-            titleBar.setBackgroundColor(bgColor)
-            titleBar.setColorFilter(textColor)
+            titleBar.setCardBackgroundColor(bgColor)
+            tvBookName.setTextColor(textColor)
             tvChapterName.setTextColor(textColor)
             tvChapterUrl.setTextColor(textColor)
         }
@@ -200,32 +198,34 @@ class ReadMenu @JvmOverloads constructor(
         brightnessBackground.cornerRadius = 5F.dpToPx()
         brightnessBackground.setColor(ColorUtils.adjustAlpha(bgColor, 0.5f))
         llBrightness.background = brightnessBackground
+        // 底部菜单：使用用户自定义背景色
+        bottomMenu.setCardBackgroundColor(bgColor)
         if (AppConfig.isEInkMode) {
-            titleBar.setBackgroundResource(R.drawable.bg_eink_border_bottom)
-            llBottomBg.setBackgroundResource(R.drawable.bg_eink_border_top)
-        } else {
+            titleBar.setCardBackgroundColor(bgColor)
             llBottomBg.setBackgroundColor(bgColor)
         }
-        fabSearch.backgroundTintList = bottomBackgroundList
-        fabSearch.setColorFilter(textColor)
-        fabAutoPage.backgroundTintList = bottomBackgroundList
-        fabAutoPage.setColorFilter(textColor)
-        fabReplaceRule.backgroundTintList = bottomBackgroundList
-        fabReplaceRule.setColorFilter(textColor)
-        fabAiCompanion.backgroundTintList = bottomBackgroundList
-        fabAiCompanion.setColorFilter(textColor)
-        fabNightTheme.backgroundTintList = bottomBackgroundList
-        fabNightTheme.setColorFilter(textColor)
+        // 功能按钮行：透明背景，强调色图标
+        fabSearch.backgroundTintList = null
+        (fabSearch.getChildAt(0) as? android.widget.ImageView)?.setColorFilter(context.accentColor)
+        fabAutoPage.backgroundTintList = null
+        (fabAutoPage.getChildAt(0) as? android.widget.ImageView)?.setColorFilter(context.accentColor)
+        fabReplaceRule.backgroundTintList = null
+        (fabReplaceRule.getChildAt(0) as? android.widget.ImageView)?.setColorFilter(context.accentColor)
+        fabAiCompanion.backgroundTintList = null
+        (fabAiCompanion.getChildAt(0) as? android.widget.ImageView)?.setColorFilter(context.accentColor)
+        fabNightTheme.backgroundTintList = null
+        (fabNightTheme.getChildAt(0) as? android.widget.ImageView)?.setColorFilter(context.accentColor)
+        // 底部导航行：强调色图标和文字
         tvPre.setTextColor(textColor)
         tvNext.setTextColor(textColor)
-        ivCatalog.setColorFilter(textColor, PorterDuff.Mode.SRC_IN)
-        tvCatalog.setTextColor(textColor)
-        ivReadAloud.setColorFilter(textColor, PorterDuff.Mode.SRC_IN)
-        tvReadAloud.setTextColor(textColor)
-        ivFont.setColorFilter(textColor, PorterDuff.Mode.SRC_IN)
-        tvFont.setTextColor(textColor)
-        ivSetting.setColorFilter(textColor, PorterDuff.Mode.SRC_IN)
-        tvSetting.setTextColor(textColor)
+        ivCatalog.setColorFilter(context.accentColor, PorterDuff.Mode.SRC_IN)
+        tvCatalog.setTextColor(context.accentColor)
+        ivReadAloud.setColorFilter(context.accentColor, PorterDuff.Mode.SRC_IN)
+        tvReadAloud.setTextColor(context.accentColor)
+        ivFont.setColorFilter(context.accentColor, PorterDuff.Mode.SRC_IN)
+        tvFont.setTextColor(context.accentColor)
+        ivSetting.setColorFilter(context.accentColor, PorterDuff.Mode.SRC_IN)
+        tvSetting.setTextColor(context.accentColor)
         vwBrightnessPosAdjust.setColorFilter(textColor, PorterDuff.Mode.SRC_IN)
         llBrightness.setOnClickListener(null)
         seekBrightness.post {
@@ -249,9 +249,7 @@ class ReadMenu @JvmOverloads constructor(
     }
 
     fun refreshMenuColorFilter() {
-        if (immersiveMenu) {
-            binding.titleBar.setColorFilter(textColor)
-        }
+        // MaterialCardView handles its own styling
     }
 
     private fun upColorConfig() {
@@ -404,8 +402,31 @@ class ReadMenu @JvmOverloads constructor(
 
     private fun bindEvent() = binding.run {
         vwMenuBg.setOnClickListener { runMenuOut() }
-        titleBar.toolbar.setOnClickListener {
+        ivBack.setOnClickListener {
+            runMenuOut()
+        }
+        // 书名点击进入详情页
+        tvBookName.setOnClickListener {
             callBack.openBookInfoActivity()
+        }
+        ivMore.setOnClickListener {
+            PopupMenu(context, ivMore).apply {
+                inflate(R.menu.book_read)
+                setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.menu_change_source -> {
+                            runMenuOut { callBack.openChangeSource() }
+                        }
+                        R.id.menu_refresh -> callBack.upBookView()
+                        R.id.menu_download -> callBack.startDownload()
+                        R.id.menu_add_bookmark -> callBack.addBookmark()
+                        R.id.menu_page_anim -> callBack.showPageAnimDialog()
+                        R.id.menu_log -> callBack.showLog()
+                    }
+                    true
+                }
+                show()
+            }
         }
         val chapterViewClickListener = OnClickListener {
             if (ReadBook.isLocalBook) {
@@ -617,7 +638,7 @@ class ReadMenu @JvmOverloads constructor(
     }
 
     fun upBookView() {
-        binding.titleBar.title = ReadBook.book?.name
+        binding.tvBookName.text = ReadBook.book?.name ?: ""
         ReadBook.curTextChapter?.let {
             binding.tvChapterName.text = it.title
             binding.tvChapterName.visible()
@@ -631,7 +652,8 @@ class ReadMenu @JvmOverloads constructor(
             binding.tvPre.isEnabled = ReadBook.durChapterIndex != 0
             binding.tvNext.isEnabled = ReadBook.durChapterIndex != ReadBook.simulatedChapterSize - 1
         } ?: let {
-            binding.tvChapterName.gone()
+            binding.tvChapterName.text = ReadBook.book?.name
+            binding.tvChapterName.visible()
             binding.tvChapterUrl.gone()
         }
     }
@@ -659,14 +681,15 @@ class ReadMenu @JvmOverloads constructor(
     }
 
     fun setAutoPage(autoPage: Boolean) = binding.run {
+        val icon = fabAutoPage.getChildAt(0) as? android.widget.ImageView
         if (autoPage) {
-            fabAutoPage.setImageResource(R.drawable.ic_auto_page_stop)
+            icon?.setImageResource(R.drawable.ic_auto_page_stop)
             fabAutoPage.contentDescription = context.getString(R.string.auto_next_page_stop)
         } else {
-            fabAutoPage.setImageResource(R.drawable.ic_auto_page)
+            icon?.setImageResource(R.drawable.ic_auto_page)
             fabAutoPage.contentDescription = context.getString(R.string.auto_next_page)
         }
-        fabAutoPage.setColorFilter(textColor)
+        icon?.setColorFilter(context.accentColor)
     }
 
     private fun upBrightnessVwPos() {
@@ -696,6 +719,20 @@ class ReadMenu @JvmOverloads constructor(
         fun showReadAloudDialog()
         fun upSystemUiVisibility()
         fun onClickReadAloud()
+        fun openChangeSource() {}
+        fun upBookView() {}
+        fun startDownload() {}
+        fun addBookmark() {}
+        fun showPageAnimDialog() {}
+        fun showReadProgress() {}
+        fun setSourceVariable() {}
+        fun setBookVariable() {}
+        fun copyBookUrl() {}
+        fun copyTocUrl() {}
+        fun enableUpdate(enable: Boolean) {}
+        fun splitLongChapter(enable: Boolean) {}
+        fun clearCache() {}
+        fun showLog() {}
         fun showHelp()
         fun showLogin()
         fun payAction()

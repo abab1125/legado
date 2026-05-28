@@ -1,72 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/cv_content"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
+    android:layout_margin="4dp"
     android:clickable="true"
     android:focusable="true"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="0dp"
-    app:strokeWidth="0dp"
-    app:cardBackgroundColor="@android:color/transparent">
+    tools:ignore="UnusedAttribute">
 
-    <FrameLayout
+    <io.legado.app.ui.widget.image.CoverImageView
+        android:id="@+id/iv_cover"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:scaleType="centerCrop"
+        android:src="@drawable/image_cover_default"
+        android:transitionName="img_cover"
+        tools:ignore="UnusedAttribute,ImageContrastCheck" />
 
-        <io.legado.app.ui.widget.image.CoverImageView
-            android:id="@+id/iv_cover"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scaleType="centerCrop"
-            android:src="@drawable/image_cover_default"
-            android:transitionName="img_cover"
-            tools:ignore="UnusedAttribute,ImageContrastCheck" />
+    <!-- 书名叠在封面底部，带渐变遮罩 -->
+    <TextView
+        android:id="@+id/tv_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_gradient_cover"
+        android:ellipsize="end"
+        android:gravity="start|bottom"
+        android:includeFontPadding="false"
+        android:lines="2"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="10dp"
+        android:text="@string/book_name"
+        android:textColor="@color/md_dark_primary_text"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        tools:ignore="RtlHardcoded,RtlSymmetry" />
 
-        <!-- 渐变遮罩 + 组名 -->
-        <TextView
-            android:id="@+id/tv_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:background="@drawable/bg_gradient_cover"
-            android:ellipsize="end"
-            android:gravity="start|bottom"
-            android:includeFontPadding="false"
-            android:lines="2"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="24dp"
-            android:paddingBottom="10dp"
-            android:text="@string/book_name"
-            android:textColor="@color/md_dark_primary_text"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            tools:ignore="RtlHardcoded,RtlSymmetry" />
+    <!-- 未读徽章 -->
+    <io.legado.app.ui.widget.text.BadgeView
+        android:id="@+id/bv_unread"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="6dp"
+        android:includeFontPadding="false"
+        tools:ignore="RtlHardcoded" />
 
-        <!-- 未读徽章 -->
-        <io.legado.app.ui.widget.text.BadgeView
-            android:id="@+id/bv_unread"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|end"
-            android:layout_margin="6dp"
-            android:includeFontPadding="false"
-            tools:ignore="RtlHardcoded" />
+    <!-- 加载动画 -->
+    <io.legado.app.ui.widget.anima.RotateLoading
+        android:id="@+id/rl_loading"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="6dp"
+        android:visibility="invisible"
+        app:loading_width="2dp" />
 
-        <!-- 加载动画 -->
-        <io.legado.app.ui.widget.anima.RotateLoading
-            android:id="@+id/rl_loading"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_gravity="top|end"
-            android:layout_margin="6dp"
-            android:visibility="invisible"
-            app:loading_width="2dp" />
-
-    </FrameLayout>
-
-</com.google.android.material.card.MaterialCardView>
+</FrameLayout>

@@ -84,7 +84,7 @@ abstract class BaseActivity<VB : ViewBinding>(
         setContentView(binding.root)
         upBackgroundImage()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            findViewById<TitleBar>(R.id.title_bar)
+            (findViewById(R.id.title_bar) as? TitleBar)
                 ?.onMultiWindowModeChanged(isInMultiWindowMode, fullScreen)
         }
         onBackPressedDispatcher.addCallback(this) {

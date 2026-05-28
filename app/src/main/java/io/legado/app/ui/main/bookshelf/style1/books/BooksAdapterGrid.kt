@@ -11,6 +11,7 @@ import io.legado.app.databinding.ItemBookshelfGridBinding
 import io.legado.app.help.book.isLocal
 import io.legado.app.help.book.ReadIterationHelper
 import io.legado.app.help.config.AppConfig
+import io.legado.app.ui.widget.ReadingProgressView
 import io.legado.app.utils.gone
 import io.legado.app.utils.invisible
 import io.legado.app.utils.visible
@@ -43,6 +44,7 @@ class BooksAdapterGrid(context: Context, private val callBack: CallBack) :
                     }
                     ivCover.load(item, false)
                     upRefresh(binding, item)
+                    upProgress(pbProgress, item)
                 } else {
                     for (i in payloads.indices) {
                         val bundle = payloads[i] as Bundle
@@ -65,6 +67,7 @@ class BooksAdapterGrid(context: Context, private val callBack: CallBack) :
                     tvName.text = item.name
                     ivCover.load(item, false)
                     upRefresh(binding, item)
+                    upProgress(pbProgress, item)
                 } else {
                     for (i in payloads.indices) {
                         val bundle = payloads[i] as Bundle
@@ -118,6 +121,19 @@ class BooksAdapterGrid(context: Context, private val callBack: CallBack) :
                 }
                 ReadIterationHelper.applyTagStyle(tvReadTag, item.readIteration)
             }
+        }
+    }
+
+    private fun upProgress(progressView: ReadingProgressView, item: Book) {
+        val total = item.totalChapterNum
+        if (total > 1 && item.durChapterIndex > 0) {
+            progressView.progress = (item.durChapterIndex * 100 / (total - 1)).coerceIn(0, 100)
+            progressView.visible()
+        } else if (total > 0) {
+            progressView.progress = 0
+            progressView.visible()
+        } else {
+            progressView.gone()
         }
     }
 

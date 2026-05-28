@@ -1296,6 +1296,12 @@ class ReadBookActivity : BaseReadBookActivity(),
         }
     }
 
+    override fun openChangeSource() {
+        ReadBook.book?.let {
+            showDialogFragment(ChangeBookSourceDialog(it.name, it.author))
+        }
+    }
+
     /**
      * 替换
      */

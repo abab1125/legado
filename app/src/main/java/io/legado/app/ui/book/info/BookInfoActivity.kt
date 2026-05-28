@@ -236,8 +236,8 @@ class BookInfoActivity :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         binding.titleBar.setBackgroundResource(R.color.transparent)
         binding.refreshLayout?.setColorSchemeColors(accentColor)
-        binding.arcView?.setBgColor(backgroundColor)
         binding.llInfo.setBackgroundColor(backgroundColor)
+        binding.llIntroSection?.setBackgroundColor(backgroundColor)
         binding.ivCoverC.setCardBackgroundColor(backgroundColor)
         binding.flAction.setBackgroundColor(bottomBackground)
         binding.vwBg.applyNavigationBarPadding()
@@ -807,7 +807,7 @@ class BookInfoActivity :
                 showDialogFragment(ChangeBookSourceDialog(book.name, book.author))
             }
         }
-        tvTocView.setOnClickListener {
+        llToc.setOnClickListener {
             if (viewModel.chapterListData.value.isNullOrEmpty()) {
                 toastOnUi(R.string.chapter_list_empty)
                 return@setOnClickListener

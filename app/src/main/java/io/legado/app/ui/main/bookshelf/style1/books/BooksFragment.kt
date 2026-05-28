@@ -158,11 +158,11 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
                     val spanCount = bookshelfLayout
                     val rowIndex = position / spanCount
                     when (rowIndex) {
-                        0 -> { //第一行加额外上边距
-                            outRect.set(bookshelfMargin, bookshelfMargin + 24, bookshelfMargin, bookshelfMargin)
+                        0 -> {
+                            outRect.set(bookshelfMargin, bookshelfMargin + 8, bookshelfMargin, bookshelfMargin)
                         }
-                        totalRows - 1 -> { //最后一行加额外下边距
-                            outRect.set(bookshelfMargin, bookshelfMargin, bookshelfMargin, bookshelfMargin + 24)
+                        totalRows - 1 -> {
+                            outRect.set(bookshelfMargin, bookshelfMargin, bookshelfMargin, bookshelfMargin + 8)
                         }
                         else -> {
                             outRect.set(bookshelfMargin, bookshelfMargin, bookshelfMargin, bookshelfMargin)
@@ -171,10 +171,10 @@ class BooksFragment() : BaseFragment(R.layout.fragment_books),
                 } else {
                     when (position) {
                         0 -> {
-                            outRect.set(0, bookshelfMargin + 24, 0, bookshelfMargin)
+                            outRect.set(0, bookshelfMargin + 8, 0, bookshelfMargin)
                         }
                         itemCount - 1 -> {
-                            outRect.set(0, bookshelfMargin, 0, bookshelfMargin + 24)
+                            outRect.set(0, bookshelfMargin, 0, bookshelfMargin + 8)
                         }
                         else -> {
                             outRect.set(0, bookshelfMargin, 0, bookshelfMargin)

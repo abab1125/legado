@@ -473,6 +473,11 @@ class WebViewActivity : VMBaseActivity<ActivityWebViewBinding, WebViewModel>() {
                     }
                 }
             }
+            if (url.orEmpty().contains("jingshiro.github.io/LegadoRecord/")) {
+                val json = io.legado.app.help.readrecord.DetailedReadRecordHelper.buildExportJson(io.legado.app.data.appDb.detailedReadRecordDao.all())
+                val js = "if(typeof setLegadoRecord === 'function'){ setLegadoRecord($json); }"
+                view?.evaluateJavascript(js, null)
+            }
         }
 
         private fun shouldOverrideUrlLoading(url: Uri): Boolean {

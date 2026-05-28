@@ -151,6 +151,8 @@ class ThemeConfigFragment : PreferenceFragment(),
             PreferKey.cAccent,
             PreferKey.cBackground,
             PreferKey.cBBackground,
+            PreferKey.cCardBg,
+            PreferKey.cardBgAlpha,
             PreferKey.tNavBar-> {
                 upTheme(false)
             }
@@ -159,6 +161,8 @@ class ThemeConfigFragment : PreferenceFragment(),
             PreferKey.cNAccent,
             PreferKey.cNBackground,
             PreferKey.cNBBackground,
+            PreferKey.cNCardBg,
+            PreferKey.cardBgNAlpha,
             PreferKey.tNavBarN -> {
                 upTheme(true)
             }

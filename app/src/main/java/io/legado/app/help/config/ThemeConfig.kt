@@ -235,6 +235,7 @@ object ThemeConfig {
             val accent = config.accentColor.toColorInt()
             val background = config.backgroundColor.toColorInt()
             val bBackground = config.bottomBackground.toColorInt()
+            val cardBackground = config.cardBackground.toColorInt()
             val isNightTheme = config.isNightTheme
             val transparentNavBar = config.transparentNavBar
             val backgroundPath = config.backgroundImgPath
@@ -279,6 +280,7 @@ object ThemeConfig {
                 context.putPrefInt(PreferKey.cNAccent, accent)
                 context.putPrefInt(PreferKey.cNBackground, background)
                 context.putPrefInt(PreferKey.cNBBackground, bBackground)
+                context.putPrefInt(PreferKey.cNCardBg, cardBackground)
                 context.putPrefBoolean(PreferKey.tNavBarN, transparentNavBar)
                 context.putPrefString(PreferKey.bgImageN, backgroundPath)
                 context.putPrefInt(PreferKey.bgImageNBlurring, backgroundBlur)
@@ -288,6 +290,7 @@ object ThemeConfig {
                 context.putPrefInt(PreferKey.cAccent, accent)
                 context.putPrefInt(PreferKey.cBackground, background)
                 context.putPrefInt(PreferKey.cBBackground, bBackground)
+                context.putPrefInt(PreferKey.cCardBg, cardBackground)
                 context.putPrefBoolean(PreferKey.tNavBar, transparentNavBar)
                 context.putPrefString(PreferKey.bgImage, backgroundPath)
                 context.putPrefInt(PreferKey.bgImageBlurring, backgroundBlur)
@@ -324,6 +327,8 @@ object ThemeConfig {
             context.getPrefInt(PreferKey.cBBackground, context.getCompatColor(R.color.md_grey_200))
         val transparentNavBar =
             context.getPrefBoolean(PreferKey.tNavBar, false)
+        val cardBg =
+            context.getPrefInt(PreferKey.cCardBg, context.getCompatColor(R.color.md3_surfaceContainer))
         val bgImgPath =
             context.getPrefString(PreferKey.bgImage)
         val bgImgBlur =
@@ -336,6 +341,7 @@ object ThemeConfig {
             accentColor = "#${accent.hexString}",
             backgroundColor = "#${background.hexString}",
             bottomBackground = "#${bBackground.hexString}",
+            cardBackground = "#${cardBg.hexString}",
             transparentNavBar = transparentNavBar,
             backgroundImgPath = bgImgPath,
             backgroundImgBlur = bgImgBlur
@@ -364,6 +370,8 @@ object ThemeConfig {
             context.getPrefInt(PreferKey.cNBBackground, context.getCompatColor(R.color.md_grey_850))
         val transparentNavBar =
             context.getPrefBoolean(PreferKey.tNavBarN, false)
+        val cardBg =
+            context.getPrefInt(PreferKey.cNCardBg, context.getCompatColor(R.color.md3_surfaceContainer))
         val bgImgPath =
             context.getPrefString(PreferKey.bgImageN)
         val bgImgBlur =
@@ -375,6 +383,7 @@ object ThemeConfig {
             accentColor = "#${accent.hexString}",
             backgroundColor = "#${background.hexString}",
             bottomBackground = "#${bBackground.hexString}",
+            cardBackground = "#${cardBg.hexString}",
             transparentNavBar = transparentNavBar,
             backgroundImgPath = bgImgPath,
             backgroundImgBlur = bgImgBlur
@@ -397,6 +406,7 @@ object ThemeConfig {
                     .accentColor(Color.BLACK)
                     .backgroundColor(Color.WHITE)
                     .bottomBackground(Color.WHITE)
+                    .cardBackground(Color.WHITE)
                     .transparentNavBar(false)
                     .apply()
             }
@@ -416,11 +426,15 @@ object ThemeConfig {
                     getPrefInt(PreferKey.cNBBackground, getCompatColor(R.color.md_grey_850))
                 val transparentNavBar =
                     getPrefBoolean(PreferKey.tNavBarN, false)
+                val cardBg =
+                    getPrefInt(PreferKey.cNCardBg, getCompatColor(R.color.md3_surfaceContainer))
+                val cardBgAlpha = getPrefInt(PreferKey.cardBgNAlpha, 100) / 100f
                 ThemeStore.editTheme(this)
                     .primaryColor(ColorUtils.withAlpha(primary, 1f))
                     .accentColor(ColorUtils.withAlpha(accent, 1f))
                     .backgroundColor(ColorUtils.withAlpha(background, 1f))
                     .bottomBackground(ColorUtils.withAlpha(bBackground, 1f))
+                    .cardBackground(ColorUtils.withAlpha(cardBg, cardBgAlpha))
                     .transparentNavBar(transparentNavBar)
                     .apply()
             }
@@ -440,11 +454,15 @@ object ThemeConfig {
                     getPrefInt(PreferKey.cBBackground, getCompatColor(R.color.md_grey_200))
                 val transparentNavBar =
                     getPrefBoolean(PreferKey.tNavBar, false)
+                val cardBg =
+                    getPrefInt(PreferKey.cCardBg, getCompatColor(R.color.md3_surfaceContainer))
+                val cardBgAlpha = getPrefInt(PreferKey.cardBgAlpha, 100) / 100f
                 ThemeStore.editTheme(this)
                     .primaryColor(ColorUtils.withAlpha(primary, 1f))
                     .accentColor(ColorUtils.withAlpha(accent, 1f))
                     .backgroundColor(ColorUtils.withAlpha(background, 1f))
                     .bottomBackground(ColorUtils.withAlpha(bBackground, 1f))
+                    .cardBackground(ColorUtils.withAlpha(cardBg, cardBgAlpha))
                     .transparentNavBar(transparentNavBar)
                     .apply()
             }
@@ -492,6 +510,7 @@ object ThemeConfig {
         var accentColor: String,
         var backgroundColor: String,
         var bottomBackground: String,
+        var cardBackground: String = "#F3EDF7",
         var transparentNavBar: Boolean,
         var backgroundImgPath: String?,
         var backgroundImgBlur: Int
@@ -510,6 +529,7 @@ object ThemeConfig {
                         && other.accentColor == accentColor
                         && other.backgroundColor == backgroundColor
                         && other.bottomBackground == bottomBackground
+                        && other.cardBackground == cardBackground
                         && other.transparentNavBar == transparentNavBar
                         && other.backgroundImgPath == backgroundImgPath
                         && other.backgroundImgBlur == backgroundImgBlur
@@ -524,6 +544,7 @@ object ThemeConfig {
             "accentColor" to accentColor,
             "backgroundColor" to backgroundColor,
             "bottomBackground" to bottomBackground,
+            "cardBackground" to cardBackground,
             "transparentNavBar" to transparentNavBar,
             "backgroundImgPath" to backgroundImgPath,
             "backgroundImgBlur" to backgroundImgBlur

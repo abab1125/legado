@@ -27,6 +27,7 @@ import io.legado.app.lib.theme.primaryColor
 import io.legado.app.ui.widget.TitleBar
 import io.legado.app.utils.ColorUtils
 import io.legado.app.utils.applyBackgroundTint
+import io.legado.app.utils.applyCardBackground
 import io.legado.app.utils.applyOpenTint
 import io.legado.app.utils.applyTint
 import io.legado.app.utils.disableAutoFill
@@ -156,6 +157,7 @@ abstract class BaseActivity<VB : ViewBinding>(
                window.decorView.applyBackgroundTint(backgroundColor)
             }
         }
+        applyCardBackground()
     }
 
     open fun upBackgroundImage() {

@@ -5,23 +5,23 @@ import android.view.ViewGroup
 import io.legado.app.base.adapter.ItemViewHolder
 import io.legado.app.base.adapter.RecyclerAdapter
 import io.legado.app.data.entities.Book
-import io.legado.app.databinding.ItemFilletTextBinding
+import io.legado.app.databinding.ItemBookshelfPillBinding
 
 
 class BookAdapter(context: Context, val callBack: CallBack) :
-    RecyclerAdapter<Book, ItemFilletTextBinding>(context) {
+    RecyclerAdapter<Book, ItemBookshelfPillBinding>(context) {
 
     override fun getItemId(position: Int): Long {
         return position.toLong()
     }
 
-    override fun getViewBinding(parent: ViewGroup): ItemFilletTextBinding {
-        return ItemFilletTextBinding.inflate(inflater, parent, false)
+    override fun getViewBinding(parent: ViewGroup): ItemBookshelfPillBinding {
+        return ItemBookshelfPillBinding.inflate(inflater, parent, false)
     }
 
     override fun convert(
         holder: ItemViewHolder,
-        binding: ItemFilletTextBinding,
+        binding: ItemBookshelfPillBinding,
         item: Book,
         payloads: MutableList<Any>
     ) {
@@ -30,7 +30,7 @@ class BookAdapter(context: Context, val callBack: CallBack) :
         }
     }
 
-    override fun registerListener(holder: ItemViewHolder, binding: ItemFilletTextBinding) {
+    override fun registerListener(holder: ItemViewHolder, binding: ItemBookshelfPillBinding) {
         holder.itemView.apply {
             setOnClickListener {
                 getItem(holder.layoutPosition)?.let {

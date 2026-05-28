@@ -73,6 +73,9 @@ val Context.backgroundColor: Int
 val Context.bottomBackground: Int
     get() = ThemeStore.bottomBackground(this)
 
+val Context.cardBackground: Int
+    get() = ThemeStore.cardBackground(this)
+
 val Context.primaryTextColor: Int
     get() = getPrimaryTextColor(isDarkTheme)
 

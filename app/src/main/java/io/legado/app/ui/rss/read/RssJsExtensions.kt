@@ -71,7 +71,7 @@ open class RssJsExtensions(
     @JavascriptInterface
     fun getReadRecordDetail(): String? {
         val url = activityRef.get()?.findViewById<android.webkit.WebView>(io.legado.app.R.id.web_view)?.url ?: ""
-        if (url.contains("myst423.shop/recorder/")) {
+        if (url.contains("jingshiro.github.io/LegadoRecord/")) {
             return DetailedReadRecordHelper.buildExportJson(appDb.detailedReadRecordDao.all())
         }
         return null

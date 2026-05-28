@@ -8,6 +8,7 @@ import androidx.annotation.CheckResult
 import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
+import io.legado.app.R
 import io.legado.app.utils.ColorUtils
 import splitties.init.appCtx
 import androidx.core.graphics.toColorInt
@@ -148,6 +149,11 @@ private constructor(private val mContext: Context) : ThemeStoreInterface {
 
     override fun bottomBackground(color: Int): ThemeStore {
         mEditor.putInt(ThemeStorePrefKeys.KEY_BOTTOM_BACKGROUND, color)
+        return this
+    }
+
+    override fun cardBackground(color: Int): ThemeStore {
+        mEditor.putInt(ThemeStorePrefKeys.KEY_CARD_BACKGROUND, color)
         return this
     }
 
@@ -307,6 +313,15 @@ private constructor(private val mContext: Context) : ThemeStoreInterface {
             return prefs(context).getInt(
                 ThemeStorePrefKeys.KEY_BOTTOM_BACKGROUND,
                 ThemeUtils.resolveColor(context, android.R.attr.colorBackground)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun cardBackground(context: Context = appCtx): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_CARD_BACKGROUND,
+                ContextCompat.getColor(context, R.color.md3_surfaceContainer)
             )
         }
 

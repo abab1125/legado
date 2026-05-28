@@ -1,114 +1,58 @@
 # [English](English.md) [中文](README.md)
 
-![icon_android](https://gitee.com/lyc486/yuedu/raw/master/icon_android.png)
-<a href="https://jb.gg/OpenSourceSupport" target="_blank">
-<img width="24" height="24" src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg?_gl=1*135yekd*_ga*OTY4Mjg4NDYzLjE2Mzk0NTE3MzQ.*_ga_9J976DJZ68*MTY2OTE2MzM5Ny4xMy4wLjE2NjkxNjMzOTcuNjAuMC4w&_ga=2.257292110.451256242.1669085120-968288463.1639451734" alt="idea"/>
-</a>
-
 <div align="center">
 <img width="125" height="125" src="https://github.com/gedoor/legado/raw/master/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="legado"/>
 <br>
 阅读 - 自用增强分支
 <br>
 <a href="https://github.com/Jingshiro/legado" target="_blank">项目地址</a>
-<br>
-本分支继承自 <a href="https://github.com/luoyacheng/legado" target="_blank">luoyacheng/legado (阅读Sigma)</a>，阅读Sigma 继承自 <a href="https://github.com/gedoor/legado" target="_blank">gedoor/legado</a>，在保留原版强大功能的基础上，新增了更多特性。
 </div>
 
-## 分支说明
+---
 
-本分支在原有阅读（Legado）的基础架构上，重点增强了阅读记录统计、AI交互辅助以及知识管理等功能，致力于提供更智能、更精细的阅读体验。
+## 重要声明
 
-**本分支核心特性：**
+**本项目仅为开发者个人自用的阅读器，不对任何人的任何使用体验负责。**
 
-- **详细阅读记录**：记录更细致的阅读信息，支持导出与统计。
-- **想法分享功能**：阅读时长按文字即可写下想法，并可生成分享卡片。同时支持将书中的想法/笔记一键导出至 Obsidian。
-- **AI 助手**：引入LLM交互能力，支持工具调用，AI 可查询和管理书架、书源、订阅等数据。
-- **主题全量导出功能**：支持一键分享全部主题设置。
-- **阅读小票**：可在书籍首页和尾部显示小票，以快速确认书籍的评分和阅读时长。
+**本应用不提供任何书籍资源，不内置任何内容，不鼓励、不支持、不协助任何人使用本软件阅读盗版书籍。强烈建议所有使用者仅将本软件用于阅读正版授权内容。因使用本软件产生的一切法律责任和后果由使用者自行承担，开发者概不负责。**
+
+本项目基于 [Luoyacheng/legado](https://github.com/luoyacheng/legado)（阅读 Sigma）进行二次开发，在此衷心感谢前辈们提供的代码基础和技术支持。阅读 Sigma 继承自 [gedoor/legado](https://github.com/gedoor/legado)，本项目站在巨人的肩膀上，才得以实现更多功能。
+
+
+---
+
+## 关于本项目
+
+本项目是一个**高自由度的自定义阅读器**，核心理念是让用户完全掌控自己的阅读体验。在阅读（Legado）的基础架构上，本分支重点增强了 **阅读记录统计**、**AI 交互辅助**、**知识管理** 以及 **UI 体验** 等方面。
+
+### 本项目核心拓展
+
+- **详细阅读记录**：记录更细致的阅读信息，支持统计和导出，并支持[可视化解析](https://github.com/Jingshiro/LegadoRecord)
+- **AI 助手**：引入大模型交互能力，支持工具调用，AI 可查询和管理书架等数据。支持独立入口，无需打开书籍即可与 AI 对话。
+- **想法分享功能**：阅读时长按文字即可写下想法，并可生成分享卡片。支持将想法/笔记一键导出至 Obsidian（支持 REST API 或本地文件模式）。
+- **阅读小票**：可在书籍首页和尾部显示小票，快速确认书籍的评分和阅读时长。
 - **WebDAV 备份管理增强**：支持在本地对云端备份进行删除、重命名等操作。
 - **读完/刷书标签**：记录书籍阅读状态（读完/N刷），并在书架上进行展示。
+- **主题全量导出功能**：支持一键分享全部主题设置。
+- **Web API 扩展**：Web 服务新增读书想法（增删改查）和阅读记录查询接口，支持 AI Agent 通过 HTTP 调用。
+- **UI 优化**：对整体UI采用 MD3 设计语言进行优化。
 
-[![](https://img.shields.io/badge/-Contents:-696969.svg)](#contents) [![](https://img.shields.io/badge/-Function-F5F5F5.svg)](#Function-主要功能-) [![](https://img.shields.io/badge/-Community-F5F5F5.svg)](#Community-交流社区-) [![](https://img.shields.io/badge/-API-F5F5F5.svg)](#API-) [![](https://img.shields.io/badge/-Other-F5F5F5.svg)](#Other-其他-) [![](https://img.shields.io/badge/-Grateful-F5F5F5.svg)](#Grateful-感谢-)
 
-> 新用户？
->
-> 软件不提供内容，需要您自己手动添加，例如导入书源等。
-> 看看 [官方帮助文档](https://www.yuque.com/legado/wiki)，也许里面就有你要的答案。
+---
 
-# Function-主要功能 [![](https://img.shields.io/badge/-Function-F5F5F5.svg)](#Function-主要功能-)
+## 开源许可
 
-[English](English.md)
+本项目基于 [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html) 开源。
 
-<details><summary>中文</summary>
-1.自定义书源，自己设置规则，抓取网页数据，规则简单易懂，软件内有规则说明。<br>
-2.列表书架，网格书架自由切换。<br>
-3.书源规则支持搜索及发现，所有找书看书功能全部自定义，找书更方便。<br>
-4.订阅内容,可以订阅想看的任何内容,看你想看。<br>
-5.支持替换净化，去除广告替换内容很方便。<br>
-6.支持本地TXT、EPUB阅读，手动浏览，智能扫描。<br>
-7.支持高度自定义阅读界面，切换字体、颜色、背景、行距、段距、加粗、简繁转换等。<br>
-8.支持多种翻页模式，覆盖、仿真、滑动、滚动等。<br>
-9.软件开源，持续优化，无广告。
-</details>
+这意味着您可以自由使用、修改和分发本软件，但须遵守以下条件：
+- 修改后的版本必须同样以 GPL-3.0 许可证发布
+- 必须保留原始版权声明和许可证
+- 必须公开修改后的源代码
 
-<a href="#readme">
-    <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="#" align="right">
-</a>
+详细条款请参阅 [GPL-3.0 完整文本](https://www.gnu.org/licenses/gpl-3.0.txt)。
+---
 
-# Community-交流社区 [![](https://img.shields.io/badge/-Community-F5F5F5.svg)](#Community-交流社区-)
-
-#### Telegram
-
-[![Telegram-channel](https://img.shields.io/badge/Σ_Telegram-%E9%A2%91%E9%81%93-blue)](https://t.me/readsigma)
-
-#### WeChat
-
-[![WeChat-channel](https://img.shields.io/badge/Σ_%e5%be%ae%e4%bf%a1-%e5%85%ac%e4%bc%97%e5%8f%b7-green)](https://mp.weixin.qq.com/s/f54f7yP9HQi6P5Wky8wE1A)  
-<img src="https://open.weixin.qq.com/qr/code?username=legado_plus" width="100">
-
-#### Discord
-
-[![Discord](https://img.shields.io/discord/560731361414086666?color=%235865f2&label=Discord)](https://discord.gg/VtUfRyzRXn)
-
-#### Other
-
-https://www.yuque.com/legado/wiki/community
-
-<a href="#readme">
-    <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="#" align="right">
-</a>
-
-# API [![](https://img.shields.io/badge/-API-F5F5F5.svg)](#API-)
-
-- 阅读3.0 提供了2种方式的API：`Web方式`和`Content Provider方式`。您可以在[这里](api.md)根据需要自行调用。
-- 可通过url唤起阅读进行一键导入,url格式: legado://import/{path}?src={url}
-- path类型: bookSource,rssSource,replaceRule,textTocRule,httpTTS,theme,readConfig,dictRule,[addToBookshelf](/app/src/main/java/io/legado/app/ui/association/AddToBookshelfDialog.kt)
-- path类型解释: 书源,订阅源,替换规则,本地txt小说目录规则,在线朗读引擎,主题,阅读排版,添加到书架
-
-<a href="#readme">
-    <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="#" align="right">
-</a>
-
-# Other-其他 [![](https://img.shields.io/badge/-Other-F5F5F5.svg)](#Other-其他-)
-
-##### 免责声明
-
-https://gedoor.github.io/Disclaimer
-
-##### 阅读3.0
-
-- [书源规则](https://mgz0227.github.io/The-tutorial-of-Legado/)
-- [更新日志](/app/src/main/assets/updateLog.md)
-- [帮助文档](/app/src/main/assets/web/help/md/appHelp.md)
-- [web端书架](https://github.com/gedoor/legado_web_bookshelf)
-- [web端源编辑](https://github.com/gedoor/legado_web_source_editor)
-
-<a href="#readme">
-    <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="#" align="right">
-</a>
-
-# Grateful-感谢 [![](https://img.shields.io/badge/-Grateful-F5F5F5.svg)](#Grateful-感谢-)
+## 感谢
 
 > - org.jsoup:jsoup
 > - cn.wanghaomiao:JsoupXpath
@@ -127,8 +71,3 @@ https://gedoor.github.io/Disclaimer
 > - com.positiondev.epublib:epublib-core
 > - com.github.Moriafly:LyricViewX
 > - io.github.rosemoe:editor
->   <a href="#readme">
-
-    <img src="https://img.shields.io/badge/-返回顶部-orange.svg" alt="#" align="right">
-
-</a>

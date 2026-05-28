@@ -731,7 +731,7 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
                     view.evaluateJavascript(it, null)
                 }
             }
-            if (url.contains("myst423.shop/recorder/")) {
+            if (url.contains("jingshiro.github.io/LegadoRecord/")) {
                 val json = io.legado.app.help.readrecord.DetailedReadRecordHelper.buildExportJson(io.legado.app.data.appDb.detailedReadRecordDao.all())
                 val js = "if(typeof setLegadoRecord === 'function'){ setLegadoRecord($json); }"
                 view.evaluateJavascript(js, null)

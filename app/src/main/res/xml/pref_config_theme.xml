@@ -101,6 +101,27 @@
             app:cpv_dialogType="preset"
             app:iconSpaceReserved="false" />
 
+        <io.legado.app.lib.prefs.ColorPreference
+            android:defaultValue="@color/md3_surfaceContainer"
+            android:key="colorCardBackground"
+            android:summary="设置 MD3 卡片底色"
+            android:title="卡片底色"
+            app:cpv_dialogType="preset"
+            app:iconSpaceReserved="false" />
+
+        <io.legado.app.lib.prefs.SeekBarPreference
+            android:clickable="false"
+            android:defaultValue="100"
+            android:key="cardBackgroundAlpha"
+            android:summary="调整卡片底色透明度"
+            android:title="卡片透明度"
+            app:MaxValue="100"
+            app:MinValue="0"
+            app:allowDividerAbove="false"
+            app:allowDividerBelow="false"
+            app:iconSpaceReserved="false"
+            app:selectable="false" />
+
         <io.legado.app.lib.prefs.Preference
             android:key="backgroundImage"
             android:title="@string/background_image" />
@@ -161,6 +182,27 @@
             android:title="@string/navbar_color"
             app:cpv_dialogType="preset"
             app:iconSpaceReserved="false" />
+
+        <io.legado.app.lib.prefs.ColorPreference
+            android:defaultValue="@color/md3_surfaceContainer"
+            android:key="colorCardBackgroundNight"
+            android:summary="设置夜间 MD3 卡片底色"
+            android:title="卡片底色"
+            app:cpv_dialogType="preset"
+            app:iconSpaceReserved="false" />
+
+        <io.legado.app.lib.prefs.SeekBarPreference
+            android:clickable="false"
+            android:defaultValue="100"
+            android:key="cardBackgroundNightAlpha"
+            android:summary="调整夜间卡片底色透明度"
+            android:title="卡片透明度"
+            app:MaxValue="100"
+            app:MinValue="0"
+            app:allowDividerAbove="false"
+            app:allowDividerBelow="false"
+            app:iconSpaceReserved="false"
+            app:selectable="false" />
 
         <io.legado.app.lib.prefs.Preference
             android:key="backgroundImageNight"

@@ -193,6 +193,9 @@ object PreferKey {
     const val bgImageBlurring = "backgroundImageBlurring"
     const val tNavBar = "transparentNavBar"
 
+    const val cCardBg = "colorCardBackground"
+    const val cardBgAlpha = "cardBackgroundAlpha"
+
     const val cNPrimary = "colorPrimaryNight"
     const val cNAccent = "colorAccentNight"
     const val cNBackground = "colorBackgroundNight"
@@ -200,6 +203,9 @@ object PreferKey {
     const val bgImageN = "backgroundImageNight"
     const val bgImageNBlurring = "backgroundImageNightBlurring"
     const val tNavBarN = "transparentNavBarNight"
+
+    const val cNCardBg = "colorCardBackgroundNight"
+    const val cardBgNAlpha = "cardBackgroundNightAlpha"
 
     const val showReadTitleAddition = "showReadTitleAddition"
     const val readBarStyleFollowPage = "readBarStyleFollowPage"

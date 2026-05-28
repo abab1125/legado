@@ -1,7 +1,5 @@
-# [English](English.md) [中文](README.md)
-
 <div align="center">
-<img width="125" height="125" src="https://github.com/gedoor/legado/raw/master/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="legado"/>
+<img width="125" height="125" src="app/src/main/res/drawable/iconnew.png" alt="legado"/>
 <br>
 阅读 - 自用增强分支
 <br>

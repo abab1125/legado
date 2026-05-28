@@ -36,3 +36,5 @@ build_output.txt
 # Python Scripts
 generate_icons.py
 .mcp.json
+build_output.txt
+iconnew.png

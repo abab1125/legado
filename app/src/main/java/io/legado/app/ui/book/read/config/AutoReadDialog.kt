@@ -58,7 +58,6 @@ class AutoReadDialog : BaseDialogFragment(R.layout.dialog_auto_read) {
         val bg = requireContext().bottomBackground
         val isLight = ColorUtils.isColorLight(bg)
         val textColor = requireContext().getPrimaryTextColor(isLight)
-        root.setBackgroundColor(bg)
         tvReadSpeedTitle.setTextColor(textColor)
         tvReadSpeed.setTextColor(textColor)
         ivCatalog.setColorFilter(textColor, PorterDuff.Mode.SRC_IN)

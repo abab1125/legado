@@ -266,7 +266,25 @@ data class TextLine(
 
         fun flushSegment() {
             if (start >= 0f && currentPaint != null) {
-                canvas.drawLine(start, lineY, end, lineY, currentPaint!!)
+                val style = currentStyle
+                if (style?.style == 3) {
+                    // 曲线：用Path画正弦波
+                    val path = android.graphics.Path()
+                    val amplitude = currentPaint!!.strokeWidth * 2
+                    val segWidth = end - start
+                    path.moveTo(start, lineY)
+                    var x = start
+                    while (x < end) {
+                        val progress = (x - start) / segWidth
+                        val y = lineY + (amplitude * Math.sin(progress * Math.PI * 8)).toFloat()
+                        path.lineTo(x, y)
+                        x += 1f
+                    }
+                    path.lineTo(end, lineY)
+                    canvas.drawPath(path, currentPaint!!)
+                } else {
+                    canvas.drawLine(start, lineY, end, lineY, currentPaint!!)
+                }
             }
             start = -1f
             end = -1f

@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="12dp">
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="8dp"
+    app:strokeWidth="0dp">
 
     <LinearLayout
         android:id="@+id/root_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/shape_bottom_dialog_card"
         android:orientation="vertical">
 
         <LinearLayout
@@ -409,4 +413,4 @@
 
     </LinearLayout>
 
-</FrameLayout>
+</com.google.android.material.card.MaterialCardView>

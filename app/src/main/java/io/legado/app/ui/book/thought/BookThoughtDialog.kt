@@ -56,8 +56,6 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
         val isLight = ColorUtils.isColorLight(bg)
         val textColor = requireContext().getPrimaryTextColor(isLight)
         binding.run {
-            // 设置卡片背景色
-            root.setBackgroundColor(bg)
             tvTitle.setTextColor(textColor)
             tvChapterName.setTextColor(textColor)
             editSelectedText.setTextColor(textColor)
@@ -120,9 +118,25 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
                 }
             }
             tvUnderlineStyle.setOnClickListener {
-                val style = TextLine.ThoughtUnderlineStyle()
-                ThoughtUnderlineStyleDialog(style) { newStyle ->
-                    // TODO: 保存样式到 BookThought 并刷新
+                val currentThoughtStyle = TextLine.ThoughtUnderlineStyle(
+                    bookThought.underlineStyle,
+                    bookThought.underlineWeight,
+                    bookThought.underlineColor
+                )
+                ThoughtUnderlineStyleDialog(currentThoughtStyle) { newStyle ->
+                    lifecycleScope.launch {
+                        withContext(IO) {
+                            appDb.bookThoughtDao.insert(
+                                bookThought.copy(
+                                    underlineStyle = newStyle.style,
+                                    underlineWeight = newStyle.weight,
+                                    underlineColor = newStyle.color,
+                                    updateTime = System.currentTimeMillis()
+                                )
+                            )
+                        }
+                        postEvent(EventBus.REFRESH_BOOK_THOUGHT, true)
+                    }
                 }.show(childFragmentManager, "underlineStyleDialog")
             }
         }

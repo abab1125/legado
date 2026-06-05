@@ -56,18 +56,26 @@ class MoreConfigDialog : BasePrefDialogFragment() {
         savedInstanceState: Bundle?
     ): View {
         (activity as ReadBookActivity).bottomDialog++
-        val outer = FrameLayout(requireContext())
-        outer.setPadding(12.dpToPx(), 12.dpToPx(), 12.dpToPx(), 12.dpToPx())
+        val cardView = com.google.android.material.card.MaterialCardView(requireContext()).apply {
+            val lp = ViewGroup.MarginLayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            lp.setMargins(12.dpToPx(), 0, 12.dpToPx(), 12.dpToPx())
+            layoutParams = lp
+            radius = 16.dpToPx().toFloat()
+            cardElevation = 8.dpToPx().toFloat()
+            strokeWidth = 0
+        }
         val view = LinearLayout(context)
-        view.setBackgroundResource(R.drawable.shape_bottom_dialog_card)
         view.setBackgroundColor(requireContext().bottomBackground)
         view.id = R.id.tag1
-        outer.addView(view, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
+        cardView.addView(view, ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
         ))
-        container?.addView(outer)
-        return outer
+        container?.addView(cardView)
+        return cardView
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

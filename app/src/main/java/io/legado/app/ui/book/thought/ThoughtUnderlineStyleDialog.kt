@@ -1,14 +1,18 @@
 package io.legado.app.ui.book.thought
 
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
+import android.graphics.Path
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.SeekBar
+import com.jaredrummler.android.colorpicker.ColorPickerDialog
+import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import io.legado.app.R
 import io.legado.app.base.BaseDialogFragment
 import io.legado.app.databinding.DialogThoughtUnderlineStyleBinding
@@ -22,12 +26,17 @@ import io.legado.app.utils.viewbindingdelegate.viewBinding
 class ThoughtUnderlineStyleDialog(
     private val currentStyle: TextLine.ThoughtUnderlineStyle = TextLine.ThoughtUnderlineStyle(),
     private val onConfirm: (TextLine.ThoughtUnderlineStyle) -> Unit
-) : BaseDialogFragment(R.layout.dialog_thought_underline_style) {
+) : BaseDialogFragment(R.layout.dialog_thought_underline_style), ColorPickerDialogListener {
 
     private val binding by viewBinding(DialogThoughtUnderlineStyleBinding::bind)
     private var selectedStyle = currentStyle.style
     private var selectedWeight = currentStyle.weight
     private var selectedColor = currentStyle.color
+    private var selectedColorInt: Int = Color.TRANSPARENT
+
+    companion object {
+        private const val COLOR_DIALOG_ID = 1001
+    }
 
     override fun onStart() {
         super.onStart()
@@ -48,12 +57,19 @@ class ThoughtUnderlineStyleDialog(
         val isLight = ColorUtils.isColorLight(bg)
         val textColor = requireContext().getPrimaryTextColor(isLight)
         binding.run {
-            root.setBackgroundColor(bg)
             tvTitle.setTextColor(textColor)
             tvWeightValue.setTextColor(textColor)
             tvCancel.setTextColor(textColor)
-            tvColorValue.setTextColor(requireContext().getColor(R.color.accent))
         }
+        // 初始化当前颜色值
+        selectedColorInt = if (selectedColor.isNotEmpty()) {
+            try { Color.parseColor(selectedColor) } catch (_: Exception) {
+                requireContext().getColor(R.color.accent)
+            }
+        } else {
+            requireContext().getColor(R.color.accent)
+        }
+        updateColorDisplay()
         initStyleChips()
         initWeightSeekBar()
         initColorButton()
@@ -97,26 +113,48 @@ class ThoughtUnderlineStyleDialog(
 
     private fun initColorButton() = binding.run {
         tvColorValue.setOnClickListener {
-            // 简单的颜色切换：跟随强调色 -> 红色 -> 蓝色 -> 绿色 -> 跟随强调色
-            selectedColor = when (selectedColor) {
-                "" -> "#FF0000"
-                "#FF0000" -> "#0000FF"
-                "#0000FF" -> "#00FF00"
-                else -> ""
-            }
-            tvColorValue.text = when (selectedColor) {
-                "" -> getString(R.string.underline_follow_accent)
-                "#FF0000" -> "Red"
-                "#0000FF" -> "Blue"
-                "#00FF00" -> "Green"
-                else -> selectedColor
-            }
+            ColorPickerDialog.newBuilder()
+                .setShowAlphaSlider(false)
+                .setDialogType(ColorPickerDialog.TYPE_CUSTOM)
+                .setDialogId(COLOR_DIALOG_ID)
+                .setColor(selectedColorInt)
+                .show(requireActivity())
+        }
+    }
+
+    private fun updateColorDisplay() = binding.run {
+        if (selectedColor.isEmpty()) {
+            tvColorValue.text = getString(R.string.underline_follow_accent)
+            tvColorValue.setTextColor(requireContext().getColor(R.color.accent))
+        } else {
+            tvColorValue.text = selectedColor
+            tvColorValue.setTextColor(selectedColorInt)
+        }
+    }
+
+    override fun onColorSelected(dialogId: Int, color: Int) {
+        if (dialogId == COLOR_DIALOG_ID) {
+            selectedColorInt = color
+            selectedColor = String.format("#%06X", 0xFFFFFF and color)
+            updateColorDisplay()
             updatePreview()
         }
     }
 
+    override fun onDialogDismissed(dialogId: Int) {}
+
     private fun initPreview() {
         updatePreview()
+    }
+
+    private fun getColor(): Int {
+        return if (selectedColor.isNotEmpty()) {
+            try { Color.parseColor(selectedColor) } catch (_: Exception) {
+                requireContext().getColor(R.color.accent)
+            }
+        } else {
+            requireContext().getColor(R.color.accent)
+        }
     }
 
     private fun updatePreview() = binding.run {
@@ -124,31 +162,50 @@ class ThoughtUnderlineStyleDialog(
         previewView.post {
             val w = previewView.width.toFloat()
             val h = previewView.height.toFloat()
+            if (w <= 0 || h <= 0) return@post
             val bitmap = android.graphics.Bitmap.createBitmap(
                 w.toInt(), h.toInt(), android.graphics.Bitmap.Config.ARGB_8888
             )
             val canvas = Canvas(bitmap)
             val lineY = h * 0.7f
-            val color = if (selectedColor.isNotEmpty()) {
-                try { android.graphics.Color.parseColor(selectedColor) } catch (_: Exception) {
-                    requireContext().getColor(R.color.accent)
-                }
-            } else {
-                requireContext().getColor(R.color.accent)
-            }
-            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                this.color = color
-                strokeWidth = selectedWeight.dpToPx()
-                style = Paint.Style.STROKE
-            }
+            val color = getColor()
+            val strokeWidthPx = selectedWeight.dpToPx()
             when (selectedStyle) {
-                1 -> paint.pathEffect = null
-                2 -> paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 0f)
-                3 -> paint.pathEffect = DashPathEffect(floatArrayOf(6f, 6f), 0f)
-                4 -> paint.pathEffect = DashPathEffect(floatArrayOf(2f, 8f), 0f)
-                else -> paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 0f)
+                3 -> {
+                    // 曲线：用Path画正弦波
+                    val path = Path()
+                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        this.color = color
+                        strokeWidth = strokeWidthPx
+                        style = Paint.Style.STROKE
+                        pathEffect = null
+                    }
+                    val amplitude = strokeWidthPx * 2
+                    val frequency = w / (amplitude * 2)
+                    path.moveTo(0f, lineY)
+                    var x = 0f
+                    while (x < w) {
+                        val y = lineY + (amplitude * Math.sin((x / w) * Math.PI * 4 * frequency)).toFloat()
+                        path.lineTo(x, y)
+                        x += 1f
+                    }
+                    canvas.drawPath(path, paint)
+                }
+                else -> {
+                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        this.color = color
+                        strokeWidth = strokeWidthPx
+                        style = Paint.Style.STROKE
+                    }
+                    when (selectedStyle) {
+                        1 -> paint.pathEffect = null
+                        2 -> paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 0f)
+                        4 -> paint.pathEffect = DashPathEffect(floatArrayOf(2f, 8f), 0f)
+                        else -> paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 0f)
+                    }
+                    canvas.drawLine(0f, lineY, w, lineY, paint)
+                }
             }
-            canvas.drawLine(0f, lineY, w, lineY, paint)
             previewView.background = android.graphics.drawable.BitmapDrawable(resources, bitmap)
         }
     }

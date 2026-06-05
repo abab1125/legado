@@ -71,7 +71,6 @@ class ReadStyleDialog : BaseDialogFragment(R.layout.dialog_read_book_style),
         val bg = requireContext().bottomBackground
         val isLight = ColorUtils.isColorLight(bg)
         val textColor = requireContext().getPrimaryTextColor(isLight)
-        rootView.setBackgroundColor(bg)
         tvPageAnim.setTextColor(textColor)
         tvBgTs.setTextColor(textColor)
         tvShareLayout.setTextColor(textColor)

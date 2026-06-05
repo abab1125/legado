@@ -1,8 +1,11 @@
 package io.legado.app.ui.book.thought
 
+import android.graphics.PorterDuff
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.lifecycle.lifecycleScope
 import io.legado.app.R
 import io.legado.app.base.BaseDialogFragment
@@ -10,9 +13,11 @@ import io.legado.app.constant.EventBus
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.BookThought
 import io.legado.app.databinding.DialogBookThoughtBinding
-import io.legado.app.lib.theme.primaryColor
+import io.legado.app.lib.theme.bottomBackground
+import io.legado.app.lib.theme.getPrimaryTextColor
+import io.legado.app.utils.ColorUtils
+import io.legado.app.utils.dpToPx
 import io.legado.app.utils.postEvent
-import io.legado.app.utils.setLayout
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import io.legado.app.utils.visible
@@ -33,11 +38,31 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
 
     override fun onStart() {
         super.onStart()
-        setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        dialog?.window?.run {
+            clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setBackgroundDrawableResource(android.R.color.transparent)
+            decorView.setPadding(0, 0, 0, 0)
+            val attr = attributes
+            attr.dimAmount = 0.0f
+            attr.gravity = Gravity.BOTTOM
+            attributes = attr
+            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
     }
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
-        binding.toolBar.setBackgroundColor(primaryColor)
+        val bg = requireContext().bottomBackground
+        val isLight = ColorUtils.isColorLight(bg)
+        val textColor = requireContext().getPrimaryTextColor(isLight)
+        binding.run {
+            // 设置卡片背景色
+            root.setBackgroundColor(bg)
+            tvTitle.setTextColor(textColor)
+            tvChapterName.setTextColor(textColor)
+            editSelectedText.setTextColor(textColor)
+            editThought.setTextColor(textColor)
+            tvUnderlineStyle.setTextColor(requireContext().getColor(R.color.accent))
+        }
         val args = arguments ?: let {
             dismiss()
             return
@@ -92,6 +117,9 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
                     context?.toastOnUi(R.string.thought_deleted)
                     dismiss()
                 }
+            }
+            tvUnderlineStyle.setOnClickListener {
+                // TODO: 弹出 ThoughtUnderlineStyleDialog（第三部分实现）
             }
         }
     }

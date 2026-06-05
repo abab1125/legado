@@ -3,46 +3,62 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="16dp">
+    android:layout_height="wrap_content"
+    android:padding="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:background="@drawable/shape_card_view"
+        android:background="@drawable/shape_bottom_dialog_card"
         android:orientation="vertical"
-        tools:ignore="UselessParent">
+        android:paddingBottom="8dp">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/tool_bar"
+        <!-- 拖拽指示条 -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="@color/btn_bg_press" />
+
+        <!-- 标题行 -->
+        <TextView
+            android:id="@+id/tv_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:theme="?attr/actionBarStyle"
-            app:popupTheme="@style/AppTheme.PopupOverlay"
-            app:title="@string/write_thought"
-            app:titleTextAppearance="@style/ToolbarTitle" />
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="8dp"
+            android:text="@string/write_thought"
+            android:textColor="@color/primaryText"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
+        <!-- 章节名 -->
         <TextView
             android:id="@+id/tv_chapter_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
-            android:textColor="@color/primaryText" />
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="4dp"
+            android:textColor="@color/primaryText"
+            android:textSize="12sp"
+            android:alpha="0.7" />
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:maxHeight="400dp"
             android:overScrollMode="ifContentScrolls">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:paddingHorizontal="16dp">
 
+                <!-- 选中文字展示区 -->
                 <io.legado.app.ui.widget.text.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -59,6 +75,7 @@
 
                 </io.legado.app.ui.widget.text.TextInputLayout>
 
+                <!-- 想法输入框 -->
                 <io.legado.app.ui.widget.text.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -76,15 +93,28 @@
 
                 </io.legado.app.ui.widget.text.TextInputLayout>
 
+                <!-- 下划线样式按钮 -->
+                <TextView
+                    android:id="@+id/tv_underline_style"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="下划线样式"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp" />
+
             </LinearLayout>
 
         </androidx.core.widget.NestedScrollView>
 
+        <!-- 底部操作栏 -->
         <com.google.android.flexbox.FlexboxLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
+            android:paddingHorizontal="8dp"
             app:flexWrap="wrap"
             app:justifyContent="space_between">
 
@@ -121,5 +151,7 @@
             </LinearLayout>
 
         </com.google.android.flexbox.FlexboxLayout>
+
     </LinearLayout>
+
 </FrameLayout>

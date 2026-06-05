@@ -84,12 +84,3 @@
 | 想法导出 Obsidian | `archieved/thought_obsidian_export_plan` | ✅ 已完成 |
 | 藏书票 | `archieved/reading_receipt` | ✅ 已完成 |
 | "我的"页面 MD3 | `archieved/my_page_md3_progress` | ✅ 已完成 |
-
-### 已完成的功能（本次开发）
-
-| 功能 | 说明 |
-|------|------|
-| 阅读页二级弹窗统一 | 自动翻页/朗读/界面/设置 → MD3 MaterialCardView |
-| 写想法弹窗重设计 | 底部弹窗风格，含下划线样式按钮 |
-| 想法下划线样式自定义 | 实线/虚线/点线 + 粗细 + 颜色取色器 |
-| AI 工具（6个） | get_book_content / search_online_book / save_book_progress / rate_book / mark_book_status / set_book_note |

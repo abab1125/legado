@@ -91,6 +91,11 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 if (content != null) {
                     totalCount += content.length
                 }
+                // 加上本章用户想法的字数
+                val thoughts = appDb.bookThoughtDao.getByChapter(book.name, book.author, chapter.index)
+                for (t in thoughts) {
+                    totalCount += t.selectedText.length + t.thought.length
+                }
             }
             if (wordCountJobVersion.get() == myVersion) {
                 wordCountLiveData.postValue(totalCount)
@@ -177,6 +182,23 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                             append("=== ${chapter.title} ===\n")
                             append(content)
                             append("\n\n")
+                            // 注入用户在本章的想法（划线+评注）
+                            val thoughts = appDb.bookThoughtDao.getByChapter(book.name, book.author, chapter.index)
+                            if (thoughts.isNotEmpty()) {
+                                append("【用户在本章的想法（共${thoughts.size}条）】\n")
+                                thoughts.forEachIndexed { i, t ->
+                                    append("${i + 1}. ")
+                                    if (t.selectedText.isNotBlank()) {
+                                        append("「${t.selectedText.take(300)}」")
+                                    }
+                                    if (t.thought.isNotBlank()) {
+                                        if (t.selectedText.isNotBlank()) append(" → ")
+                                        append(t.thought)
+                                    }
+                                    append("\n")
+                                }
+                                append("\n")
+                            }
                         }
                     }
                 }

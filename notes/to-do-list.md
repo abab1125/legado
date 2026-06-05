@@ -1,69 +1,95 @@
 # 待办事项清单
 
-> 基于 notes/ 目录下所有功能开发记录，对比代码实现状态整理。
-> 更新时间：2026-06-05
+> 项目开发工作索引。更新时间：2026-06-05
 
 ---
 
-## ✅ 已完成
+## 📋 活跃开发文档
 
-| 功能 | 对应文档 | 说明 |
-|------|----------|------|
-| 云端备份管理 | `cloud_backup_management_plan.md` | CloudBackupActivity/ViewModel/Adapter 全部实现，支持列表、删除、重命名、恢复 |
-| 阅读记录联动删除 | `implementation_plan_read_record.md` | ReadRecordActivity 已实现删除/清空时同步删除详细阅读记录 |
-| AI 助手核心功能 | `project_ai_assistant.md` | 16个工具（8只读+8写操作）、记忆系统、独立入口全部完成 |
-| AI 助手优化 | `ai_assistant_optimization_plan.md` | 独立模式判断修复、记忆保存/会话恢复已实现 |
-| 想法导出 Obsidian | `thought_obsidian_export_plan.md` | ObsidianExportDialog + ThoughtObsidianExporter 全部完成，支持 REST API 和本地文件两种方式 |
-| 藏书票 | `reading_receipt.md` | BookplateDrawer 已实现，含阅读凭证绘制、评分交互、完读触发 |
-| "我的"页面 MD3 改造 | `my_page_md3_progress.md` | MyFragment 已重写为自定义布局，移除 PreferenceFragment |
-| 阅读页二级弹窗统一 | `pure-sniffing-papert.md`（第一部分） | 自动翻页/朗读/界面/设置弹窗改为 MD3 MaterialCardView 卡片 |
-| 写想法弹窗重设计 | `pure-sniffing-papert.md`（第二部分） | 底部弹窗风格，含拖拽条、标题、输入区、下划线样式按钮 |
-| 想法下划线样式自定义 | `pure-sniffing-papert.md`（第三部分） | 支持实线/虚线/点线、粗细调节、颜色取色器、每条笔记独立保存 |
-| MD3 主题切换 | `material_design_migration_plan.md` Phase 1 | Base.AppTheme 已迁移到 Theme.MaterialComponents.DayNight.NoActionBar.Bridge |
-| MD3 CardView 迁移 | `material_design_migration_plan.md` Phase 3d | 全部 44 处已替换为 MaterialCardView，0 处遗留 |
-| AI 工具：get_book_content | `legado_new_tools_guide.md` | ToolRouter 中已实现 |
-| AI 工具：search_online_book | `legado_new_tools_guide.md` | ToolRouter 中已实现 |
-| AI 工具：save_book_progress | `legado_new_tools_guide.md` | ToolRouter 中已实现 |
-| AI 工具：rate_book | `legado_new_tools_guide.md` | ToolRouter 中已实现 |
-| AI 工具：mark_book_status | `legado_new_tools_guide.md` | ToolRouter 中已实现 |
-| AI 工具：set_book_note | `legado_new_tools_guide.md` | BookThoughtController.saveBookThought 已实现 |
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| AI 工具开发指南 | [[legado_new_tools_guide]] | 14个 AI 工具的完整定义、参数、返回格式 |
+| Material Design 迁移计划 | [[material_design_migration_plan]] | 5个阶段的 MD3 迁移策略 |
 
 ---
 
-## ❌ 未完成
+## 🔴 P0 — AI 工具（管理闭环）
 
-### Material Design 迁移（`material_design_migration_plan.md`）
+> 优先级最高。AI 助手的核心能力补全，让 AI 能管理书源和替换规则。
 
-| 阶段 | 内容 | 状态 |
-|------|------|------|
-| Phase 2 | 自定义 View 迁移（16个 AppCompat 基类替换为 Material/标准基类） | ❌ 未开始 |
-| Phase 3a | 自定义 TextInputLayout → Material TextInputLayout（152处） | ❌ 未开始 |
-| Phase 3b | AppCompat Toolbar → MaterialToolbar（30处） | ❌ 未开始 |
-| Phase 3c | AppCompatImageView → ImageView（77处） | ❌ 未开始 |
-| Phase 3e | AppCompatSpinner 自动升级确认 | ❌ 待确认 |
-| Phase 4 | 样式细节调优（色彩系统、组件样式统一、ripple、Shape theming） | ❌ 未开始 |
-| Phase 5 | 进阶优化（Material3、Dynamic Color、Material Motion、BottomSheet） | ❌ 未开始 |
+| 工具 | 功能 | 风险 | 状态 |
+|------|------|------|------|
+| `get_replace_rules` | 获取文本替换规则列表 | 低 | ❌ |
+| `save_replace_rule` | 创建/修改替换规则 | 中 | ❌ |
+| `delete_replace_rule` | 删除替换规则 | 高 | ❌ |
+| `save_book_source` | 导入书源（JSON/URL） | 中 | ❌ |
+| `manage_webdav` | WebDAV 备份管理 | 高 | ❌ |
 
-### AI 工具（`legado_new_tools_guide.md`）— 管理闭环
+> 参考：[[legado_new_tools_guide]] 第二批（P1）
 
-| 工具 | 功能 | 状态 |
-|------|------|------|
-| `get_replace_rules` | 获取文本替换规则列表 | ❌ 未实现 |
-| `save_replace_rule` | 创建/修改替换规则 | ❌ 未实现 |
-| `delete_replace_rule` | 删除替换规则 | ❌ 未实现 |
-| `save_book_source` | 导入书源（JSON/URL） | ❌ 未实现 |
-| `manage_webdav` | WebDAV 备份管理（列出/删除/恢复/重命名） | ❌ 未实现 |
+---
 
-### AI 工具（`legado_new_tools_guide.md`）— 知识闭环
+## 🟡 P1 — AI 工具（知识闭环）
 
-| 工具 | 功能 | 状态 |
-|------|------|------|
-| `get_thoughts` | 获取读书想法列表 | ❌ 未实现 |
-| `export_to_obsidian` | 想法导出到 Obsidian（AI 工具入口） | ❌ 未实现 |
-| `get_detailed_reading_record` | 获取详细阅读记录（按天/书/时间段） | ❌ 未实现 |
+> 让 AI 能读取和导出读书想法、阅读记录。
 
-### 其他
+| 工具 | 功能 | 风险 | 状态 |
+|------|------|------|------|
+| `get_thoughts` | 获取读书想法列表 | 低 | ❌ |
+| `export_to_obsidian` | 想法导出到 Obsidian（AI 工具入口） | 低 | ❌ |
+| `get_detailed_reading_record` | 获取详细阅读记录 | 低 | ❌ |
+
+> 参考：[[legado_new_tools_guide]] 第三批（P2）
+
+---
+
+## 🟢 P2 — Material Design 迁移
+
+> UI 已经大部分 OK，剩余是代码规范化和一致性工作。
+
+| 阶段 | 内容 | 工作量 | 状态 |
+|------|------|--------|------|
+| ~~Phase 1~~ | ~~主题切换~~ | ~~1-2天~~ | ✅ |
+| Phase 2 | 自定义 View 迁移（16个 AppCompat 基类） | 2-3天 | ❌ |
+| Phase 3a | 自定义 TextInputLayout → Material（152处） | 5-7天 | ❌ |
+| Phase 3b | Toolbar → MaterialToolbar（30处） | 1天 | ❌ |
+| Phase 3c | AppCompatImageView → ImageView（77处） | 1天 | ❌ |
+| ~~Phase 3d~~ | ~~CardView → MaterialCardView~~ | | ✅ |
+| Phase 3e | AppCompatSpinner 自动升级确认 | 0.5天 | ❌ |
+| Phase 4 | 样式细节调优（色彩/ripple/Shape） | 3-5天 | ❌ |
+| Phase 5 | 进阶优化（Material3/Dynamic Color/Motion） | 按需 | ❌ |
+
+> 参考：[[material_design_migration_plan]]
+
+---
+
+## ⚪ 待确认
 
 | 功能 | 说明 | 状态 |
 |------|------|------|
-| 阅读记录排除订阅源 | ReadRssActivity/VideoPlayerActivity 中排除 RSS 源的详细记录（`implementation_plan_read_record.md` 待确认问题） | ⚠️ 待确认 |
+| 阅读记录排除订阅源 | [[implementation_plan_read_record]] 中 ReadRssActivity/VideoPlayerActivity 排除 RSS 源详细记录 | ⚠️ |
+
+---
+
+## 📁 文档索引
+
+### 已归档（已完成）
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| 云端备份管理 | `archieved/cloud_backup_management_plan` | ✅ 已完成 |
+| 阅读记录修改 | `archieved/implementation_plan_read_record` | ✅ 已完成 |
+| AI 助手开发记录 | `archieved/project_ai_assistant` | ✅ 已完成 |
+| AI 助手优化 | `archieved/ai_assistant_optimization_plan` | ✅ 已完成 |
+| 想法导出 Obsidian | `archieved/thought_obsidian_export_plan` | ✅ 已完成 |
+| 藏书票 | `archieved/reading_receipt` | ✅ 已完成 |
+| "我的"页面 MD3 | `archieved/my_page_md3_progress` | ✅ 已完成 |
+
+### 已完成的功能（本次开发）
+
+| 功能 | 说明 |
+|------|------|
+| 阅读页二级弹窗统一 | 自动翻页/朗读/界面/设置 → MD3 MaterialCardView |
+| 写想法弹窗重设计 | 底部弹窗风格，含下划线样式按钮 |
+| 想法下划线样式自定义 | 实线/虚线/点线 + 粗细 + 颜色取色器 |
+| AI 工具（6个） | get_book_content / search_online_book / save_book_progress / rate_book / mark_book_status / set_book_note |

@@ -118,11 +118,13 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
                 }
             }
             tvUnderlineStyle.setOnClickListener {
-                val currentThoughtStyle = TextLine.ThoughtUnderlineStyle(
-                    _bookThought!!.underlineStyle,
-                    _bookThought!!.underlineWeight,
-                    _bookThought!!.underlineColor
-                )
+                val thought = _bookThought!!
+                // 如果这条笔记还没设置过样式，用上次的默认样式
+                val currentThoughtStyle = if (thought.underlineStyle == 0 && thought.underlineWeight == 2.5f && thought.underlineColor.isEmpty()) {
+                    ThoughtUnderlineStyleDialog.lastUsedStyle()
+                } else {
+                    TextLine.ThoughtUnderlineStyle(thought.underlineStyle, thought.underlineWeight, thought.underlineColor)
+                }
                 ThoughtUnderlineStyleDialog(currentThoughtStyle) { newStyle ->
                     _bookThought = _bookThought!!.copy(
                         underlineStyle = newStyle.style,

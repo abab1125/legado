@@ -67,24 +67,24 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
             return
         }
         @Suppress("DEPRECATION")
-        val bookThought = args.getParcelable<BookThought>("thought")
-        bookThought ?: let {
+        var _bookThought = args.getParcelable<BookThought>("thought")
+        _bookThought ?: let {
             dismiss()
             return
         }
         val editPos = args.getInt("editPos", -1)
         binding.tvFooterLeft.visible(editPos >= 0)
         binding.run {
-            tvChapterName.text = bookThought.chapterName
-            editSelectedText.setText(bookThought.selectedText)
-            editThought.setText(bookThought.thought)
+            tvChapterName.text = _bookThought!!.chapterName
+            editSelectedText.setText(_bookThought!!.selectedText)
+            editThought.setText(_bookThought!!.thought)
             tvShare.setOnClickListener {
                 val thoughtText = editThought.text?.toString()?.trim().orEmpty()
                 if (thoughtText.isEmpty()) {
                     context?.toastOnUi(R.string.cannot_empty)
                     return@setOnClickListener
                 }
-                ShareThoughtDialog.newInstance(bookThought, thoughtText)
+                ShareThoughtDialog.newInstance(_bookThought!!, thoughtText)
                     .show(childFragmentManager, "shareThoughtDialog")
             }
             tvOk.setOnClickListener {
@@ -96,7 +96,7 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
                 lifecycleScope.launch {
                     withContext(IO) {
                         appDb.bookThoughtDao.insert(
-                            bookThought.copy(
+                            _bookThought!!.copy(
                                 thought = thoughtText,
                                 updateTime = System.currentTimeMillis()
                             )
@@ -110,7 +110,7 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
             tvFooterLeft.setOnClickListener {
                 lifecycleScope.launch {
                     withContext(IO) {
-                        appDb.bookThoughtDao.delete(bookThought)
+                        appDb.bookThoughtDao.delete(_bookThought!!)
                     }
                     postEvent(EventBus.REFRESH_BOOK_THOUGHT, true)
                     context?.toastOnUi(R.string.thought_deleted)
@@ -119,21 +119,20 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
             }
             tvUnderlineStyle.setOnClickListener {
                 val currentThoughtStyle = TextLine.ThoughtUnderlineStyle(
-                    bookThought.underlineStyle,
-                    bookThought.underlineWeight,
-                    bookThought.underlineColor
+                    _bookThought!!.underlineStyle,
+                    _bookThought!!.underlineWeight,
+                    _bookThought!!.underlineColor
                 )
                 ThoughtUnderlineStyleDialog(currentThoughtStyle) { newStyle ->
+                    _bookThought = _bookThought!!.copy(
+                        underlineStyle = newStyle.style,
+                        underlineWeight = newStyle.weight,
+                        underlineColor = newStyle.color,
+                        updateTime = System.currentTimeMillis()
+                    )
                     lifecycleScope.launch {
                         withContext(IO) {
-                            appDb.bookThoughtDao.insert(
-                                bookThought.copy(
-                                    underlineStyle = newStyle.style,
-                                    underlineWeight = newStyle.weight,
-                                    underlineColor = newStyle.color,
-                                    updateTime = System.currentTimeMillis()
-                                )
-                            )
+                            appDb.bookThoughtDao.insert(_bookThought!!)
                         }
                         postEvent(EventBus.REFRESH_BOOK_THOUGHT, true)
                     }

@@ -46,7 +46,7 @@ class MoreConfigDialog : BasePrefDialogFragment() {
             attr.dimAmount = 0.0f
             attr.gravity = Gravity.BOTTOM
             attributes = attr
-            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, 360.dpToPx())
         }
     }
 
@@ -66,16 +66,16 @@ class MoreConfigDialog : BasePrefDialogFragment() {
             radius = 16.dpToPx().toFloat()
             cardElevation = 8.dpToPx().toFloat()
             strokeWidth = 0
+            id = R.id.tag1
         }
         val view = LinearLayout(context)
         view.setBackgroundColor(requireContext().bottomBackground)
-        view.id = R.id.tag1
         cardView.addView(view, ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         ))
         container?.addView(cardView)
-        return view
+        return cardView
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

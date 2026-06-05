@@ -258,24 +258,72 @@ data class TextLine(
 
     private fun drawThoughtUnderline(canvas: Canvas) {
         val lineY = height + (ChapterProvider.lineSpacingExtra * 10 - 11).coerceIn(-1f, 10f).dpToPx()
-        val dashPaint = TextPaint(ChapterProvider.contentPaint).apply {
-            color = ReadBookConfig.textAccentColor
-            pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 0f)
-            strokeWidth = 2.5f.dpToPx()
-        }
         var start = -1f
         var end = -1f
         var lastRight = -1f
+        var currentPaint: TextPaint? = null
+        var currentStyle: ThoughtUnderlineStyle? = null
+
+        fun flushSegment() {
+            if (start >= 0f && currentPaint != null) {
+                canvas.drawLine(start, lineY, end, lineY, currentPaint!!)
+            }
+            start = -1f
+            end = -1f
+            lastRight = -1f
+            currentPaint = null
+            currentStyle = null
+        }
+
+        fun getPaintForStyle(style: ThoughtUnderlineStyle): TextPaint {
+            val color = if (style.color.isNotEmpty()) {
+                try {
+                    android.graphics.Color.parseColor(style.color)
+                } catch (_: Exception) {
+                    ReadBookConfig.textAccentColor
+                }
+            } else {
+                ReadBookConfig.textAccentColor
+            }
+            val strokeWidthPx = style.weight.dpToPx()
+            val paint = TextPaint(ChapterProvider.contentPaint).apply {
+                this.color = color
+                strokeWidth = strokeWidthPx
+            }
+            when (style.style) {
+                1 -> { // 实线
+                    paint.pathEffect = null
+                }
+                2 -> { // 虚线
+                    paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 0f)
+                }
+                3 -> { // 曲线(用虚线模拟波浪)
+                    paint.pathEffect = DashPathEffect(floatArrayOf(6f, 6f), 0f)
+                }
+                4 -> { // 点线
+                    paint.pathEffect = DashPathEffect(floatArrayOf(2f, 8f), 0f)
+                }
+                else -> { // 默认虚线
+                    paint.pathEffect = DashPathEffect(floatArrayOf(10f, 10f), 0f)
+                }
+            }
+            return paint
+        }
+
+        val defaultStyle = ThoughtUnderlineStyle()
+
         for (column in columns) {
             val thoughtText = (column as? TextBaseColumn)?.thoughtText
+            val columnStyle = (column as? TextBaseColumn)?.thoughtStyle ?: defaultStyle
             if (thoughtText.isNullOrEmpty()) {
-                if (start >= 0f) {
-                    canvas.drawLine(start, lineY, end, lineY, dashPaint)
-                    start = -1f
-                    end = -1f
-                    lastRight = -1f
-                }
+                flushSegment()
                 continue
+            }
+            // 样式变化时刷新当前段
+            if (currentStyle != columnStyle) {
+                flushSegment()
+                currentStyle = columnStyle
+                currentPaint = getPaintForStyle(columnStyle)
             }
             if (start < 0f) {
                 start = column.start
@@ -284,7 +332,9 @@ data class TextLine(
                 continue
             }
             if (column.start - lastRight > 1f) {
-                canvas.drawLine(start, lineY, end, lineY, dashPaint)
+                flushSegment()
+                currentStyle = columnStyle
+                currentPaint = getPaintForStyle(columnStyle)
                 start = column.start
                 end = column.end
                 lastRight = column.end
@@ -293,9 +343,7 @@ data class TextLine(
             end = column.end
             lastRight = column.end
         }
-        if (start >= 0f) {
-            canvas.drawLine(start, lineY, end, lineY, dashPaint)
-        }
+        flushSegment()
     }
 
     fun checkFastDraw(): Boolean {
@@ -320,6 +368,18 @@ data class TextLine(
     fun recycleRecorder() {
         canvasRecorder.recycle()
     }
+
+    /**
+     * 思考下划线样式
+     * @param style 0=默认(跟随强调色虚线), 1=实线, 2=虚线, 3=曲线, 4=点线
+     * @param weight 线宽(dp)
+     * @param color 颜色(空=跟随强调色)
+     */
+    data class ThoughtUnderlineStyle(
+        val style: Int = 0,
+        val weight: Float = 2.5f,
+        val color: String = ""
+    )
 
     @SuppressLint("NewApi")
     companion object {

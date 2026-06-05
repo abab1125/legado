@@ -1,5 +1,7 @@
 package io.legado.app.ui.book.read.page.entities.column
 
+import io.legado.app.ui.book.read.page.entities.TextLine
+
 /**
  * 文字基列
  */
@@ -10,4 +12,5 @@ interface TextBaseColumn : BaseColumn {
     var selected: Boolean
     var isSearchResult: Boolean
     var thoughtText: String?
+    var thoughtStyle: TextLine.ThoughtUnderlineStyle?
 }

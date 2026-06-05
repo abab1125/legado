@@ -48,6 +48,7 @@ data class TextColumn(
             }
             field = value
         }
+    override var thoughtStyle: TextLine.ThoughtUnderlineStyle? = null
 
     override fun draw(view: ContentTextView, canvas: Canvas) {
         val textPaint = if (textLine.isTitle) {

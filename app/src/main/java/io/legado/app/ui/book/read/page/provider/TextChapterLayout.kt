@@ -15,6 +15,7 @@ import io.legado.app.constant.AppPattern
 import io.legado.app.constant.PageAnim
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
+import io.legado.app.data.entities.BookThought
 import io.legado.app.help.book.BookContent
 import io.legado.app.help.book.BookHelp
 import io.legado.app.help.book.getBookSource
@@ -526,7 +527,7 @@ class TextChapterLayout(
                 val start = chapterText.indexOf(thought.selectedText, startSearch)
                 if (start < 0) break
                 val end = start + thought.selectedText.length
-                markThoughtRange(start, end, thought.selectedText)
+                markThoughtRange(start, end, thought.selectedText, thought)
                 startSearch = start + thought.selectedText.length
                 matched = true
             }
@@ -534,13 +535,26 @@ class TextChapterLayout(
                 markThoughtRangeWithNormalized(
                     thought.selectedText,
                     normalizedChapter,
-                    normalizedToRawIndex
+                    normalizedToRawIndex,
+                    thought
                 )
             }
         }
     }
 
-    private fun markThoughtRange(start: Int, end: Int, selectedText: String) {
+    private fun markThoughtRange(
+        start: Int,
+        end: Int,
+        selectedText: String,
+        thought: BookThought? = null
+    ) {
+        val style = thought?.let {
+            TextLine.ThoughtUnderlineStyle(
+                it.underlineStyle,
+                it.underlineWeight,
+                it.underlineColor
+            )
+        }
         textPages.forEach { textPage ->
             textPage.lines.forEach { line ->
                 if (line.chapterPosition >= end) return@forEach
@@ -550,6 +564,7 @@ class TextChapterLayout(
                     val charPos = line.chapterPosition + index
                     if (charPos in start until end) {
                         textColumn.thoughtText = selectedText
+                        textColumn.thoughtStyle = style
                     }
                 }
             }
@@ -559,7 +574,8 @@ class TextChapterLayout(
     private fun markThoughtRangeWithNormalized(
         selectedText: String,
         normalizedChapter: String,
-        normalizedToRawIndex: IntArray
+        normalizedToRawIndex: IntArray,
+        thought: BookThought? = null
     ) {
         val normalizedTarget = normalizeForMatch(selectedText)
         if (normalizedTarget.isEmpty() || normalizedChapter.isEmpty()) return
@@ -570,7 +586,7 @@ class TextChapterLayout(
             val matchedEndExclusive = matchedStart + normalizedTarget.length
             val rawStart = normalizedToRawIndex[matchedStart]
             val rawEnd = normalizedToRawIndex[matchedEndExclusive - 1] + 1
-            markThoughtRange(rawStart, rawEnd, selectedText)
+            markThoughtRange(rawStart, rawEnd, selectedText, thought)
             startSearch = matchedEndExclusive
         }
     }

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape_bottom_dialog_card"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- 拖拽指示条 -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="12dp"
+            android:background="@color/btn_bg_press" />
+
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="12dp"
+            android:text="下划线样式"
+            android:textColor="@color/primaryText"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- 样式选择 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="8dp"
+            android:text="样式"
+            android:textColor="@color/primaryText"
+            android:textSize="13sp"
+            android:alpha="0.7" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_style"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_default"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="默认"
+                android:checked="true" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_solid"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="实线" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_dashed"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="虚线" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_wave"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="曲线" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_dotted"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="点线" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- 粗度调节 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:paddingBottom="4dp"
+            android:text="粗度"
+            android:textColor="@color/primaryText"
+            android:textSize="13sp"
+            android:alpha="0.7" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <SeekBar
+                android:id="@+id/seek_weight"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="90"
+                android:progress="20" />
+
+            <TextView
+                android:id="@+id/tv_weight_value"
+                android:layout_width="48dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="2.5dp"
+                android:textColor="@color/primaryText"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- 颜色选择 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="颜色"
+                android:textColor="@color/primaryText"
+                android:textSize="13sp"
+                android:alpha="0.7" />
+
+            <TextView
+                android:id="@+id/tv_color_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
+                android:text="跟随强调色"
+                android:textColor="@color/accent"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- 预览区 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:paddingBottom="4dp"
+            android:text="预览"
+            android:textColor="@color/primaryText"
+            android:textSize="13sp"
+            android:alpha="0.7" />
+
+        <View
+            android:id="@+id/vw_preview"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- 底部按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="取消"
+                android:textColor="@color/primaryText" />
+
+            <TextView
+                android:id="@+id/tv_ok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="确认"
+                android:textColor="@color/accent" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

@@ -15,6 +15,7 @@ import io.legado.app.data.entities.BookThought
 import io.legado.app.databinding.DialogBookThoughtBinding
 import io.legado.app.lib.theme.bottomBackground
 import io.legado.app.lib.theme.getPrimaryTextColor
+import io.legado.app.ui.book.read.page.entities.TextLine
 import io.legado.app.utils.ColorUtils
 import io.legado.app.utils.dpToPx
 import io.legado.app.utils.postEvent
@@ -119,7 +120,10 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
                 }
             }
             tvUnderlineStyle.setOnClickListener {
-                // TODO: 弹出 ThoughtUnderlineStyleDialog（第三部分实现）
+                val style = TextLine.ThoughtUnderlineStyle()
+                ThoughtUnderlineStyleDialog(style) { newStyle ->
+                    // TODO: 保存样式到 BookThought 并刷新
+                }.show(childFragmentManager, "underlineStyleDialog")
             }
         }
     }

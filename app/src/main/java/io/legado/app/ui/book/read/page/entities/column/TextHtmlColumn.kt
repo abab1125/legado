@@ -60,6 +60,7 @@ data class TextHtmlColumn(
             }
             field = value
         }
+    override var thoughtStyle: TextLine.ThoughtUnderlineStyle? = null
 
     override fun draw(view: ContentTextView, canvas: Canvas) {
         val y = textLine.lineBase - textLine.lineTop

@@ -91,6 +91,7 @@ import io.legado.app.ui.book.read.config.TipConfigDialog.Companion.TIP_COLOR
 import io.legado.app.ui.book.read.config.TipConfigDialog.Companion.TIP_DIVIDER_COLOR
 import io.legado.app.ui.book.read.page.ContentTextView
 import io.legado.app.ui.book.read.page.ReadView
+import io.legado.app.ui.book.read.page.entities.TextLine
 import io.legado.app.ui.book.read.page.entities.TextPage
 import io.legado.app.ui.book.read.page.entities.column.TextBaseColumn
 import io.legado.app.ui.book.read.page.delegate.ScrollPageDelegate
@@ -2149,7 +2150,7 @@ class ReadBookActivity : BaseReadBookActivity(),
                             val start = chapterText.indexOf(thought.selectedText, startSearch)
                             if (start < 0) break
                             val end = start + thought.selectedText.length
-                            markThoughtRange(pages, start, end, thought.selectedText)
+                            markThoughtRange(pages, start, end, thought.selectedText, thought)
                             startSearch = end
                             matched = true
                         }
@@ -2158,7 +2159,8 @@ class ReadBookActivity : BaseReadBookActivity(),
                                 pages,
                                 thought.selectedText,
                                 normalizedChapter,
-                                normalizedToRawIndex
+                                normalizedToRawIndex,
+                                thought
                             )
                         }
                     }
@@ -2183,8 +2185,16 @@ class ReadBookActivity : BaseReadBookActivity(),
         pages: List<TextPage>,
         start: Int,
         end: Int,
-        selectedText: String
+        selectedText: String,
+        thought: BookThought? = null
     ) {
+        val style = thought?.let {
+            TextLine.ThoughtUnderlineStyle(
+                it.underlineStyle,
+                it.underlineWeight,
+                it.underlineColor
+            )
+        }
         pages.forEach { page ->
             page.lines.forEach { line ->
                 if (line.chapterPosition >= end) return@forEach
@@ -2194,6 +2204,7 @@ class ReadBookActivity : BaseReadBookActivity(),
                     val charPos = line.chapterPosition + index
                     if (charPos in start until end) {
                         textColumn.thoughtText = selectedText
+                        textColumn.thoughtStyle = style
                     }
                 }
             }
@@ -2204,7 +2215,8 @@ class ReadBookActivity : BaseReadBookActivity(),
         pages: List<TextPage>,
         selectedText: String,
         normalizedChapter: String,
-        normalizedToRawIndex: IntArray
+        normalizedToRawIndex: IntArray,
+        thought: BookThought? = null
     ) {
         val normalizedTarget = normalizeForMatch(selectedText)
         if (normalizedTarget.isEmpty() || normalizedChapter.isEmpty()) return
@@ -2215,7 +2227,7 @@ class ReadBookActivity : BaseReadBookActivity(),
             val matchedEndExclusive = matchedStart + normalizedTarget.length
             val rawStart = normalizedToRawIndex[matchedStart]
             val rawEnd = normalizedToRawIndex[matchedEndExclusive - 1] + 1
-            markThoughtRange(pages, rawStart, rawEnd, selectedText)
+            markThoughtRange(pages, rawStart, rawEnd, selectedText, thought)
             startSearch = matchedEndExclusive
         }
     }

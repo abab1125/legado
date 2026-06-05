@@ -28,5 +28,11 @@ data class BookThought(
     val textHash: String = "",
     val thought: String = "",
     val createTime: Long = System.currentTimeMillis(),
-    val updateTime: Long = System.currentTimeMillis()
+    val updateTime: Long = System.currentTimeMillis(),
+    @ColumnInfo(defaultValue = "0")
+    val underlineStyle: Int = 0,
+    @ColumnInfo(defaultValue = "2.5")
+    val underlineWeight: Float = 2.5f,
+    @ColumnInfo(defaultValue = "")
+    val underlineColor: String = ""
 ) : Parcelable

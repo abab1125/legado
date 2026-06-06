@@ -10,8 +10,6 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.FrameLayout
-import android.widget.LinearLayout
 import androidx.preference.Preference
 import io.legado.app.R
 import io.legado.app.base.BasePrefDialogFragment
@@ -40,6 +38,7 @@ class MoreConfigDialog : BasePrefDialogFragment() {
     override fun onStart() {
         super.onStart()
         dialog?.window?.run {
+            addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
             clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setBackgroundDrawableResource(android.R.color.transparent)
             decorView.setPadding(0, 0, 0, 0)

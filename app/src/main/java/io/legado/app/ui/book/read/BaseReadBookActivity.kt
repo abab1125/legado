@@ -231,7 +231,7 @@ abstract class BaseReadBookActivity :
 
     @SuppressLint("RtlHardcoded")
     private fun upNavigationBar() {
-        binding.navigationBar.gone(!menuLayoutIsVisible)
+        binding.navigationBar.gone(!(binding.readMenu.isVisible || binding.searchMenu.bottomMenuVisible))
     }
 
     /**

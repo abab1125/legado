@@ -1019,6 +1019,7 @@
     <string name="welcome_text">阅读|享受美好时光</string>
     <string name="custom_welcome">自定义欢迎页</string>
     <string name="custom_welcome_summary">是否使用自定义欢迎页</string>
+    <string name="welcome_image_summary">支持 jpg、png、bmp、webp、gif 格式</string>
     <string name="show_icon">显示图标</string>
     <string name="show_default_book_icon">显示默认书籍图标</string>
     <string name="cache_export">缓存/导出</string>
@@ -1289,6 +1290,11 @@
     <string name="sure_cache_book">是否确认开始缓存？</string>
     <string name="auto_check_new_backup_t">自动检查新备份</string>
     <string name="auto_check_new_backup_s">打开软件时检查是否有新备份，有新备份时提示是否更新</string>
+    <string name="backup_extra_options">备份附加选项</string>
+    <string name="backup_extra_options_s">配置需要一起打包的文件</string>
+    <string name="backup_font_file">备份字体文件</string>
+    <string name="backup_theme_bg_file">备份主题背景图</string>
+    <string name="backup_read_bg_file">备份阅读背景图</string>
     <string name="sys_image_picker">系统图片选择器</string>
     <string name="template_style">模板样式</string>
 </resources>

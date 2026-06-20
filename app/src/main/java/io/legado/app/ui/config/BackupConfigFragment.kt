@@ -35,6 +35,7 @@ import io.legado.app.ui.widget.dialog.WaitDialog
 import io.legado.app.utils.FileDoc
 import io.legado.app.utils.applyTint
 import io.legado.app.utils.checkWrite
+import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.getPrefString
 import io.legado.app.utils.isContentScheme
 import io.legado.app.utils.launch
@@ -228,6 +229,7 @@ class BackupConfigFragment : PreferenceFragment(),
         when (preference.key) {
             PreferKey.backupPath -> selectBackupPath.launch()
             PreferKey.restoreIgnore -> backupIgnore()
+            "backupExtraOptions" -> backupExtraOptions()
             "web_dav_backup" -> backup()
             "web_dav_restore" -> restore()
             "import_old" -> restoreOld.launch()
@@ -248,6 +250,20 @@ class BackupConfigFragment : PreferenceFragment(),
             }
             onDismiss {
                 BackupConfig.saveIgnoreConfig()
+            }
+        }
+    }
+
+    /**
+     * 备份附加选项
+     */
+    private fun backupExtraOptions() {
+        val checkedItems = BooleanArray(BackupConfig.backupExtraKeys.size) {
+            appCtx.getPrefBoolean(BackupConfig.backupExtraKeys[it], false)
+        }
+        alert(R.string.backup_extra_options) {
+            multiChoiceItems(BackupConfig.backupExtraTitles, checkedItems) { _, which, isChecked ->
+                BackupConfig.saveBackupExtraOption(BackupConfig.backupExtraKeys[which], isChecked)
             }
         }
     }

@@ -26,8 +26,10 @@ import io.legado.app.utils.fromJsonObject
 import io.legado.app.utils.getPrefString
 import io.legado.app.utils.isJson
 import io.legado.app.utils.normalizeFileName
+import io.legado.app.utils.getFile
 import io.legado.app.utils.removePref
 import io.legado.app.utils.toastOnUi
+import io.legado.app.utils.externalFiles
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.runBlocking
@@ -244,8 +246,17 @@ object AppWebDav {
         val authorization = authorization ?: return
         if (!NetworkUtils.isAvailable()) return
         val bgWebDavFiles = getAllBgWebDavFiles().getOrThrow()
-            .map { it.displayName }
-            .toSet()
+        val bgDir = appCtx.externalFiles.getFile("bg")
+        if (!bgDir.exists()) {
+            bgDir.mkdirs()
+        }
+        bgWebDavFiles.forEach { webDavFile ->
+            val target = File(bgDir, webDavFile.displayName)
+            if (!target.exists()) {
+                WebDav("$bgWebDavUrl${webDavFile.displayName}", authorization)
+                    .downloadTo(target.absolutePath, true)
+            }
+        }
     }
 
     @Suppress("unused")

@@ -5,6 +5,8 @@ import io.legado.app.constant.PreferKey
 import io.legado.app.utils.FileUtils
 import io.legado.app.utils.GSON
 import io.legado.app.utils.fromJsonObject
+import io.legado.app.utils.getPrefBoolean
+import io.legado.app.utils.putPrefBoolean
 import splitties.init.appCtx
 
 /**
@@ -142,6 +144,31 @@ object BackupConfig {
     fun saveIgnoreConfig() {
         val json = GSON.toJson(ignoreConfig)
         FileUtils.createFileIfNotExist(ignoreConfigPath).writeText(json)
+    }
+
+    val backupExtraKeys = arrayOf(
+        PreferKey.backupFont,
+        PreferKey.backupThemeBg,
+        PreferKey.backupReadBg
+    )
+
+    val backupExtraTitles = arrayOf(
+        appCtx.getString(R.string.backup_font_file),
+        appCtx.getString(R.string.backup_theme_bg_file),
+        appCtx.getString(R.string.backup_read_bg_file)
+    )
+
+    val backupFont: Boolean
+        get() = appCtx.getPrefBoolean(PreferKey.backupFont, false)
+
+    val backupThemeBg: Boolean
+        get() = appCtx.getPrefBoolean(PreferKey.backupThemeBg, false)
+
+    val backupReadBg: Boolean
+        get() = appCtx.getPrefBoolean(PreferKey.backupReadBg, false)
+
+    fun saveBackupExtraOption(key: String, value: Boolean) {
+        appCtx.putPrefBoolean(key, value)
     }
 
 }

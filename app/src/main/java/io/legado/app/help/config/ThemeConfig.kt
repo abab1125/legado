@@ -519,7 +519,7 @@ object ThemeConfig {
         var accentColor: String,
         var backgroundColor: String,
         var bottomBackground: String,
-        var cardBackground: String = "#F3EDF7",
+        var cardBackground: String? = "#F3EDF7",
         var cardBackgroundAlpha: Int = 100,
         var transparentNavBar: Boolean,
         var backgroundImgPath: String?,

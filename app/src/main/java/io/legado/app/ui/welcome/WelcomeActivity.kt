@@ -1,10 +1,15 @@
 package io.legado.app.ui.welcome
 
 import android.content.Intent
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.postDelayed
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.gif.GifDrawable
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import io.legado.app.base.BaseActivity
 import io.legado.app.constant.PreferKey
 import io.legado.app.constant.Theme
@@ -65,17 +70,41 @@ open class WelcomeActivity : BaseActivity<ActivityWelcomeBinding>() {
                 getPrefString(PreferKey.welcomeImage)
             }
             imagePath?.let { path ->
-                kotlin.runCatching {
-                    val drawable = if (path.endsWith(".9.png")) {
-                        BitmapUtils.decodeNinePatchDrawable(path)
-                    } else {
-                        val size = windowManager.windowSize
-                        BitmapUtils.decodeBitmap(path, size.widthPixels, size.heightPixels)
-                            ?.toDrawable(resources)
+                if (path.endsWith(".gif", ignoreCase = true)) {
+                    // 使用Glide加载GIF
+                    Glide.with(this)
+                        .asGif()
+                        .load(path)
+                        .into(object : CustomTarget<GifDrawable>() {
+                            override fun onResourceReady(
+                                resource: GifDrawable,
+                                transition: Transition<in GifDrawable>?
+                            ) {
+                                resource.start()
+                                window.decorView.background = resource
+                            }
+
+                            override fun onLoadCleared(placeholder: Drawable?) {
+                                // 清理资源
+                            }
+
+                            override fun onLoadFailed(errorDrawable: Drawable?) {
+                                android.util.Log.e("WelcomeActivity", "加载GIF失败: $path")
+                            }
+                        })
+                } else {
+                    kotlin.runCatching {
+                        val drawable = if (path.endsWith(".9.png")) {
+                            BitmapUtils.decodeNinePatchDrawable(path)
+                        } else {
+                            val size = windowManager.windowSize
+                            BitmapUtils.decodeBitmap(path, size.widthPixels, size.heightPixels)
+                                ?.toDrawable(resources)
+                        }
+                        drawable?.let { window.decorView.background = it }
+                    }.onFailure {
+                        android.util.Log.e("WelcomeActivity", "加载启动页背景图失败: $path", it)
                     }
-                    drawable?.let { window.decorView.background = it }
-                }.onFailure {
-                    android.util.Log.e("WelcomeActivity", "加载启动页背景图失败: $path", it)
                 }
             }
             if (isDark) {

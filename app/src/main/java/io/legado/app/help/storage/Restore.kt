@@ -33,6 +33,8 @@ import io.legado.app.help.book.upType
 import io.legado.app.help.config.LocalConfig
 import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.help.config.ThemeConfig
+import io.legado.app.utils.externalFiles
+import io.legado.app.utils.getFile
 import com.google.gson.JsonParser
 import io.legado.app.help.readrecord.DetailedReadRecordExport
 import io.legado.app.help.readrecord.DetailedReadRecordHelper
@@ -258,6 +260,12 @@ object Restore {
             }
         }
         //AppWebDav.downBgs()
+        // 恢复字体文件到本地，并修正阅读配置中的字体路径
+        restoreFontFiles(backupRootPath)
+        // 恢复主题背景图到本地，并修正主题配置中的背景图路径
+        restoreThemeBgFiles(backupRootPath)
+        // 恢复阅读背景图到本地
+        restoreReadBgFiles(backupRootPath)
         appCtx.getSharedPreferences(backupRootPath, "config")?.all?.let { map ->
             val edit = appCtx.defaultSharedPreferences.edit()
 
@@ -409,6 +417,102 @@ object Restore {
             AppLog.put("$fileName\n读取解析出错\n${e.localizedMessage}", e)
             appCtx.toastOnUi("$fileName\n读取文件出错\n${e.localizedMessage}")
             null
+        }
+    }
+
+    /**
+     * 从备份中恢复字体文件到本地字体目录，并修正阅读配置中的字体路径
+     */
+    private fun restoreFontFiles(backupRootPath: String) {
+        val fontDir = File(backupRootPath, "font")
+        if (!fontDir.exists()) return
+        val localFontDir = appCtx.externalFiles.getFile("font")
+        if (!localFontDir.exists()) {
+            localFontDir.mkdirs()
+        }
+        fontDir.listFiles()?.forEach { fontFile ->
+            val target = File(localFontDir, fontFile.name)
+            if (!target.exists()) {
+                fontFile.copyTo(target, overwrite = true)
+            }
+        }
+        // 修正阅读配置中的字体路径
+        ReadBookConfig.configList.forEach { config ->
+            if (config.textFont.isNotEmpty()) {
+                val fontName = File(config.textFont).name
+                val localFontPath = File(localFontDir, fontName)
+                if (localFontPath.exists()) {
+                    config.textFont = localFontPath.absolutePath
+                }
+            }
+        }
+    }
+
+    /**
+     * 从备份中恢复主题背景图到本地目录，并修正主题配置中的背景图路径
+     */
+    private fun restoreThemeBgFiles(backupRootPath: String) {
+        val themeBgDir = File(backupRootPath, "themeBg")
+        if (!themeBgDir.exists()) return
+        themeBgDir.listFiles()?.forEach { bgFile ->
+            // 根据文件名判断是日间还是夜间主题的背景图
+            ThemeConfig.configList.forEach { config ->
+                val path = config.backgroundImgPath ?: return@forEach
+                if (!path.startsWith("http") && File(path).name == bgFile.name) {
+                    val targetDir = appCtx.externalFiles.getFile("bg")
+                    if (!targetDir.exists()) {
+                        targetDir.mkdirs()
+                    }
+                    val target = File(targetDir, bgFile.name)
+                    if (!target.exists()) {
+                        bgFile.copyTo(target, overwrite = true)
+                    }
+                    config.backgroundImgPath = target.absolutePath
+                }
+            }
+        }
+        ThemeConfig.save()
+    }
+
+    /**
+     * 从备份中恢复阅读背景图到本地目录
+     */
+    private fun restoreReadBgFiles(backupRootPath: String) {
+        val readBgDir = File(backupRootPath, "readBg")
+        if (!readBgDir.exists()) return
+        val localBgDir = appCtx.externalFiles.getFile("bg")
+        if (!localBgDir.exists()) {
+            localBgDir.mkdirs()
+        }
+        readBgDir.listFiles()?.forEach { bgFile ->
+            val target = File(localBgDir, bgFile.name)
+            if (!target.exists()) {
+                bgFile.copyTo(target, overwrite = true)
+            }
+        }
+        // 修正阅读配置中的背景图路径
+        ReadBookConfig.configList.forEach { config ->
+            if (config.bgType == 2 && config.bgStr.isNotEmpty()) {
+                val bgName = File(config.bgStr).name
+                val localBgPath = File(localBgDir, bgName)
+                if (localBgPath.exists()) {
+                    config.bgStr = localBgPath.absolutePath
+                }
+            }
+            if (config.bgTypeNight == 2 && config.bgStrNight.isNotEmpty()) {
+                val bgName = File(config.bgStrNight).name
+                val localBgPath = File(localBgDir, bgName)
+                if (localBgPath.exists()) {
+                    config.bgStrNight = localBgPath.absolutePath
+                }
+            }
+            if (config.bgTypeEInk == 2 && config.bgStrEInk.isNotEmpty()) {
+                val bgName = File(config.bgStrEInk).name
+                val localBgPath = File(localBgDir, bgName)
+                if (localBgPath.exists()) {
+                    config.bgStrEInk = localBgPath.absolutePath
+                }
+            }
         }
     }
 

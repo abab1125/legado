@@ -229,6 +229,47 @@ object Backup {
         for (i in 0 until paths.size) {
             paths[i] = backupPath + File.separator + paths[i]
         }
+        // 收集并备份字体文件
+        if (BackupConfig.backupFont) {
+            collectFontFiles().forEach { fontFile ->
+                val target = backupPath + File.separator + "font" + File.separator + fontFile.name
+                fontFile.copyTo(FileUtils.createFileIfNotExist(target), overwrite = true)
+            }
+            val fontDir = backupPath + File.separator + "font"
+            if (File(fontDir).exists()) {
+                File(fontDir).listFiles()?.forEach {
+                    paths.add(it.absolutePath)
+                }
+            }
+        }
+        // 收集并备份主题背景图（仅本地文件）
+        if (BackupConfig.backupThemeBg) {
+            collectThemeBgFiles().forEach { bgFile ->
+                val target =
+                    backupPath + File.separator + "themeBg" + File.separator + bgFile.name
+                bgFile.copyTo(FileUtils.createFileIfNotExist(target), overwrite = true)
+            }
+            val themeBgDir = backupPath + File.separator + "themeBg"
+            if (File(themeBgDir).exists()) {
+                File(themeBgDir).listFiles()?.forEach {
+                    paths.add(it.absolutePath)
+                }
+            }
+        }
+        // 收集并备份阅读背景图
+        if (BackupConfig.backupReadBg) {
+            collectReadBgFiles().forEach { bgFile ->
+                val target =
+                    backupPath + File.separator + "readBg" + File.separator + bgFile.name
+                bgFile.copyTo(FileUtils.createFileIfNotExist(target), overwrite = true)
+            }
+            val readBgDir = backupPath + File.separator + "readBg"
+            if (File(readBgDir).exists()) {
+                File(readBgDir).listFiles()?.forEach {
+                    paths.add(it.absolutePath)
+                }
+            }
+        }
         FileUtils.delete(zipFilePath)
         FileUtils.delete(zipFilePath.replace("tmp_", ""))
         val backupFileName = if (AppConfig.onlyLatestBackup) {
@@ -326,6 +367,82 @@ object Backup {
                 inputS.copyTo(outputS)
             }
         }
+    }
+
+    /**
+     * 收集所有阅读排版配置中引用的字体文件
+     */
+    private fun collectFontFiles(): List<File> {
+        val fontFiles = mutableListOf<File>()
+        ReadBookConfig.configList.forEach { config ->
+            if (config.textFont.isNotEmpty()) {
+                var fontFile = File(config.textFont)
+                // 如果不是完整路径，尝试在本地字体目录查找
+                if (!fontFile.exists()) {
+                    val localFontPath =
+                        FileUtils.getPath(appCtx.externalFiles, "font", config.textFont)
+                    fontFile = File(localFontPath)
+                }
+                // 如果是 content URI，读取流复制到临时文件
+                if (!fontFile.exists() && config.textFont.startsWith("content://")) {
+                    try {
+                        val uri = Uri.parse(config.textFont)
+                        val fileName = uri.lastPathSegment
+                            ?: "${config.textFont.hashCode()}.ttf"
+                        val tempFile = File(backupPath, "font_cache${File.separator}$fileName")
+                        tempFile.parentFile?.mkdirs()
+                        appCtx.contentResolver.openInputStream(uri)?.use { input ->
+                            tempFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        if (tempFile.exists() && tempFile.length() > 0) {
+                            fontFile = tempFile
+                        }
+                    } catch (_: Exception) {
+                    }
+                }
+                if (fontFile.exists()) {
+                    fontFiles.add(fontFile)
+                }
+            }
+        }
+        return fontFiles.distinctBy { it.name }
+    }
+
+    /**
+     * 收集所有主题配置中的本地背景图文件（排除网络URL）
+     */
+    private fun collectThemeBgFiles(): List<File> {
+        val bgFiles = mutableListOf<File>()
+        ThemeConfig.configList.forEach { config ->
+            val path = config.backgroundImgPath ?: return@forEach
+            if (!path.startsWith("http")) {
+                val bgFile = File(path)
+                if (bgFile.exists()) {
+                    bgFiles.add(bgFile)
+                }
+            }
+        }
+        return bgFiles.distinctBy { it.name }
+    }
+
+    /**
+     * 收集所有阅读背景图文件
+     */
+    private fun collectReadBgFiles(): List<File> {
+        val bgFiles = mutableListOf<File>()
+        ReadBookConfig.getAllPicBgStr().forEach { path ->
+            val bgFile = if (path.contains(File.separator)) {
+                File(path)
+            } else {
+                appCtx.externalFiles.getFile("bg", path)
+            }
+            if (bgFile.exists()) {
+                bgFiles.add(bgFile)
+            }
+        }
+        return bgFiles.distinctBy { it.name }
     }
 
     fun clearCache() {

@@ -81,6 +81,14 @@
             app:iconSpaceReserved="false" />
 
         <io.legado.app.lib.prefs.Preference
+            android:key="backupExtraOptions"
+            android:summary="@string/backup_extra_options_s"
+            android:title="@string/backup_extra_options"
+            app:allowDividerAbove="false"
+            app:allowDividerBelow="false"
+            app:iconSpaceReserved="false" />
+
+        <io.legado.app.lib.prefs.Preference
             android:key="web_dav_restore"
             android:summary="@string/restore_summary"
             android:title="@string/restore"

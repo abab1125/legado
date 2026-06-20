@@ -35,6 +35,7 @@
         <io.legado.app.lib.prefs.Preference
             android:key="welcomeImagePath"
             android:title="@string/background_image"
+            android:summary="@string/welcome_image_summary"
             app:allowDividerAbove="false"
             app:allowDividerBelow="false"
             app:iconSpaceReserved="false" />
@@ -70,6 +71,7 @@
         <io.legado.app.lib.prefs.Preference
             android:key="welcomeImagePathDark"
             android:title="@string/background_image"
+            android:summary="@string/welcome_image_summary"
             app:allowDividerAbove="false"
             app:allowDividerBelow="false"
             app:iconSpaceReserved="false" />

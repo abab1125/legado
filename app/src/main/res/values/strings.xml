@@ -1032,6 +1032,7 @@
     <string name="welcome_text">阅读|享受美好时光</string>
     <string name="custom_welcome">Customize the welcome page</string>
     <string name="custom_welcome_summary">Whether to use a customized welcome page</string>
+    <string name="welcome_image_summary">Supports jpg, png, bmp, webp, gif formats</string>
     <string name="show_icon">Show icon</string>
     <string name="show_default_book_icon">Show default book icon</string>
     <string name="cache_export">Cache / Export</string>
@@ -1392,6 +1393,11 @@
     <string name="change_page">选择页数</string>
     <string name="auto_check_new_backup_t">自动检查新备份</string>
     <string name="auto_check_new_backup_s">打开软件时检查是否有新备份，有新备份时提示是否更新</string>
+    <string name="backup_extra_options">Backup Extra Options</string>
+    <string name="backup_extra_options_s">Configure files to include in backup</string>
+    <string name="backup_font_file">Backup Font Files</string>
+    <string name="backup_theme_bg_file">Backup Theme Background Images</string>
+    <string name="backup_read_bg_file">Backup Reading Background Images</string>
     <string name="r_preloadJs">预注入Js（preloadJs）</string>
     <string name="cache_first">优先加载缓存</string>
     <string name="rule_sub_content">副文规则（subContent）</string>

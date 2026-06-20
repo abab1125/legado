@@ -25,7 +25,7 @@ class HandleFileContract :
             handleFileParam.apply(input)
         }
         if (handleFileParam.mode == IMAGE) {
-            handleFileParam.allowExtensions = arrayOf("jpg", "png", "bmp", "webp")
+            handleFileParam.allowExtensions = arrayOf("jpg", "png", "bmp", "webp", "gif")
         }
         handleFileParam.let {
             requestCode = it.requestCode

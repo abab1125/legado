@@ -225,4 +225,7 @@ object PreferKey {
     const val readIterationPopup = "readIterationPopup"
     const val readIterationShowTag = "readIterationShowTag"
     const val showBookplate = "showBookplate"
+    const val backupFont = "backupFont"
+    const val backupThemeBg = "backupThemeBg"
+    const val backupReadBg = "backupReadBg"
 }

@@ -5,7 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
 
     <!-- AI Message (Left) -->
     <LinearLayout
@@ -37,7 +40,6 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- 折叠/展开 头部 -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/ll_reasoning_header"
                     android:layout_width="wrap_content"
@@ -74,7 +76,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- 思维链内容（默认折叠） -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -95,46 +96,67 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
-            <!-- AI消息气泡 + 删除按钮行 -->
+            <!-- AI 消息气泡 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_ai_bubble"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="#20888888">
+                <TextView
+                    android:id="@+id/tv_ai_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textIsSelectable="true" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- AI 操作按钮栏 -->
             <LinearLayout
+                android:id="@+id/ll_ai_actions"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="4dp">
+                android:layout_marginTop="2dp">
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/card_ai_bubble"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="0dp"
-                    app:cardBackgroundColor="#20888888">
-                    <TextView
-                        android:id="@+id/tv_ai_content"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:padding="12dp"
-                        android:textColor="?android:attr/textColorPrimary"
-                        android:textIsSelectable="true" />
-                </com.google.android.material.card.MaterialCardView>
+                <ImageButton
+                    android:id="@+id/btn_ai_edit"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_edit"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    app:tint="?android:attr/textColorSecondary"
+                    android:contentDescription="编辑" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/iv_delete_ai"
-                    style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                <ImageButton
+                    android:id="@+id/btn_ai_copy"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:layout_marginStart="4dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:padding="0dp"
-                    app:icon="@drawable/ic_outline_delete"
-                    app:iconTint="?android:attr/textColorSecondary"
-                    app:iconGravity="textStart"
-                    app:iconPadding="0dp"
-                    android:contentDescription="删除消息"
-                    android:visibility="gone" />
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_copy"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    app:tint="?android:attr/textColorSecondary"
+                    android:contentDescription="@string/ai_copy" />
+
+                <ImageButton
+                    android:id="@+id/btn_ai_delete"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_outline_delete"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    app:tint="?android:attr/textColorSecondary"
+                    android:contentDescription="删除" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -149,45 +171,80 @@
         android:paddingStart="48dp"
         android:visibility="gone">
 
-        <!-- 删除按钮（放在气泡左侧） -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/iv_delete_user"
-            style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginEnd="4dp"
-            android:layout_gravity="center_vertical"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:padding="0dp"
-            app:icon="@drawable/ic_outline_delete"
-            app:iconTint="?android:attr/textColorSecondary"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            android:contentDescription="删除消息"
-            android:visibility="gone" />
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_user_bubble"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="0dp">
-            <TextView
-                android:id="@+id/tv_user_content"
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <!-- 用户消息气泡 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_user_bubble"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textIsSelectable="true" />
-        </com.google.android.material.card.MaterialCardView>
+                app:cardCornerRadius="18dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+                <TextView
+                    android:id="@+id/tv_user_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textIsSelectable="true" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 用户操作按钮栏 -->
+            <LinearLayout
+                android:id="@+id/ll_user_actions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp"
+                android:gravity="end">
+
+                <ImageButton
+                    android:id="@+id/btn_user_edit"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_edit"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    app:tint="?android:attr/textColorSecondary"
+                    android:contentDescription="编辑" />
+
+                <ImageButton
+                    android:id="@+id/btn_user_copy"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_copy"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    app:tint="?android:attr/textColorSecondary"
+                    android:contentDescription="@string/ai_copy" />
+
+                <ImageButton
+                    android:id="@+id/btn_user_delete"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_outline_delete"
+                    android:padding="6dp"
+                    android:scaleType="centerInside"
+                    app:tint="?android:attr/textColorSecondary"
+                    android:contentDescription="删除" />
+            </LinearLayout>
+        </LinearLayout>
 
         <ImageView
             android:id="@+id/iv_user_avatar"
             android:layout_width="32dp"
             android:layout_height="32dp"
+            android:layout_marginStart="8dp"
             android:src="@drawable/ic_person"
             app:tint="?attr/colorPrimary" />
     </LinearLayout>

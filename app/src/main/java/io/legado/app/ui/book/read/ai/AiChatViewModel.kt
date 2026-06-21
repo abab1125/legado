@@ -28,6 +28,12 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
     companion object {
         private const val MAX_TOOL_ROUNDS = 90
+
+        const val VOICE_DESIGN_PROMPT = "请为本章所有角色设计声线，要求：\n" +
+            "1. 从章节对话中识别所有说话角色（旁白不算）\n" +
+            "2. 为每个角色生成一段中文音色描述（1-4句），覆盖性别与年龄、音色/质感、情绪/语气基调、语速/节奏、人设/腔调中的至少3个维度\n" +
+            "3. 用具体、可视化的描述，避免“普通”“正常”等模糊词，避免矛盾特征，不要写混响回声等后期处理\n" +
+            "4. 输出格式：**角色名** + 换行 + 声线描述，每个角色之间空一行，不需要标签和使用说明"
     }
 
     val messagesLiveData = MutableLiveData<List<ChatMessage>>()
@@ -322,6 +328,33 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             if (systemMsg != null) {
                 _messages.add(systemMsg)
             }
+        }
+        syncCache()
+        messagesLiveData.postValue(_messages.toList())
+    }
+
+    /**
+     * 获取指定显示位置的消息内容（position 是过滤掉 system/tool 后的可见列表下标）
+     */
+    fun getMessageAt(displayPosition: Int): ChatMessage? {
+        synchronized(_messages) {
+            val visibleIndices = _messages.indices
+                .filter { _messages[it].role != "system" && _messages[it].role != "tool" }
+            if (displayPosition < 0 || displayPosition >= visibleIndices.size) return null
+            return _messages[visibleIndices[displayPosition]]
+        }
+    }
+
+    /**
+     * 直接修改指定显示位置的消息内容（不经过 API）
+     */
+    fun updateMessageAt(displayPosition: Int, newContent: String) {
+        synchronized(_messages) {
+            val visibleIndices = _messages.indices
+                .filter { _messages[it].role != "system" && _messages[it].role != "tool" }
+            if (displayPosition < 0 || displayPosition >= visibleIndices.size) return
+            val realIndex = visibleIndices[displayPosition]
+            _messages[realIndex] = _messages[realIndex].copy(content = newContent)
         }
         syncCache()
         messagesLiveData.postValue(_messages.toList())

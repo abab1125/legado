@@ -32,9 +32,14 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
     override val binding by viewBinding(ActivityAiChatBinding::inflate)
     internal val viewModel by viewModels<AiChatViewModel>()
     private val adapter by lazy {
-        ChatAdapter { displayPosition ->
-            viewModel.deleteMessageAt(displayPosition)
-        }
+        ChatAdapter(
+            onEditMessage = { displayPosition, currentContent ->
+                showEditDialog(displayPosition, currentContent)
+            },
+            onDeleteMessage = { displayPosition ->
+                viewModel.deleteMessageAt(displayPosition)
+            }
+        )
     }
 
     /** 是否为独立模式（从"我的"页面进入，无书籍上下文） */
@@ -53,8 +58,9 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
         setupKeyboardAdjustment()
 
         if (isStandalone) {
-            // 独立模式：隐藏章节选择区域，直接初始化
+            // 独立模式：隐藏章节选择区域和预置提示词栏，直接初始化
             binding.layoutChapterRange.visibility = View.GONE
+            binding.layoutPromptPresets.visibility = View.GONE
             binding.titleBar.title = getString(R.string.ai_assistant)
             viewModel.initMessages(0, 0)
         } else {
@@ -129,6 +135,12 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 binding.etInput.setText("")
             }
         }
+
+        // 声线设计按钮：预填提示词到输入框
+        binding.btnVoiceDesign.setOnClickListener {
+            binding.etInput.setText(AiChatViewModel.VOICE_DESIGN_PROMPT)
+            binding.etInput.setSelection(binding.etInput.text.length)
+        }
     }
 
     private fun updateWordCount() {
@@ -139,6 +151,27 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
         val chapterSize = ReadBook.chapterSize
         if (start != null && end != null && start > 0 && end > 0 && bookUrl != null && chapterSize > 0) {
             viewModel.calculateWordCount(bookUrl, start, end)
+        }
+    }
+
+    private fun showEditDialog(displayPosition: Int, currentContent: String) {
+        val editText = android.widget.EditText(this).apply {
+            setText(currentContent)
+            setSelection(currentContent.length)
+            setPadding(48, 32, 48, 16)
+            isSingleLine = false
+            minLines = 3
+            gravity = android.view.Gravity.TOP
+        }
+        alert("编辑消息") {
+            setCustomView(editText)
+            yesButton {
+                val newContent = editText.text.toString()
+                if (newContent.isNotBlank()) {
+                    viewModel.updateMessageAt(displayPosition, newContent)
+                }
+            }
+            noButton()
         }
     }
 

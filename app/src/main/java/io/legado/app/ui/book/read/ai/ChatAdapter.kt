@@ -1,6 +1,10 @@
 package io.legado.app.ui.book.read.ai
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.res.ColorStateList
+import android.widget.Toast
 import androidx.core.graphics.ColorUtils
 import android.view.LayoutInflater
 import android.view.View
@@ -22,13 +26,11 @@ import io.noties.markwon.Markwon
 import java.net.URI
 
 class ChatAdapter(
+    private val onEditMessage: (position: Int, currentContent: String) -> Unit,
     private val onDeleteMessage: (position: Int) -> Unit
 ) : ListAdapter<ChatMessage, ChatAdapter.ChatViewHolder>(DIFF_CALLBACK) {
 
     private var markwon: Markwon? = null
-
-    /** 当前展开删除按钮的 ViewHolder */
-    private var expandedHolder: ChatViewHolder? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
         val binding = ItemAiChatBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -42,10 +44,6 @@ class ChatAdapter(
         if (markwon == null) {
             markwon = Markwon.create(context)
         }
-
-        // 每次绑定时隐藏删除按钮（防止复用残留）
-        holder.binding.ivDeleteAi.gone()
-        holder.binding.ivDeleteUser.gone()
 
         if (msg.role == "user") {
             holder.binding.llUserMsg.visible()
@@ -62,25 +60,24 @@ class ChatAdapter(
                 holder.binding.ivUserAvatar.setImageResource(R.drawable.ic_person)
             }
 
-            // 用户气泡：带透明度的主色，营造半透明磨砂质感
             val userBubbleColor = ColorUtils.setAlphaComponent(
                 ThemeStore.primaryColor(context), 45
             )
             holder.binding.cardUserBubble.setCardBackgroundColor(userBubbleColor)
 
-            // 长按用户气泡显示删除按钮
-            holder.binding.tvUserContent.setOnLongClickListener {
-                toggleDeleteButton(holder, isUser = true)
-                true
-            }
-
-            // 点击删除按钮
-            holder.binding.ivDeleteUser.setOnClickListener {
+            holder.binding.btnUserEdit.setOnClickListener {
                 val pos = holder.bindingAdapterPosition
-                if (pos != RecyclerView.NO_ID.toInt()) {
-                    collapseDeleteButton(holder)
-                    onDeleteMessage(pos)
+                if (pos != RecyclerView.NO_POSITION) onEditMessage(pos, msg.content ?: "")
+            }
+            holder.binding.btnUserCopy.setOnClickListener {
+                val pos = holder.bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) {
+                    copyToClipboard(context, msg.content)
                 }
+            }
+            holder.binding.btnUserDelete.setOnClickListener {
+                val pos = holder.bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) onDeleteMessage(pos)
             }
         } else {
             holder.binding.llAiMsg.visible()
@@ -97,70 +94,41 @@ class ChatAdapter(
                 holder.binding.ivAiAvatar.setImageResource(R.drawable.ic_chat_ai)
             }
 
-            // 处理思维链内容
             val reasoning = msg.reasoningContent
             if (!reasoning.isNullOrBlank()) {
                 holder.binding.llReasoning.visible()
                 markwon?.setMarkdown(holder.binding.tvReasoningContent, reasoning)
-                // 初始化为折叠状态（每次绑定都重置）
                 holder.binding.tvReasoningContent.gone()
                 holder.binding.ivReasoningArrow.rotation = 90f
-                // 点击头部切换折叠/展开
                 holder.binding.llReasoningHeader.setOnClickListener {
                     val isExpanded = holder.binding.tvReasoningContent.visibility == View.VISIBLE
-                    if (isExpanded) {
-                        collapseReasoning(holder)
-                    } else {
-                        expandReasoning(holder)
-                    }
+                    if (isExpanded) collapseReasoning(holder) else expandReasoning(holder)
                 }
             } else {
                 holder.binding.llReasoning.gone()
             }
 
-            // 长按 AI 气泡显示删除按钮
-            holder.binding.tvAiContent.setOnLongClickListener {
-                toggleDeleteButton(holder, isUser = false)
-                true
-            }
-
-            // 点击删除按钮
-            holder.binding.ivDeleteAi.setOnClickListener {
+            holder.binding.btnAiEdit.setOnClickListener {
                 val pos = holder.bindingAdapterPosition
-                if (pos != RecyclerView.NO_ID.toInt()) {
-                    collapseDeleteButton(holder)
-                    onDeleteMessage(pos)
+                if (pos != RecyclerView.NO_POSITION) onEditMessage(pos, msg.content ?: "")
+            }
+            holder.binding.btnAiCopy.setOnClickListener {
+                val pos = holder.bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) {
+                    copyToClipboard(context, msg.content)
                 }
             }
+            holder.binding.btnAiDelete.setOnClickListener {
+                val pos = holder.bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) onDeleteMessage(pos)
+            }
         }
     }
 
-    /**
-     * 切换删除按钮的显示状态；如果当前有其他展开的 holder，先折叠它
-     */
-    private fun toggleDeleteButton(holder: ChatViewHolder, isUser: Boolean) {
-        val deleteView = if (isUser) holder.binding.ivDeleteUser else holder.binding.ivDeleteAi
-        val alreadyExpanded = deleteView.visibility == View.VISIBLE
-
-        // 折叠之前展开的（如果不是同一个）
-        if (expandedHolder != null && expandedHolder != holder) {
-            collapseDeleteButton(expandedHolder!!)
-        }
-
-        if (alreadyExpanded) {
-            collapseDeleteButton(holder)
-        } else {
-            deleteView.alpha = 0f
-            deleteView.visible()
-            deleteView.animate().alpha(1f).setDuration(150).start()
-            expandedHolder = holder
-        }
-    }
-
-    private fun collapseDeleteButton(holder: ChatViewHolder) {
-        holder.binding.ivDeleteAi.gone()
-        holder.binding.ivDeleteUser.gone()
-        if (expandedHolder == holder) expandedHolder = null
+    private fun copyToClipboard(context: Context, text: String?) {
+        val clipManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipManager.setPrimaryClip(ClipData.newPlainText("ai_message", text ?: ""))
+        Toast.makeText(context, R.string.ai_copied, Toast.LENGTH_SHORT).show()
     }
 
     private fun expandReasoning(holder: ChatViewHolder) {
@@ -188,31 +156,20 @@ class ChatAdapter(
     class ChatViewHolder(val binding: ItemAiChatBinding) : RecyclerView.ViewHolder(binding.root)
 
     companion object {
-        /**
-         * 将含中文、全角符号等非 ASCII 字符的 URL 进行 percent-encoding，
-         * 确保 Glide/OkHttp 能正常解析和请求。
-         */
         fun encodeAvatarUrl(url: String): String {
             return try {
                 val uri = URI(url)
-                // 利用 URI 的多参数构造器对各部分单独编码，再转回 ASCII-safe 字符串
                 URI(
-                    uri.scheme,
-                    uri.userInfo,
-                    uri.host,
-                    uri.port,
-                    uri.path,
-                    uri.query,
-                    uri.fragment
+                    uri.scheme, uri.userInfo, uri.host, uri.port,
+                    uri.path, uri.query, uri.fragment
                 ).toASCIIString()
             } catch (e: Exception) {
-                url // 编码失败则原样返回，由 Glide 尝试处理
+                url
             }
         }
 
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<ChatMessage>() {
             override fun areItemsTheSame(old: ChatMessage, new: ChatMessage): Boolean {
-                // 同一位置、同一角色的消息认为是同一条
                 return old.role == new.role && old.content == new.content
             }
 

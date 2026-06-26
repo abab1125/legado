@@ -20,7 +20,52 @@ object DatabaseMigrations {
             migration_31_32, migration_32_33, migration_33_34, migration_34_35,
             migration_35_36, migration_36_37, migration_37_38, migration_38_39,
             migration_39_40, migration_40_41, migration_41_42, migration_42_43,
+            migration_96_97,
         )
+    }
+
+    private val migration_96_97 = object : Migration(96, 97) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `knowledge_points` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `bookUrl` TEXT NOT NULL,
+                    `chapterIndex` INTEGER NOT NULL DEFAULT -1,
+                    `title` TEXT NOT NULL,
+                    `content` TEXT NOT NULL,
+                    `tags` TEXT NOT NULL,
+                    `category` TEXT NOT NULL DEFAULT 'note',
+                    `sortOrder` INTEGER NOT NULL DEFAULT 0,
+                    `createTime` INTEGER NOT NULL DEFAULT 0,
+                    `updateTime` INTEGER NOT NULL DEFAULT 0
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_knowledge_points_bookUrl` ON `knowledge_points` (`bookUrl`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_knowledge_points_bookUrl_chapterIndex` ON `knowledge_points` (`bookUrl`, `chapterIndex`)"
+            )
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `writing_prompts` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `bookUrl` TEXT NOT NULL,
+                    `title` TEXT NOT NULL,
+                    `content` TEXT NOT NULL,
+                    `type` TEXT NOT NULL DEFAULT 'other',
+                    `sortOrder` INTEGER NOT NULL DEFAULT 0,
+                    `createTime` INTEGER NOT NULL DEFAULT 0,
+                    `updateTime` INTEGER NOT NULL DEFAULT 0
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_writing_prompts_bookUrl` ON `writing_prompts` (`bookUrl`)"
+            )
+        }
     }
 
     private val migration_10_11 = object : Migration(10, 11) {

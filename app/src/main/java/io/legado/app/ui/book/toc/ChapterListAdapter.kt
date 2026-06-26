@@ -136,24 +136,19 @@ class ChapterListAdapter(context: Context, val callback: Callback) :
                 }
                 tvChapterName.text = getDisplayTitle(item)
                 if (item.isVolume) {
-                    //卷名，如第一卷 突出显示
                     tvChapterItem.setBackgroundColor(context.getCompatColor(R.color.btn_bg_press))
                 } else {
-                    //普通章节 保持不变
                     tvChapterItem.background =
                         ThemeUtils.resolveDrawable(context, android.R.attr.selectableItemBackground)
                 }
 
-                //卷名不显示 去掉了 !item.isVolume，让卷名也显示
                 if (!item.tag.isNullOrEmpty()) {
-                    //更新时间规则
                     tvTag.text = item.tag
                     tvTag.visible()
                 } else {
                     tvTag.gone()
                 }
                 if (AppConfig.tocCountWords && !item.wordCount.isNullOrEmpty() && !item.isVolume) {
-                    //章节字数
                     tvWordCount.text = item.wordCount
                     tvWordCount.visible()
                 } else {
@@ -164,6 +159,14 @@ class ChapterListAdapter(context: Context, val callback: Callback) :
                     ivLocked.visible()
                 } else {
                     ivLocked.gone()
+                }
+
+                // 章纲图标：有内容时用主题色，无内容时灰色
+                val hasSummary = !item.variableMap["summary"].isNullOrBlank()
+                ivSummary.imageTintList = if (hasSummary) {
+                    android.content.res.ColorStateList.valueOf(context.accentColor)
+                } else {
+                    android.content.res.ColorStateList.valueOf(context.getCompatColor(R.color.secondaryText))
                 }
 
                 upHasCache(binding, isDur, cached)
@@ -186,6 +189,12 @@ class ChapterListAdapter(context: Context, val callback: Callback) :
             }
             true
         }
+        // 章纲按钮点击
+        binding.ivSummary.setOnClickListener {
+            getItem(holder.layoutPosition)?.let { item ->
+                callback.openSummary(item)
+            }
+        }
     }
 
     private fun upHasCache(binding: ItemChapterListBinding, isDur: Boolean, cached: Boolean) =
@@ -205,6 +214,7 @@ class ChapterListAdapter(context: Context, val callback: Callback) :
         fun openChapter(bookChapter: BookChapter)
         fun durChapterIndex(): Int
         fun onListChanged()
+        fun openSummary(bookChapter: BookChapter)
     }
 
 }

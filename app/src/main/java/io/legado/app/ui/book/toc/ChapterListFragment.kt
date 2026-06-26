@@ -221,4 +221,18 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
         }
     }
 
+    override fun openSummary(bookChapter: BookChapter) {
+        val book = viewModel.bookData.value ?: return
+        val dialog = ChapterSummaryDialog.newInstance(book, bookChapter)
+        dialog.setOnDismissListener {
+            // 刷新该章节行，更新章纲图标状态
+            adapter.getItems().forEachIndexed { index, item ->
+                if (item.url == bookChapter.url) {
+                    adapter.notifyItemChanged(index)
+                    return@forEachIndexed
+                }
+            }
+        }
+        dialog.show(parentFragmentManager, "chapter_summary")
+    }
 }

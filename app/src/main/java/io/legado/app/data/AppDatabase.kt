@@ -21,6 +21,7 @@ import io.legado.app.data.dao.DetailedReadRecordDao
 import io.legado.app.data.dao.DictRuleDao
 import io.legado.app.data.dao.HttpTTSDao
 import io.legado.app.data.dao.KeyboardAssistsDao
+import io.legado.app.data.dao.KnowledgePointDao
 import io.legado.app.data.dao.ReadRecordDao
 import io.legado.app.data.dao.ReplaceRuleDao
 import io.legado.app.data.dao.RssArticleDao
@@ -32,6 +33,7 @@ import io.legado.app.data.dao.SearchBookDao
 import io.legado.app.data.dao.SearchKeywordDao
 import io.legado.app.data.dao.ServerDao
 import io.legado.app.data.dao.TxtTocRuleDao
+import io.legado.app.data.dao.WritingPromptDao
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
 import io.legado.app.data.entities.BookGroup
@@ -45,6 +47,7 @@ import io.legado.app.data.entities.DetailedReadRecord
 import io.legado.app.data.entities.DictRule
 import io.legado.app.data.entities.HttpTTS
 import io.legado.app.data.entities.KeyboardAssist
+import io.legado.app.data.entities.KnowledgePoint
 import io.legado.app.data.entities.ReadRecord
 import io.legado.app.data.entities.ReplaceRule
 import io.legado.app.data.entities.RssArticle
@@ -56,6 +59,7 @@ import io.legado.app.data.entities.SearchBook
 import io.legado.app.data.entities.SearchKeyword
 import io.legado.app.data.entities.Server
 import io.legado.app.data.entities.TxtTocRule
+import io.legado.app.data.entities.WritingPrompt
 import io.legado.app.help.DefaultData
 import org.intellij.lang.annotations.Language
 import splitties.init.appCtx
@@ -71,7 +75,7 @@ val appDb by lazy {
 }
 
 @Database(
-    version = 96,
+    version = 97,
     exportSchema = true,
     entities = [Book::class, BookGroup::class, BookSource::class, BookChapter::class,
         ReplaceRule::class, SearchBook::class, SearchKeyword::class, Cookie::class,
@@ -79,7 +83,9 @@ val appDb by lazy {
         RssStar::class, TxtTocRule::class, ReadRecord::class, DetailedReadRecord::class,
         HttpTTS::class, Cache::class, RuleSub::class, DictRule::class, KeyboardAssist::class,
         BookThought::class,
-        Server::class],
+        Server::class,
+        KnowledgePoint::class,
+        WritingPrompt::class],
     views = [BookSourcePart::class],
     autoMigrations = [
         AutoMigration(from = 43, to = 44),
@@ -162,6 +168,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract val dictRuleDao: DictRuleDao
     abstract val keyboardAssistsDao: KeyboardAssistsDao
     abstract val serverDao: ServerDao
+    abstract val knowledgePointDao: KnowledgePointDao
+    abstract val writingPromptDao: WritingPromptDao
 
     companion object {
 
@@ -174,12 +182,10 @@ abstract class AppDatabase : RoomDatabase() {
         val dbCallback = object : Callback() {
 
             override fun onCreate(db: SupportSQLiteDatabase) {
-                // 只在 API 级别 23 (Marshmallow) 及以上版本尝试设置区域设置
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     try {
                         Log.d("AppDatabaseCallback", "准备 设置 locale for API ${Build.VERSION.SDK_INT}...")
                         db.setLocale(Locale.CHINESE)
-                        // 在 21 上报错，但无法拦截
                         Log.d("AppDatabaseCallback", "成功 设置 locale for API ${Build.VERSION.SDK_INT}.")
                     } catch (e: Exception) {
                         Log.e("AppDatabaseCallback", "错误 设置 locale in onCreate for API ${Build.VERSION.SDK_INT}", e)

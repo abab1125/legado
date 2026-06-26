@@ -490,6 +490,18 @@
                 <data android:pathPattern=".*\\.7Z" />
             </intent-filter>
         </activity>
+        <!-- 写作台 -->
+        <activity
+            android:name=".ui.write.WriteDeskActivity"
+            android:configChanges="locale|keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout" />
+        <!-- 作品详情 -->
+        <activity
+            android:name=".ui.write.WriteBookActivity"
+            android:configChanges="locale|keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout" />
+        <activity
+            android:name=".ui.write.ChapterEditorActivity"
+            android:configChanges="locale|keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout"
+            android:windowSoftInputMode="adjustResize" />
 
         <service
             android:name=".service.CheckSourceService"

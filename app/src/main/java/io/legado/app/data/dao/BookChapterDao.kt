@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import io.legado.app.data.entities.BookChapter
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BookChapterDao {
@@ -19,8 +20,14 @@ interface BookChapterDao {
     @Query("select * from chapters where bookUrl = :bookUrl order by `index`")
     fun getChapterList(bookUrl: String): List<BookChapter>
 
+    @Query("select * from chapters where bookUrl = :bookUrl order by `index`")
+    fun flowByBook(bookUrl: String): Flow<List<BookChapter>>
+
     @Query("select * from chapters where bookUrl = :bookUrl and `index` >= :start and `index` <= :end order by `index`")
     fun getChapterList(bookUrl: String, start: Int, end: Int): List<BookChapter>
+
+    @Query("select * from chapters where bookUrl = :bookUrl and url = :url")
+    fun getChapter(bookUrl: String, url: String): BookChapter?
 
     @Query("select * from chapters where bookUrl = :bookUrl and `index` = :index")
     fun getChapter(bookUrl: String, index: Int): BookChapter?
@@ -39,6 +46,9 @@ interface BookChapterDao {
 
     @Query("delete from chapters where bookUrl = :bookUrl")
     fun delByBook(bookUrl: String)
+
+    @Query("delete from chapters where bookUrl = :bookUrl and url = :url")
+    fun deleteByUrl(bookUrl: String, url: String)
 
     @Query("update chapters set wordCount = :wordCount where bookUrl = :bookUrl and url = :url")
     fun upWordCount(bookUrl: String, url: String, wordCount: String)

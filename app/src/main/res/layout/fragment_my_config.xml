@@ -86,7 +86,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:padding="12dp"
-                    android:weightSum="4">
+                    android:weightSum="5">
 
                     <!-- 备份恢复 -->
                     <LinearLayout
@@ -98,7 +98,7 @@
                         android:gravity="center"
                         android:background="@drawable/bg_quick_action"
                         android:padding="8dp"
-                        android:layout_marginEnd="6dp">
+                        android:layout_marginEnd="4dp">
 
                         <ImageView
                             android:layout_width="28dp"
@@ -203,6 +203,38 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/read_record"
+                            android:textSize="12sp"
+                            android:textColor="?android:textColorSecondary"
+                            android:layout_marginTop="4dp"
+                            android:singleLine="true" />
+
+                    </LinearLayout>
+
+                    <!-- 写作台 -->
+                    <LinearLayout
+                        android:id="@+id/btn_write_desk"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_quick_action"
+                        android:padding="8dp"
+                        android:layout_marginStart="4dp">
+
+                        <ImageView
+                            android:id="@+id/iv_write_desk"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:src="@drawable/ic_cfg_replace"
+                            android:contentDescription="写作台"
+                            app:tint="?android:textColorPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_write_desk"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="写作台"
                             android:textSize="12sp"
                             android:textColor="?android:textColorSecondary"
                             android:layout_marginTop="4dp"

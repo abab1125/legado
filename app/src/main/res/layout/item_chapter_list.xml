@@ -31,7 +31,7 @@
         android:singleLine="true"
         app:layout_constraintBottom_toTopOf="@+id/barrier"
         app:layout_constraintStart_toEndOf="@+id/iv_locked"
-        app:layout_constraintEnd_toStartOf="@+id/iv_checked"
+        app:layout_constraintEnd_toStartOf="@+id/iv_summary"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="标题" />
 
@@ -65,12 +65,29 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tv_tag"
         app:layout_constraintTop_toBottomOf="@+id/barrier"
-        app:layout_constraintEnd_toStartOf="@+id/iv_checked"
+        app:layout_constraintEnd_toStartOf="@+id/iv_summary"
         app:layout_constraintHorizontal_bias="0"
         app:layout_goneMarginStart="0dp"
         tools:ignore="RtlSymmetry"
         tools:visibility="visible"
         tools:text="10字" />
+
+    <!-- 章纲按钮 -->
+    <ImageView
+        android:id="@+id/iv_summary"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:padding="3dp"
+        android:contentDescription="章节概要"
+        android:src="@drawable/ic_edit"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/iv_checked"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:tint="@color/secondaryText"
+        tools:ignore="RtlSymmetry"
+        tools:visibility="visible" />
 
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/barrier"

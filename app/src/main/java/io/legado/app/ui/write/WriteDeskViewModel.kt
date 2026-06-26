@@ -58,7 +58,6 @@ class WriteDeskViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             appDb.bookDao.delete(book)
             appDb.bookChapterDao.delByBook(book.bookUrl)
-            appDb.writingPromptDao.deleteByBook(book.bookUrl)
             appDb.knowledgePointDao.deleteByBook(book.bookUrl)
         }
     }
@@ -74,11 +73,10 @@ class WriteDeskViewModel : ViewModel() {
 
     suspend fun getBookStats(bookUrl: String): BookStats {
         val chapters = appDb.bookChapterDao.getChapterList(bookUrl, 0, Int.MAX_VALUE)
-        val prompts = appDb.writingPromptDao.countByBook(bookUrl)
         val knowledge = appDb.knowledgePointDao.countByBook(bookUrl)
         return BookStats(
             chapterCount = chapters.size,
-            promptCount = prompts,
+            promptCount = appDb.writingPromptDao.count(),
             knowledgeCount = knowledge
         )
     }

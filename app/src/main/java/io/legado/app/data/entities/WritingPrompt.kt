@@ -2,21 +2,16 @@ package io.legado.app.data.entities
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
  * 写作提示词——角色设定、世界观、写作风格指引、大纲等
+ * 完全全局化，不绑定任何书籍
  */
-@Entity(
-    tableName = "writing_prompts",
-    indices = [Index(value = ["bookUrl"])]
-)
+@Entity(tableName = "writing_prompts")
 data class WritingPrompt(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    // 所属书籍
-    val bookUrl: String = "",
     // 提示词标题
     val title: String = "",
     // 提示词内容

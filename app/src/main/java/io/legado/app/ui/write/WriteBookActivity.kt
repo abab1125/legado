@@ -47,7 +47,7 @@ class WriteBookActivity :
         // 操作按钮
         binding.btnNewChapter.setOnClickListener { showNewChapterDialog() }
         binding.btnPrompts.setOnClickListener {
-            PromptManageDialog.newInstance(bookUrl).show(supportFragmentManager, "prompt")
+            PromptManageDialog.newInstance().show(supportFragmentManager, "prompt")
         }
         binding.btnKnowledge.setOnClickListener {
             KnowledgeManageDialog.newInstance(bookUrl).show(supportFragmentManager, "knowledge")

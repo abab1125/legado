@@ -20,8 +20,28 @@ object DatabaseMigrations {
             migration_31_32, migration_32_33, migration_33_34, migration_34_35,
             migration_35_36, migration_36_37, migration_37_38, migration_38_39,
             migration_39_40, migration_40_41, migration_41_42, migration_42_43,
-            migration_96_97,
+            migration_96_97, migration_97_98,
         )
+    }
+
+    private val migration_97_98 = object : Migration(97, 98) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // writing_prompts 去掉 bookUrl 列，改为全局化
+            db.execSQL(
+                """CREATE TABLE IF NOT EXISTS `writing_prompts_new` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `title` TEXT NOT NULL,
+                    `content` TEXT NOT NULL,
+                    `type` TEXT NOT NULL DEFAULT 'other',
+                    `sortOrder` INTEGER NOT NULL DEFAULT 0,
+                    `createTime` INTEGER NOT NULL DEFAULT 0,
+                    `updateTime` INTEGER NOT NULL DEFAULT 0
+                )"""
+            )
+            db.execSQL("INSERT INTO `writing_prompts_new` (`id`, `title`, `content`, `type`, `sortOrder`, `createTime`, `updateTime`) SELECT `id`, `title`, `content`, `type`, `sortOrder`, `createTime`, `updateTime` FROM `writing_prompts`")
+            db.execSQL("DROP TABLE `writing_prompts`")
+            db.execSQL("ALTER TABLE `writing_prompts_new` RENAME TO `writing_prompts`")
+        }
     }
 
     private val migration_96_97 = object : Migration(96, 97) {

@@ -13,7 +13,6 @@ import io.legado.app.data.appDb
 import io.legado.app.data.entities.WritingPrompt
 import io.legado.app.databinding.DialogPromptManageBinding
 import io.legado.app.databinding.ItemPromptBinding
-import io.legado.app.utils.GSON
 import io.legado.app.utils.setLayout
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
@@ -22,20 +21,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * 全局提示词管理对话框
+ * 完全全局化，不绑定任何书籍
+ */
 class PromptManageDialog : BaseDialogFragment(R.layout.dialog_prompt_manage) {
 
     private val binding by viewBinding(DialogPromptManageBinding::bind)
     private val adapter by lazy { PromptAdapter() }
     private var prompts = mutableListOf<WritingPrompt>()
 
-    private val bookUrl: String
-        get() = arguments?.getString(ARG_BOOK_URL) ?: ""
-
     companion object {
-        private const val ARG_BOOK_URL = "bookUrl"
-        fun newInstance(bookUrl: String) = PromptManageDialog().apply {
-            arguments = Bundle().apply { putString(ARG_BOOK_URL, bookUrl) }
-        }
+        fun newInstance() = PromptManageDialog()
     }
 
     override fun onStart() {
@@ -51,9 +48,8 @@ class PromptManageDialog : BaseDialogFragment(R.layout.dialog_prompt_manage) {
     }
 
     private fun loadPrompts() {
-        if (bookUrl.isBlank()) return
         lifecycleScope.launch(Dispatchers.IO) {
-            val list = appDb.writingPromptDao.getByBook(bookUrl).sortedBy { it.sortOrder }
+            val list = appDb.writingPromptDao.all.sortedBy { it.sortOrder }
             withContext(Dispatchers.Main) {
                 prompts = list.toMutableList()
                 adapter.setItems(prompts.toList())
@@ -71,7 +67,6 @@ class PromptManageDialog : BaseDialogFragment(R.layout.dialog_prompt_manage) {
                 if (text.isNullOrBlank()) return@setPositiveButton
                 lifecycleScope.launch(Dispatchers.IO) {
                     val prompt = WritingPrompt(
-                        bookUrl = bookUrl,
                         title = "提示词 ${prompts.size + 1}",
                         content = text,
                         type = "custom",

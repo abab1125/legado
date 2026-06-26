@@ -24,6 +24,7 @@ import io.legado.app.lib.theme.primaryTextColor
 import io.legado.app.utils.applyTint
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
+import io.legado.app.ui.write.PromptManageDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -54,6 +55,19 @@ class WriteDeskActivity :
 
         binding.titleBar.findViewById<View>(R.id.search_view)?.let { search ->
             search.applyTint(primaryTextColor)
+        }
+
+        binding.titleBar.menu.add("提示词库").apply {
+            setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS)
+        }
+        binding.titleBar.toolbar.setOnMenuItemClickListener { item ->
+            when (item.title.toString()) {
+                "提示词库" -> {
+                    PromptManageDialog.newInstance().show(supportFragmentManager, "prompt")
+                    true
+                }
+                else -> false
+            }
         }
     }
 

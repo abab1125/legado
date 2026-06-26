@@ -362,3 +362,19 @@ main                    # 稳定分支，推送到 GitHub Actions 编译 APK
 - 原始仓库：https://github.com/Jingshiro/legado
 - 官方 legado：https://github.com/gedoor/legado（已归档清空）
 - 本项目本地路径：`/Users/ma/开发/workSpace/legado/`
+
+## 九、CodeGraph 代码索引
+
+本目录已建立 CodeGraph 索引（`.codegraph/`），支持符号查询、调用链追踪、影响范围分析。
+
+**用法：**
+```bash
+cd /Users/ma/开发/workSpace/legado
+codegraph query "ClassName"         # 搜索符号
+codegraph callers ClassName         # 找谁调了它
+codegraph callees ClassName         # 它调了谁
+codegraph impact ClassName          # 改它影响哪些代码
+codegraph files                     # 看项目文件结构
+```
+
+**注意：** CodeGraph 用完即关，不要常驻后台。

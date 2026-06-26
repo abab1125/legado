@@ -40,8 +40,8 @@ object ThoughtImageExporter {
         val width = 1125
         val horizontalPadding = 36
         val topBarHeight = 6
-        val topPadding = 22
-        val bottomPadding = 28
+        val topPadding = 18
+        val bottomPadding = 20
         val contentWidth = width - horizontalPadding * 2
         val textInset = 14
         val typeface = resolveReadTypeface()
@@ -97,7 +97,7 @@ object ThoughtImageExporter {
             strokeWidth = 1f
         }
         val thoughtBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = 0x145A7C62
+            color = 0x125A7C62
             style = Paint.Style.FILL
         }
 
@@ -110,26 +110,26 @@ object ThoughtImageExporter {
             thought.selectedText,
             selectedPaint,
             contentWidth - textInset * 2,
-            lineSpacingMultiplier = 1.8f
+            lineSpacingMultiplier = 1.5f
         )
         val thoughtTitle = "[感想]"
         val thoughtLayout = createLayout(
             thoughtText,
             thoughtPaint,
             contentWidth - textInset * 2,
-            lineSpacingMultiplier = 1.6f
+            lineSpacingMultiplier = 1.4f
         )
 
         val metaHeight = (metaPaint.fontMetrics.bottom - metaPaint.fontMetrics.top).toInt()
         val thoughtTitleHeight = (thoughtTitlePaint.fontMetrics.bottom - thoughtTitlePaint.fontMetrics.top).toInt()
-        val selectedTopGap = 16
-        val selectedBottomGap = 18
+        val selectedTopGap = 12
+        val selectedBottomGap = 14
         val dividerTopGap = 2
-        val dividerBottomGap = 18
-        val thoughtContainerPaddingTop = 12
+        val dividerBottomGap = 12
+        val thoughtContainerPaddingTop = 10
         val thoughtContainerPaddingHorizontal = textInset
-        val thoughtTitleBottomGap = 10
-        val thoughtContainerPaddingBottom = 14
+        val thoughtTitleBottomGap = 8
+        val thoughtContainerPaddingBottom = 10
         val thoughtContainerHeight = thoughtContainerPaddingTop +
             thoughtTitleHeight +
             thoughtTitleBottomGap +
@@ -166,6 +166,14 @@ object ThoughtImageExporter {
         )
 
         val selectedTop = metaBaseline + metaPaint.fontMetrics.bottom + selectedTopGap
+        // 选中文字区域背景，与 HTML 模板 rgba(90,124,98,0.12) 一致
+        canvas.drawRect(
+            horizontalPadding.toFloat(),
+            selectedTop,
+            (width - horizontalPadding).toFloat(),
+            selectedTop + selectedLayout.height,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x1F5A7C62 }
+        )
         canvas.drawRect(
             horizontalPadding.toFloat(),
             selectedTop,

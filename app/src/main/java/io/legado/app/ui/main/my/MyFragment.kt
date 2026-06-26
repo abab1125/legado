@@ -15,6 +15,7 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.constant.PreferKey
 import io.legado.app.databinding.FragmentMyConfigBinding
 import io.legado.app.help.config.ThemeConfig
+import io.legado.app.help.AppWebDav
 import io.legado.app.help.storage.Backup
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.dialogs.selector
@@ -166,45 +167,125 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
     }
 
     private fun showWebDavDialog() {
-        val url = requireContext().defaultSharedPreferences.getString(PreferKey.webDavUrl, "") ?: ""
-        val account = requireContext().defaultSharedPreferences.getString(PreferKey.webDavAccount, "") ?: ""
-        val password = requireContext().defaultSharedPreferences.getString(PreferKey.webDavPassword, "") ?: ""
+        val ctx = requireContext()
+        val url = ctx.defaultSharedPreferences.getString(PreferKey.webDavUrl, "") ?: ""
+        val account = ctx.defaultSharedPreferences.getString(PreferKey.webDavAccount, "") ?: ""
+        val password = ctx.defaultSharedPreferences.getString(PreferKey.webDavPassword, "") ?: ""
+        val subDir = ctx.defaultSharedPreferences.getString(PreferKey.webDavDir, "") ?: ""
+        val deviceName = ctx.defaultSharedPreferences.getString(PreferKey.webDavDeviceName, "") ?: ""
 
-        val layout = LinearLayout(requireContext()).apply {
+        val density = ctx.resources.displayMetrics.density
+        val hPadding = (16 * density).toInt()
+        val vPadding = (8 * density).toInt()
+
+        val layout = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(64, 32, 64, 0)
+            setPadding(hPadding, vPadding, hPadding, 0)
         }
 
-        val etUrl = android.widget.EditText(requireContext()).apply {
+        val etUrl = android.widget.EditText(ctx).apply {
             hint = getString(R.string.web_dav_url)
             setText(url)
             inputType = InputType.TYPE_CLASS_TEXT
         }
-        val etAccount = android.widget.EditText(requireContext()).apply {
+        val etAccount = android.widget.EditText(ctx).apply {
             hint = getString(R.string.web_dav_account)
             setText(account)
             inputType = InputType.TYPE_CLASS_TEXT
         }
-        val etPassword = android.widget.EditText(requireContext()).apply {
+        val etPassword = android.widget.EditText(ctx).apply {
             hint = getString(R.string.web_dav_pw)
             setText(password)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        val etSubDir = android.widget.EditText(ctx).apply {
+            hint = getString(R.string.sub_dir)
+            setText(subDir)
+            inputType = InputType.TYPE_CLASS_TEXT
+        }
+        val etDeviceName = android.widget.EditText(ctx).apply {
+            hint = getString(R.string.webdav_device_name)
+            setText(deviceName)
+            inputType = InputType.TYPE_CLASS_TEXT
         }
 
         layout.addView(etUrl)
         layout.addView(etAccount)
         layout.addView(etPassword)
+        layout.addView(etSubDir)
+        layout.addView(etDeviceName)
 
-        alert(R.string.web_dav_set) {
+        // 底部按钮容器
+        val buttonLayout = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.END
+            setPadding(hPadding, vPadding, hPadding, vPadding)
+        }
+
+        val btnSave = com.google.android.material.button.MaterialButton(
+            ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle
+        ).apply {
+            text = getString(R.string.save_config)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { marginEnd = (8 * density).toInt() }
+        }
+
+        val btnUpload = com.google.android.material.button.MaterialButton(
+            ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle
+        ).apply {
+            text = getString(R.string.upload_to_cloud)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        buttonLayout.addView(btnSave)
+        buttonLayout.addView(btnUpload)
+        layout.addView(buttonLayout)
+
+        val dialog = alert(R.string.web_dav_set) {
             customView { layout }
-            yesButton {
-                requireContext().putPrefString(PreferKey.webDavUrl, etUrl.text.toString())
-                requireContext().putPrefString(PreferKey.webDavAccount, etAccount.text.toString())
-                requireContext().putPrefString(PreferKey.webDavPassword, etPassword.text.toString())
-                requireContext().toastOnUi("WebDav 设置已保存")
+        }
+
+        btnSave.setOnClickListener {
+            saveWebDavConfig(etUrl, etAccount, etPassword, etSubDir, etDeviceName)
+            ctx.toastOnUi(R.string.save_config)
+            dialog.dismiss()
+        }
+
+        btnUpload.setOnClickListener {
+            saveWebDavConfig(etUrl, etAccount, etPassword, etSubDir, etDeviceName)
+            dialog.dismiss()
+            lifecycleScope.launch(IO) {
+                try {
+                    AppWebDav.upConfig()
+                    Backup.backupLocked(requireContext(), null)
+                    ctx.toastOnUi(R.string.backup_success)
+                } catch (e: Throwable) {
+                    ensureActive()
+                    ctx.toastOnUi("上传失败: ${e.localizedMessage}")
+                }
             }
-            noButton {}
-        }.show()
+        }
+
+        dialog.show()
+    }
+
+    private fun saveWebDavConfig(
+        etUrl: android.widget.EditText,
+        etAccount: android.widget.EditText,
+        etPassword: android.widget.EditText,
+        etSubDir: android.widget.EditText,
+        etDeviceName: android.widget.EditText
+    ) {
+        requireContext().putPrefString(PreferKey.webDavUrl, etUrl.text.toString())
+        requireContext().putPrefString(PreferKey.webDavAccount, etAccount.text.toString())
+        requireContext().putPrefString(PreferKey.webDavPassword, etPassword.text.toString())
+        requireContext().putPrefString(PreferKey.webDavDir, etSubDir.text.toString())
+        requireContext().putPrefString(PreferKey.webDavDeviceName, etDeviceName.text.toString())
     }
 
     private fun startLocalBackup() {

@@ -1058,6 +1058,8 @@
     <string name="image_retain_number_summary">保留已读章节数量 %s</string>
     <string name="image_retain_number">漫画保留数量</string>
     <string name="export_pics_file">TXT 导出图片</string>
+    <string name="upload_to_cloud">上传到云端</string>
+    <string name="save_config">保存配置</string>
     <!-- string end -->
     <string name="error_decode_bitmap">图片解码失败</string>
     <string name="error_image_url_empty">图片链接为空，检查替换净化规则</string>

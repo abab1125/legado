@@ -11,216 +11,393 @@
       :root {
         --card-font-family: sans-serif;
       }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        margin: 0;
-        padding: 0;
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        margin: 0; padding: 0;
         background-color: transparent;
+        overflow: hidden;
       }
 
-      /* 卡片占满视口宽度，高度随内容自然撑开 */
+      /* ── 共用基础 ── */
       .card {
         width: 100vw;
-        padding: 20px 22px 18px;
         position: relative;
         font-family: var(--card-font-family);
-        /* 防止截屏时内容被截断 */
         overflow: visible;
+        display: none;
       }
+      .card.active { display: block; margin: 0; }
 
-      /* 顶部信息行：上下结构，允许自动换行 */
       .header-row {
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        margin-bottom: 18px;
-        opacity: 0.8;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
       }
-
-      .header-row span {
-        word-wrap: break-word;
-        white-space: pre-wrap;
-      }
-
+      .header-row span { word-wrap: break-word; white-space: pre-wrap; }
       .header-row span:first-child {
-        font-size: 14px;
-        margin-bottom: 4px;
+        font-size: 14px; font-weight: 600;
+        flex: 1; min-width: 0;
       }
-
       .header-row span:last-child {
-        font-size: 13px;
-        opacity: 0.8;
+        font-size: 12px; opacity: 0.6;
+        flex-shrink: 0; text-align: right;
       }
 
-      /* 原文内容 */
       .content {
-        font-size: 18px;
-        line-height: 1.75;
-        margin-bottom: 10px;
-        white-space: pre-wrap;
-        word-wrap: break-word;
+        font-size: 17px; line-height: 1.6;
+        white-space: pre-wrap; word-wrap: break-word;
       }
 
-      /* 感想区 */
       .thought-box {
-        font-size: 15px;
-        line-height: 1.6;
-        white-space: pre-wrap;
-        word-wrap: break-word;
+        font-size: 15px; line-height: 1.5;
+        white-space: pre-wrap; word-wrap: break-word;
       }
-
+      .thought-box.hidden { display: none !important; }
       .thought-label {
-        font-size: 12px;
-        margin-bottom: 4px;
-        display: block;
-        opacity: 0.65;
-        font-weight: bold;
-        letter-spacing: 0.05em;
+        font-size: 11px; font-weight: 700;
+        letter-spacing: 0.08em;
+        display: block; margin-bottom: 4px;
       }
 
-      /* 空感想时隐藏整个框 */
-      .thought-box.hidden {
-        display: none !important;
-      }
-
-      /* ── 风格 0：默认经典 ── */
+      /* ══════════════════════════════════ */
+      /* ── 风格 0：现代晨露 · 鼠尾草绿 ── */
+      /* ══════════════════════════════════ */
       .style-default {
-        background: #f5f5f0;
-        border: 2px solid #5a7c62;
-        color: #3d3d3d;
+        background: linear-gradient(175deg, #fafaf7 0%, #f5f3ee 40%, #f8f6f2 100%);
+        color: #3d3d38;
+        padding: 20px 22px 18px;
+        border-radius: 6px;
+        border: 1px solid #e0dbd1;
+        box-shadow:
+          0 1px 2px rgba(120,110,90,0.04),
+          0 3px 10px rgba(120,110,90,0.06),
+          0 8px 28px rgba(120,110,90,0.05),
+          inset 0 1px 0 rgba(255,255,255,0.7);
+        overflow: hidden;
       }
       .style-default::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 6px;
-        background: #5a7c62;
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0;
+        height: 3.5px;
+        background: linear-gradient(90deg, #8a9e7f 0%, #a3b899 30%, #b8c8a8 60%, #8a9e7f 100%);
+        border-radius: 6px 6px 0 0;
+        opacity: 0.85;
+      }
+      .style-default::after {
+        content: '';
+        position: absolute; top: 16px; right: 18px;
+        width: 40px; height: 40px;
+        background: radial-gradient(circle, rgba(138,158,127,0.06) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
       }
       .style-default .header-row {
-        color: #5a7c62;
+        color: #5a6e4f;
+        padding-bottom: 10px; margin-bottom: 14px;
+        border-bottom: 1px solid #e6e2d8;
+        position: relative;
+      }
+      .style-default .header-row::after {
+        content: '';
+        position: absolute; bottom: -1px; left: 0;
+        width: 32px; height: 2px;
+        background: #8a9e7f;
+        border-radius: 1px; opacity: 0.7;
       }
       .style-default .content {
-        background: rgba(90, 124, 98, 0.12);
-        padding: 8px 12px;
-        border-left: 3px solid #5a7c62;
-        border-radius: 2px;
+        background: linear-gradient(135deg, rgba(138,158,127,0.07) 0%, rgba(138,158,127,0.03) 100%);
+        padding: 12px 15px;
+        border-left: 3px solid #b8c8a8;
+        border-radius: 0 5px 5px 0;
+        margin-bottom: 14px;
+        line-height: 1.65;
+        position: relative;
       }
       .style-default .thought-box {
-        background: rgba(90, 124, 98, 0.07);
-        padding: 6px 10px;
+        background: rgba(138,158,127,0.05);
+        padding: 10px 14px;
         border-radius: 6px;
+        border: 1px solid rgba(138,158,127,0.12);
+        position: relative;
       }
       .style-default .thought-label {
-        color: #5a7c62;
+        color: #6b8a5c;
+        display: inline-block;
+        position: relative;
+        padding-left: 14px;
+      }
+      .style-default .thought-label::before {
+        content: '';
+        position: absolute; left: 0; top: 50%;
+        transform: translateY(-50%);
+        width: 6px; height: 6px;
+        background: #8a9e7f;
+        border-radius: 50%; opacity: 0.7;
       }
 
-      /* ── 风格 1：暖色调黏土 ── */
+      /* ══════════════════════════════════ */
+      /* ── 风格 1：日式稻香 · 暖燕麦 ── */
+      /* ══════════════════════════════════ */
       .style-clay {
-        background: #fdf2d9;
-        border-radius: 0;
+        background: linear-gradient(180deg, #fdf9f2 0%, #faf4e8 30%, #fbf6ed 100%);
+        color: #5c4f3a;
+        padding: 20px 22px 18px;
+        border-radius: 14px;
+        border: 1px solid #e8dcc5;
         box-shadow:
-          inset 8px 8px 18px #f3e5c8,
-          inset -8px -8px 18px rgba(255, 255, 255, 0.55);
-        color: #8c7851;
+          0 2px 4px rgba(160,140,110,0.05),
+          0 4px 16px rgba(160,140,110,0.08),
+          0 12px 32px rgba(160,140,110,0.06),
+          inset 0 1px 0 rgba(255,255,255,0.9);
+        overflow: hidden;
+      }
+      .style-clay::before {
+        content: '';
+        position: absolute; top: -20px; right: -20px;
+        width: 80px; height: 80px;
+        background: radial-gradient(circle, rgba(200,170,120,0.1) 0%, transparent 65%);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+      .style-clay::after {
+        content: '';
+        position: absolute; bottom: 10px; right: 16px;
+        width: 50px; height: 30px;
+        background: repeating-linear-gradient(45deg,
+          transparent, transparent 3px,
+          rgba(180,150,110,0.04) 3px, rgba(180,150,110,0.04) 4px);
+        border-radius: 4px;
+        pointer-events: none;
+      }
+      .style-clay .header-row {
+        color: #8b6914;
+        padding-bottom: 10px; margin-bottom: 14px;
+        border-bottom: 1px solid #e8dcc5;
+        position: relative;
+      }
+      .style-clay .header-row span:first-child { position: relative; }
+      .style-clay .content {
+        background: linear-gradient(180deg, rgba(180,150,110,0.08) 0%, rgba(180,150,110,0.04) 100%);
+        padding: 12px 15px;
+        border-radius: 10px;
+        margin-bottom: 14px;
+        line-height: 1.65;
+        box-shadow: inset 0 1px 2px rgba(255,255,255,0.6);
+        position: relative;
       }
       .style-clay .thought-box {
-        background: #f7efe0;
-        padding: 6px 10px;
+        background: rgba(255,255,255,0.55);
+        padding: 10px 14px;
         border-radius: 10px;
-        box-shadow: inset 4px 4px 10px #e6dec9;
+        border: 1px solid #e8dcc5;
+        box-shadow: 0 1px 3px rgba(180,150,110,0.06);
+        position: relative;
       }
       .style-clay .thought-label {
-        opacity: 0.7;
+        color: #a67c2e;
+        display: inline-flex;
+        align-items: center; gap: 6px;
+      }
+      .style-clay .thought-label::after {
+        content: '\2022';
+        font-size: 14px;
+        color: #c9a44b; opacity: 0.6;
       }
 
-      /* ── 风格 2：水墨古风 ── */
+      /* ══════════════════════════════════ */
+      /* ── 风格 2：新中式 · 墨韵留白 ── */
+      /* ══════════════════════════════════ */
       .style-ink {
-        background: #fcfaf2;
-        border: 1px solid #d1c7b7;
-        color: #222;
-        padding-top: 32px;
+        background: linear-gradient(180deg, #fefdf9 0%, #fdfaf2 50%, #fefcf7 100%);
+        color: #2c2c2c;
+        padding: 24px 22px 18px;
+        border: 1px solid #d8d0bd;
+        border-radius: 3px;
+        box-shadow:
+          0 2px 4px rgba(80,60,30,0.04),
+          0 6px 20px rgba(80,60,30,0.06),
+          0 16px 40px rgba(80,60,30,0.04);
+        overflow: hidden;
+      }
+      .style-ink::before {
+        content: '';
+        position: absolute; top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: repeating-linear-gradient(0deg,
+          transparent, transparent 28px,
+          rgba(180,160,130,0.015) 28px, rgba(180,160,130,0.015) 29px);
+        pointer-events: none; z-index: 0;
       }
       .style-ink .header-row {
-        border-bottom: 1px solid #d1c7b7;
-        padding-bottom: 10px;
+        color: #4a3828;
+        padding-bottom: 10px; margin-bottom: 16px;
+        border-bottom: 1px solid #d8d0bd;
+        position: relative; z-index: 1;
+      }
+      .style-ink .header-row::before {
+        content: '';
+        position: absolute; left: 0; bottom: -1px;
+        width: 100%; height: 1px;
+        background: linear-gradient(90deg,
+          rgba(166,44,44,0.5) 0%, rgba(166,44,44,0.15) 40%, transparent 70%);
+        border-radius: 1px;
       }
       .style-ink .content {
-        padding: 8px 0;
+        padding: 10px 0;
+        margin-bottom: 14px;
+        line-height: 1.7; font-size: 17px;
+        position: relative; z-index: 1;
       }
       .style-ink .thought-box {
-        border-left: 2.5px solid #a62c2c;
-        padding-left: 12px;
+        border-left: 2.5px solid #b84444;
+        padding: 4px 0 4px 14px;
         color: #555;
+        position: relative; z-index: 1;
+        background: linear-gradient(90deg, rgba(184,68,68,0.03) 0%, transparent 40%);
+        border-radius: 0 3px 3px 0;
       }
       .style-ink .thought-label {
         color: #a62c2c;
+        letter-spacing: 0.12em;
+        position: relative;
       }
 
-      /* ── 风格 3：民国报纸风 ── */
+      /* ══════════════════════════════════ */
+      /* ── 风格 3：现代编辑 · 几何叙事 ── */
+      /* ══════════════════════════════════ */
       .style-news {
-        background: #ede9de;
-        border: 2px solid #333;
-        padding: 20px 18px;
+        background: #fbfaf7;
+        color: #1a1a1a;
+        padding: 18px 20px 16px;
+        border: 2px solid #2a2a2a;
+        border-radius: 2px;
+        box-shadow:
+          4px 4px 0px rgba(42,42,42,0.06),
+          8px 8px 0px rgba(42,42,42,0.03),
+          0 8px 24px rgba(0,0,0,0.05);
+        position: relative;
+      }
+      .style-news::before {
+        content: '';
+        position: absolute; top: 10px; left: -6px;
+        width: 10px; height: 10px;
+        background: #e04a3c;
+        border-radius: 1px; opacity: 0.8; z-index: 2;
+      }
+      .style-news::after {
+        content: '';
+        position: absolute; bottom: 12px; right: 14px;
+        width: 28px; height: 28px;
+        border: 2px solid rgba(42,42,42,0.08);
+        border-radius: 50%;
+        pointer-events: none;
       }
       .style-news .header-row {
-        border-bottom: 3px double #333;
-        color: #1d4ed8;
-        font-weight: bold;
-        padding-bottom: 6px;
+        color: #1a3c7a; font-weight: 700;
+        padding-bottom: 8px; margin-bottom: 14px;
+        border-bottom: 3px double #2a2a2a;
+        position: relative;
       }
-      .style-news .book-name {
-        color: #b91c1c;
-        font-size: 15px;
+      .style-news .header-row span:first-child {
+        font-size: 15px; letter-spacing: 0.03em;
+        position: relative;
+      }
+      .style-news .header-row span:last-child {
+        font-size: 11px; opacity: 0.7; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.06em;
+        background: rgba(42,42,42,0.04);
+        padding: 2px 8px; border-radius: 2px;
       }
       .style-news .content {
-        color: #000;
         text-align: justify;
+        margin-bottom: 14px; line-height: 1.65;
+        position: relative;
       }
       .style-news .thought-box {
-        border-top: 1px dashed #444;
-        padding: 6px 8px 4px;
-        background: rgba(0, 0, 0, 0.03);
-        color: #333;
+        border-top: 1px solid #2a2a2a;
+        padding: 10px 0 0;
+        color: #444;
+        position: relative;
+      }
+      .style-news .thought-label {
+        color: #8b1a1a;
+        font-size: 10px; letter-spacing: 0.1em;
+        position: relative;
+        display: inline-block; padding-left: 4px;
       }
 
-      /* ── 风格 4：文艺黑金 ── */
+      /* ══════════════════════════════════ */
+      /* ── 风格 4：暗夜鎏金 · 深邃质感 ── */
+      /* ══════════════════════════════════ */
       .style-art {
-        background: #1a1a1a;
-        color: #d4d4d4;
-        padding: 24px 26px 20px;
+        background: linear-gradient(175deg, #1c1c1e 0%, #18181a 40%, #1a1a1c 100%);
+        color: #d0d0cf;
+        padding: 22px 24px 18px;
+        border-radius: 6px;
+        border: 1px solid #2e2e30;
+        box-shadow:
+          0 2px 6px rgba(0,0,0,0.3),
+          0 8px 24px rgba(0,0,0,0.25),
+          0 20px 50px rgba(0,0,0,0.2),
+          inset 0 1px 0 rgba(255,255,255,0.03);
+        overflow: hidden;
+      }
+      .style-art::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background:
+          radial-gradient(ellipse at 80% 10%, rgba(200,155,40,0.06) 0%, transparent 55%),
+          radial-gradient(ellipse at 20% 85%, rgba(200,155,40,0.04) 0%, transparent 50%);
+        pointer-events: none; z-index: 0;
+      }
+      .style-art::after {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: repeating-linear-gradient(0deg,
+          transparent, transparent 3px,
+          rgba(255,255,255,0.006) 3px, rgba(255,255,255,0.006) 4px);
+        pointer-events: none; z-index: 0;
       }
       .style-art .header-row {
-        color: #a16207;
-        border-left: 2px solid #a16207;
-        padding-left: 10px;
+        color: #c9941a;
+        padding-left: 12px; padding-bottom: 10px;
+        margin-bottom: 14px;
+        border-left: 2px solid #c9941a;
+        border-bottom: 1px solid #2e2e30;
+        position: relative; z-index: 1;
+      }
+      .style-art .header-row::after {
+        content: '';
+        position: absolute; bottom: -1px; left: -2px;
+        width: 20px; height: 1.5px;
+        background: #c9941a;
+        border-radius: 1px; opacity: 0.7;
       }
       .style-art .content {
-        font-size: 19px;
-        border-bottom: 1px solid #2e2e2e;
-        padding-bottom: 10px;
-        margin-bottom: 10px;
+        font-size: 18px; line-height: 1.65;
+        margin-bottom: 14px; padding-bottom: 14px;
+        border-bottom: 1px solid #2e2e30;
+        position: relative; z-index: 1;
+        color: #e2e2e0;
       }
       .style-art .thought-box {
-        color: #ddd;
-        padding-top: 4px;
+        color: #c5c5c3;
+        position: relative; z-index: 1;
+        padding-left: 2px;
       }
       .style-art .thought-label {
-        color: #a16207;
+        color: #c9941a;
+        letter-spacing: 0.12em;
+        display: inline-flex;
+        align-items: center; gap: 8px;
       }
-
-      /* 默认隐藏所有卡片，仅激活的显示 */
-      .card {
-        display: none;
-      }
-      .card.active {
-        display: block;
+      .style-art .thought-label::after {
+        content: '';
+        display: inline-block;
+        width: 16px; height: 1px;
+        background: rgba(200,155,40,0.5);
+        border-radius: 0.5px;
       }
     </style>
   </head>
@@ -386,11 +563,11 @@
         target.classList.add("active");
 
         var bgMap = {
-          0: "#ffffff",
-          1: "#fdf2d9",
-          2: "#fcfaf2",
-          3: "#ede9de",
-          4: "#000000",
+          0: "#f5f3ee",
+          1: "#faf4e8",
+          2: "#fdfaf2",
+          3: "#fbfaf7",
+          4: "#1c1c1e",
         };
         document.body.style.backgroundColor = bgMap[index] || "#ffffff";
       }

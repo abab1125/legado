@@ -40,6 +40,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import splitties.init.appCtx
 import android.util.Base64
+import io.legado.app.utils.share
+import java.io.File
+import java.io.FileOutputStream
 
 class ShareThoughtDialog : BaseDialogFragment(R.layout.dialog_share_thought) {
 
@@ -98,6 +101,7 @@ class ShareThoughtDialog : BaseDialogFragment(R.layout.dialog_share_thought) {
         adapter.setItems(styles)
 
         binding.btnSave.setOnClickListener { saveImage() }
+        binding.btnShare.setOnClickListener { shareImage() }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -232,28 +236,59 @@ class ShareThoughtDialog : BaseDialogFragment(R.layout.dialog_share_thought) {
     private fun saveImage() {
         binding.progressBar.isVisible = true
         val ctx = requireContext()
-        val bitmap = captureWebView(binding.webView)
-        if (bitmap == null) {
-            binding.progressBar.isVisible = false
-            ctx.toastOnUi(R.string.thought_image_save_failed)
-            return
-        }
-        lifecycleScope.launch {
-            runCatching {
-                withContext(Dispatchers.IO) {
-                    val fileName = "thought_${System.currentTimeMillis()}.png"
-                    saveToGallery(ctx, bitmap, fileName)
-                }
-            }.onSuccess { fileUri ->
-                binding.progressBar.isVisible = false
-                if (fileUri != null) {
-                    ctx.toastOnUi(getString(R.string.thought_image_saved, fileUri.toString()))
-                } else {
-                    ctx.toastOnUi(R.string.thought_image_save_failed)
-                }
-            }.onFailure {
+        captureWebView(binding.webView) { bitmap ->
+            if (bitmap == null) {
                 binding.progressBar.isVisible = false
                 ctx.toastOnUi(R.string.thought_image_save_failed)
+                return@captureWebView
+            }
+            lifecycleScope.launch {
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        val fileName = "thought_${System.currentTimeMillis()}.png"
+                        saveToGallery(ctx, bitmap, fileName)
+                    }
+                }.onSuccess { fileUri ->
+                    binding.progressBar.isVisible = false
+                    if (fileUri != null) {
+                        ctx.toastOnUi(getString(R.string.thought_image_saved, fileUri.toString()))
+                    } else {
+                        ctx.toastOnUi(R.string.thought_image_save_failed)
+                    }
+                }.onFailure {
+                    binding.progressBar.isVisible = false
+                    ctx.toastOnUi(R.string.thought_image_save_failed)
+                }
+            }
+        }
+    }
+
+    private fun shareImage() {
+        binding.progressBar.isVisible = true
+        val ctx = requireContext()
+        captureWebView(binding.webView) { bitmap ->
+            if (bitmap == null) {
+                binding.progressBar.isVisible = false
+                ctx.toastOnUi(R.string.thought_image_save_failed)
+                return@captureWebView
+            }
+            lifecycleScope.launch {
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        val file = File(ctx.externalCacheDir, "thought_share.png")
+                        FileOutputStream(file).use {
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+                        }
+                        file.setReadable(true, false)
+                        file
+                    }
+                }.onSuccess { file ->
+                    binding.progressBar.isVisible = false
+                    ctx.share(file, "image/png")
+                }.onFailure {
+                    binding.progressBar.isVisible = false
+                    ctx.toastOnUi(R.string.thought_image_save_failed)
+                }
             }
         }
     }
@@ -275,25 +310,43 @@ class ShareThoughtDialog : BaseDialogFragment(R.layout.dialog_share_thought) {
     }
 
     /**
-     * 在主线程截取 WebView 全部内容（含超出可见屏幕的部分）。
+     * 截取 WebView 中活跃卡片的精确内容。
+     * 通过 JS 查询 .card.active 元素的 getBoundingClientRect().height，
+     * 再乘以屏幕密度得到设备像素高度，彻底避免 contentHeight*scale 带来的底部空白。
      * 应用内部已在 App 初始化阶段开启 WebView.enableSlowWholeDocumentDraw()，
-     * 因此直接 draw 即可完整截取而不会被视野裁剪，也不用再去瞎切软件图层导致文字渲染丢失。
+     * 因此 draw 可以完整截取而不会被视野裁剪。
      */
-    private fun captureWebView(webView: WebView): Bitmap? {
-        return try {
-            val width = webView.measuredWidth.takeIf { it > 0 } ?: return null
-            val height = (webView.contentHeight * webView.scale).toInt().takeIf { it > 0 }
-                ?: webView.measuredHeight.takeIf { it > 0 } ?: return null
+    private fun captureWebView(webView: WebView, callback: (Bitmap?) -> Unit) {
+        val width = webView.measuredWidth.takeIf { it > 0 }
+        if (width == null) {
+            callback(null)
+            return
+        }
+        webView.scrollTo(0, 0)
 
-            // 必须滚回顶部，否则绘制会从当前 scrollY 起始，造成顶部被切掉
-            webView.scrollTo(0, 0)
+        val measureJs = """
+            (function() {
+                var card = document.querySelector('.card.active');
+                if (!card) return '0';
+                return String(Math.ceil(card.getBoundingClientRect().height));
+            })()
+        """.trimIndent()
 
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            webView.draw(Canvas(bitmap))
-
-            bitmap
-        } catch (e: Exception) {
-            null
+        webView.evaluateJavascript(measureJs) { result ->
+            try {
+                val cssHeight = result.trim().removeSurrounding("\"").toInt()
+                if (cssHeight <= 0) {
+                    callback(null)
+                    return@evaluateJavascript
+                }
+                val density = webView.resources.displayMetrics.density
+                val bitmapHeight = (cssHeight * density).toInt()
+                val bitmap = Bitmap.createBitmap(width, bitmapHeight, Bitmap.Config.ARGB_8888)
+                webView.draw(Canvas(bitmap))
+                callback(bitmap)
+            } catch (e: Exception) {
+                callback(null)
+            }
         }
     }
 

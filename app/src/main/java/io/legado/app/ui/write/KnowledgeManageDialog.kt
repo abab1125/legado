@@ -135,9 +135,8 @@ class KnowledgeManageDialog : BaseDialogFragment(R.layout.dialog_knowledge_manag
                 val newContent = contentInput.text?.toString()?.trim()
                 if (newTitle.isNullOrBlank() || newContent.isNullOrBlank()) return@setPositiveButton
                 lifecycleScope.launch(Dispatchers.IO) {
-                    kp.title = newTitle
-                    kp.content = newContent
-                    appDb.knowledgePointDao.update(kp)
+                    val updated = kp.copy(title = newTitle.trim(), content = newContent.trim())
+                    appDb.knowledgePointDao.update(updated)
                     loadItems()
                     withContext(Dispatchers.Main) { toastOnUi("已更新") }
                 }

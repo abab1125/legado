@@ -47,10 +47,10 @@ class WriteBookActivity :
         // 操作按钮
         binding.btnNewChapter.setOnClickListener { showNewChapterDialog() }
         binding.btnPrompts.setOnClickListener {
-            PromptManageDialog.newInstance(bookUrl).show(parentFragmentManager, "prompt")
+            PromptManageDialog.newInstance(bookUrl).show(supportFragmentManager, "prompt")
         }
         binding.btnKnowledge.setOnClickListener {
-            KnowledgeManageDialog.newInstance(bookUrl).show(parentFragmentManager, "knowledge")
+            KnowledgeManageDialog.newInstance(bookUrl).show(supportFragmentManager, "knowledge")
         }
         binding.btnOutline.setOnClickListener { toastOnUi("章纲浏览 - 开发中") }
     }

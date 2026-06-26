@@ -126,8 +126,8 @@ class PromptManageDialog : BaseDialogFragment(R.layout.dialog_prompt_manage) {
                 val newContent = editText.text?.toString()?.trim()
                 if (newContent.isNullOrBlank()) return@setPositiveButton
                 lifecycleScope.launch(Dispatchers.IO) {
-                    prompt.content = newContent
-                    appDb.writingPromptDao.update(prompt)
+                    val updated = prompt.copy(content = newContent.trim())
+                    appDb.writingPromptDao.update(updated)
                     loadPrompts()
                     withContext(Dispatchers.Main) { toastOnUi("已更新") }
                 }

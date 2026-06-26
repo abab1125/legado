@@ -58,11 +58,13 @@ class WriteDeskActivity :
     }
 
     private fun observeData() {
-        viewModel.booksFlow
-            .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-            .observe(this) { books ->
-                loadStats(books)
-            }
+        lifecycleScope.launch {
+            viewModel.booksFlow
+                .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+                .collect { books ->
+                    loadStats(books)
+                }
+        }
     }
 
     private fun loadStats(books: List<Book>) {

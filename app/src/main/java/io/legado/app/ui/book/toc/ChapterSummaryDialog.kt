@@ -60,16 +60,16 @@ class ChapterSummaryDialog : BaseDialogFragment(R.layout.dialog_chapter_summary)
             }
         }
 
-        binding.tv_title.text = chapter?.let { "编辑《${it.title}》概要" } ?: "章节概要"
+        binding.tvTitle.text = chapter?.let { "编辑《${it.title}》概要" } ?: "章节概要"
 
         val existingSummary = chapter?.variableMap?.get("summary")
         if (!existingSummary.isNullOrBlank()) {
-            binding.et_summary.setText(existingSummary)
+            binding.etSummary.setText(existingSummary)
         }
 
-        binding.iv_close.setOnClickListener { dismiss() }
-        binding.btn_ai_generate.setOnClickListener { generateSummary() }
-        binding.btn_save.setOnClickListener { saveSummary() }
+        binding.ivClose.setOnClickListener { dismiss() }
+        binding.btnAiGenerate.setOnClickListener { generateSummary() }
+        binding.btnSave.setOnClickListener { saveSummary() }
     }
 
     private fun generateSummary() {
@@ -84,7 +84,7 @@ class ChapterSummaryDialog : BaseDialogFragment(R.layout.dialog_chapter_summary)
             return
         }
 
-        binding.progress_bar.visibility = View.VISIBLE
+        binding.progressBar.visibility = View.VISIBLE
 
         lifecycleScope.launch {
             val result = runCatching {
@@ -132,11 +132,11 @@ class ChapterSummaryDialog : BaseDialogFragment(R.layout.dialog_chapter_summary)
                 }
             }
 
-            binding.progress_bar.visibility = View.GONE
+            binding.progressBar.visibility = View.GONE
 
             result.onSuccess { text ->
                 if (text.isNotBlank()) {
-                    binding.et_summary.setText(text.trim())
+                    binding.etSummary.setText(text.trim())
                 } else {
                     toastOnUi("AI 返回内容为空")
                 }
@@ -148,7 +148,7 @@ class ChapterSummaryDialog : BaseDialogFragment(R.layout.dialog_chapter_summary)
 
     private fun saveSummary() {
         val chapter = chapter ?: return
-        val summaryText = binding.et_summary.text?.toString()?.trim() ?: ""
+        val summaryText = binding.etSummary.text?.toString()?.trim() ?: ""
 
         lifecycleScope.launch {
             runCatching {

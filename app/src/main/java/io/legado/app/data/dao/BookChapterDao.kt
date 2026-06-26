@@ -27,7 +27,7 @@ interface BookChapterDao {
     fun getChapterList(bookUrl: String, start: Int, end: Int): List<BookChapter>
 
     @Query("select * from chapters where bookUrl = :bookUrl and url = :url")
-    fun getChapter(bookUrl: String, url: String): BookChapter?
+    fun getChapterByUrl(bookUrl: String, url: String): BookChapter?
 
     @Query("select * from chapters where bookUrl = :bookUrl and `index` = :index")
     fun getChapter(bookUrl: String, index: Int): BookChapter?

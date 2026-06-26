@@ -47,7 +47,7 @@ class ChapterEditorActivity :
     private fun loadData(bookUrl: String, chapterUrl: String) {
         lifecycleScope.launch(Dispatchers.IO) {
             val b = appDb.bookDao.getBook(bookUrl)
-            val c = appDb.bookChapterDao.getChapter(bookUrl, chapterUrl)
+            val c = appDb.bookChapterDao.getChapterByUrl(bookUrl, chapterUrl)
 
             if (b == null || c == null) {
                 withContext(Dispatchers.Main) {

@@ -14,6 +14,7 @@ import io.legado.app.databinding.ActivityChapterEditorBinding
 import io.legado.app.help.book.BookHelp
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
+import androidx.activity.viewModels
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -97,11 +98,11 @@ class ChapterEditorActivity :
         return super.onPrepareOptionsMenu(menu)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    override fun onCompatOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             1 -> saveContent()
             2 -> discardChanges()
-            else -> return super.onOptionsItemSelected(item)
+            else -> return super.onCompatOptionsItemSelected(item)
         }
         return true
     }

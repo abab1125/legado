@@ -16,6 +16,7 @@ import io.legado.app.utils.fromJsonObject
 import io.legado.app.utils.setLayout
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -59,18 +60,16 @@ class ChapterSummaryDialog : BaseDialogFragment(R.layout.dialog_chapter_summary)
             }
         }
 
-        binding.run {
-            tv_title.text = chapter?.let { "编辑《${it.title}》概要" } ?: "章节概要"
+        binding.tv_title.text = chapter?.let { "编辑《${it.title}》概要" } ?: "章节概要"
 
-            val existingSummary = chapter?.variableMap?.get("summary")
-            if (!existingSummary.isNullOrBlank()) {
-                et_summary.setText(existingSummary)
-            }
-
-            iv_close.setOnClickListener { dismiss() }
-            btn_ai_generate.setOnClickListener { generateSummary() }
-            btn_save.setOnClickListener { saveSummary() }
+        val existingSummary = chapter?.variableMap?.get("summary")
+        if (!existingSummary.isNullOrBlank()) {
+            binding.et_summary.setText(existingSummary)
         }
+
+        binding.iv_close.setOnClickListener { dismiss() }
+        binding.btn_ai_generate.setOnClickListener { generateSummary() }
+        binding.btn_save.setOnClickListener { saveSummary() }
     }
 
     private fun generateSummary() {

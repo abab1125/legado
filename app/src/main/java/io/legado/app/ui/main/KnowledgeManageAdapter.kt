@@ -27,12 +27,11 @@ class KnowledgeManageAdapter(
     }
 
     override fun convert(holder: ItemViewHolder, binding: ItemKnowledgeBinding, item: KnowledgePoint, payloads: MutableList<Any>) {
-        binding.run {
+        binding.apply {
             tvTitle.text = item.title
             tvContent.text = item.content
             tvTag.text = getCategoryLabel(item.category)
             tvTime.text = formatTime(item.updateTime)
-            ivEdit.setOnClickListener { onItemClick(item) }
         }
     }
 

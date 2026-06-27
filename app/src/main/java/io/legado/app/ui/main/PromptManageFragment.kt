@@ -5,7 +5,7 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.legado.app.R
-import io.legado.app.base.VMBaseFragment
+import io.legado.app.base.BaseFragment
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.WritingPrompt
 import io.legado.app.databinding.FragmentPromptManageBinding
@@ -17,7 +17,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class PromptManageFragment() : VMBaseFragment<FragmentPromptManageBinding>(R.layout.fragment_prompt_manage),
+class PromptManageFragment() : BaseFragment(R.layout.fragment_prompt_manage),
     MainFragmentInterface {
 
     constructor(position: Int) : this() {
@@ -25,6 +25,8 @@ class PromptManageFragment() : VMBaseFragment<FragmentPromptManageBinding>(R.lay
     }
 
     override val position: Int? get() = arguments?.getInt("position")
+
+    private val binding by viewBinding(FragmentPromptManageBinding::bind)
 
     private val adapter by lazy {
         PromptManageAdapter(requireContext(),

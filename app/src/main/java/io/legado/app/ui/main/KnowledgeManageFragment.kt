@@ -5,7 +5,7 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.legado.app.R
-import io.legado.app.base.VMBaseFragment
+import io.legado.app.base.BaseFragment
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.KnowledgePoint
 import io.legado.app.databinding.FragmentKnowledgeManageBinding
@@ -16,7 +16,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class KnowledgeManageFragment() : VMBaseFragment<FragmentKnowledgeManageBinding>(R.layout.fragment_knowledge_manage),
+class KnowledgeManageFragment() : BaseFragment(R.layout.fragment_knowledge_manage),
     MainFragmentInterface {
 
     constructor(position: Int) : this() {
@@ -25,7 +25,11 @@ class KnowledgeManageFragment() : VMBaseFragment<FragmentKnowledgeManageBinding>
 
     override val position: Int? get() = arguments?.getInt("position")
 
-    private val adapter by lazy { KnowledgeManageAdapter { showEditDialog(it) } }
+    private val binding by viewBinding(FragmentKnowledgeManageBinding::bind)
+
+    private val adapter by lazy {
+        KnowledgeManageAdapter(requireContext(), onItemClick = { showEditDialog(it) })
+    }
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) = binding.run {
         tvTitle.setText(R.string.knowledge)

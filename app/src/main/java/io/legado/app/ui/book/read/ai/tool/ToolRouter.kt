@@ -99,6 +99,7 @@ object ToolRouter {
                     // ===== 创作工具 =====
                     "insert_chapter_text" -> ToolExecuteResult.Data(handleInsertChapterText(args))
                     "insert_chapter_at" -> handleInsertChapterAt(args)
+                    "update_chapter_content" -> handleUpdateChapterContent(args)
                     else -> ToolExecuteResult.Data("""{"error":"未知工具: $name"}""")
                 }
             } catch (e: Exception) {
@@ -798,5 +799,42 @@ object ToolRouter {
         appDb.bookChapterDao.insert(newChapter)
         // 3) 写入正文文件
         BookHelp.saveText(book, newChapter, data.chapterContent)
+    }
+
+    /**
+     * update_chapter_content：修改指定章节的标题和/或正文
+     */
+    private suspend fun handleUpdateChapterContent(args: Map<*, *>): ToolExecuteResult {
+        val bookUrl = args["bookUrl"] as? String ?: return ToolExecuteResult.Data("""{"error":"bookUrl 参数不能为空"}""")
+        val chapterIndex = (args["chapterIndex"] as? Number)?.toInt()
+            ?: return ToolExecuteResult.Data("""{"error":"chapterIndex 参数不能为空"}""")
+        val newTitle = args["chapterTitle"] as? String
+        val newContent = args["chapterContent"] as? String
+        if (newTitle.isNullOrBlank() && newContent.isNullOrBlank()) {
+            return ToolExecuteResult.Data("""{"error":"chapterTitle 和 chapterContent 至少传一个"}""")
+        }
+        val book = appDb.bookDao.getBook(bookUrl)
+            ?: return ToolExecuteResult.Data("""{"error":"书架中未找到该书籍"}""")
+        val chapter = appDb.bookChapterDao.getChapter(bookUrl, chapterIndex)
+            ?: return ToolExecuteResult.Data("""{"error":"未找到该章节"}""")
+        val desc = buildString {
+            append("修改「${book.name}」${chapter.title}")
+            if (!newTitle.isNullOrBlank()) append(" → 标题改为「$newTitle」")
+            if (!newContent.isNullOrBlank()) append(" → 正文更新（${newContent.length}字）")
+        }
+        return ToolExecuteResult.BatchConfirmation(description = desc) {
+            withContext(Dispatchers.IO) {
+                if (!newTitle.isNullOrBlank()) {
+                    appDb.bookChapterDao.update(chapter.copy(title = newTitle))
+                }
+                if (!newContent.isNullOrBlank()) {
+                    BookHelp.saveText(book, chapter, newContent)
+                }
+            }
+            GSON.toJson(mapOf("success" to true, "data" to mapOf(
+                "bookUrl" to bookUrl, "chapterIndex" to chapterIndex,
+                "titleUpdated" to !newTitle.isNullOrBlank(),
+                "contentUpdated" to !newContent.isNullOrBlank())))
+        }
     }
 }

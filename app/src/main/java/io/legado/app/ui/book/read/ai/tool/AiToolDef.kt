@@ -293,6 +293,19 @@ object AiToolDef {
                         "传入-1表示插入到第一章之前（作为新第一章）。")
                 )
             ),
+            tool(
+                "update_chapter_content",
+                "修改指定章节的标题和/或正文内容。不改变章节索引顺序。" +
+                "如果只传 chapterTitle 不传 chapterContent，则只改标题；反之只改正文。" +
+                "用户确认后执行。",
+                required = listOf("bookUrl", "chapterIndex"),
+                properties = mapOf(
+                    "bookUrl" to prop("string", "当前创作书籍的 bookUrl"),
+                    "chapterIndex" to prop("integer", "要修改的章节索引（0-based）"),
+                    "chapterContent" to prop("string", "新的正文内容（不传则不修改正文）"),
+                    "chapterTitle" to prop("string", "新的章节标题（不传则不修改标题）")
+                )
+            ),
 
             // ===== 已有工具（P2：知识闭环）=====
             tool(

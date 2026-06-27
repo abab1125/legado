@@ -135,7 +135,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             val systemPrompt = buildSystemPrompt(start, end)
             synchronized(_messages) {
                 _messages.clear()
-                _messages.add(ChatMessage(role = "system", systemPrompt))
+                _messages.add(ChatMessage(role = "system", content = systemPrompt))
             }
             AiChatCache.state = AiChatCache.State(
                 bookUrl = currentBookUrl,
@@ -278,7 +278,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         }
 
         synchronized(_messages) {
-            _messages.add(ChatMessage(role = "user", userText, references = references))
+            _messages.add(ChatMessage(role = "user", content = userText, references = references))
         }
         syncCache()
         messagesLiveData.postValue(_messages.toList())
@@ -288,9 +288,9 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 val newSystemPrompt = buildSystemPrompt(start, end, references)
                 synchronized(_messages) {
                     if (_messages.isNotEmpty() && _messages.first().role == "system") {
-                        _messages[0] = ChatMessage(role = "system", newSystemPrompt)
+                        _messages[0] = ChatMessage(role = "system", content = newSystemPrompt)
                     } else {
-                        _messages.add(0, ChatMessage(role = "system", newSystemPrompt))
+                        _messages.add(0, ChatMessage(role = "system", content = newSystemPrompt))
                     }
                 }
 
@@ -348,7 +348,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 }
             } catch (e: Exception) {
                 synchronized(_messages) {
-                    _messages.add(ChatMessage(role = "assistant", "请求失败: ${e.message}"))
+                    _messages.add(ChatMessage(role = "assistant", content = "请求失败: ${e.message}"))
                 }
             } finally {
                 setGenerating(false)
@@ -543,7 +543,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 newMessages.add(toolMsg)
             }
         }
-        newMessages.add(ChatMessage(role = "assistant", "工具调用轮次已达上限，请重新提问。"))
+        newMessages.add(ChatMessage(role = "assistant", content = "工具调用轮次已达上限，请重新提问。"))
         return newMessages
     }
 

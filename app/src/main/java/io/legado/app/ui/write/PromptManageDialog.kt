@@ -105,7 +105,6 @@ class PromptManageDialog : BaseDialogFragment(R.layout.dialog_prompt_manage) {
         ) {
             binding.tvTitle.text = item.title
             binding.tvContent.text = item.content
-            binding.tvMeta.text = item.type
         }
     }
 

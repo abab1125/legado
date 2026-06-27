@@ -113,7 +113,6 @@ class KnowledgeManageDialog : BaseDialogFragment(R.layout.dialog_knowledge_manag
         ) {
             binding.tvTitle.text = item.title
             binding.tvContent.text = item.content
-            binding.tvMeta.text = item.tags ?: ""
         }
     }
 

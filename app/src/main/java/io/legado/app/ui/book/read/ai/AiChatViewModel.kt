@@ -210,49 +210,49 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                                 append("\n")
                             }
                         }
-                    }
-                }
 
-                // 注入用户引用的参考信息（@章节/@知识点/@提示词）
-                if (!references.isNullOrEmpty()) {
-                    append("\n\n【用户引用的参考信息】\n")
-                    for (ref in references) {
-                        when (ref.type) {
-                            "chapter" -> {
-                                val refBook = if (ref.bookUrl != null) appDb.bookDao.getBook(ref.bookUrl) else book
-                                val refChapter = if (ref.bookUrl != null && ref.chapterIndex != null)
-                                    appDb.bookChapterDao.getChapter(ref.bookUrl, ref.chapterIndex) else null
-                                if (refBook != null && refChapter != null) {
-                                    val refContent = BookHelp.getContent(refBook, refChapter)
-                                    append("--- ${refChapter.title} ---\n")
-                                    append(refContent ?: unavailable)
-                                    append("\n")
-                                } else {
-                                    append("【章节】${ref.title}${unavailable}\n")
-                                }
-                            }
-                            "knowledge" -> {
-                                if (ref.id != null) {
-                                    val kp = appDb.knowledgePointDao.getById(ref.id)
-                                    if (kp != null) {
-                                        append("【知识点：${kp.title}】\n${kp.content}\n")
-                                    } else {
-                                        append("【知识点】${ref.title}${unavailable}\n")
+                        // 注入用户引用的参考信息（@章节/@知识点/@提示词）
+                        if (!references.isNullOrEmpty()) {
+                            append("\n\n【用户引用的参考信息】\n")
+                            for (ref in references) {
+                                when (ref.type) {
+                                    "chapter" -> {
+                                        val refBook = if (ref.bookUrl != null) appDb.bookDao.getBook(ref.bookUrl) else book
+                                        val refChapter = if (ref.bookUrl != null && ref.chapterIndex != null)
+                                            appDb.bookChapterDao.getChapter(ref.bookUrl, ref.chapterIndex) else null
+                                        if (refBook != null && refChapter != null) {
+                                            val refContent = BookHelp.getContent(refBook, refChapter)
+                                            append("--- ${refChapter.title} ---\n")
+                                            append(refContent ?: unavailable)
+                                            append("\n")
+                                        } else {
+                                            append("【章节】${ref.title}${unavailable}\n")
+                                        }
                                     }
-                                } else {
-                                    append("【知识点】${ref.title}${unavailable}\n")
-                                }
-                            }
-                            "prompt" -> {
-                                if (ref.id != null) {
-                                    val wp = appDb.writingPromptDao.getById(ref.id)
-                                    if (wp != null) {
-                                        append("【提示词：${wp.title}】\n${wp.content}\n")
-                                    } else {
-                                        append("【提示词】${ref.title}${unavailable}\n")
+                                    "knowledge" -> {
+                                        if (ref.id != null) {
+                                            val kp = appDb.knowledgePointDao.getById(ref.id)
+                                            if (kp != null) {
+                                                append("【知识点：${kp.title}】\n${kp.content}\n")
+                                            } else {
+                                                append("【知识点】${ref.title}${unavailable}\n")
+                                            }
+                                        } else {
+                                            append("【知识点】${ref.title}${unavailable}\n")
+                                        }
                                     }
-                                } else {
-                                    append("【提示词】${ref.title}${unavailable}\n")
+                                    "prompt" -> {
+                                        if (ref.id != null) {
+                                            val wp = appDb.writingPromptDao.getById(ref.id)
+                                            if (wp != null) {
+                                                append("【提示词：${wp.title}】\n${wp.content}\n")
+                                            } else {
+                                                append("【提示词】${ref.title}${unavailable}\n")
+                                            }
+                                        } else {
+                                            append("【提示词】${ref.title}${unavailable}\n")
+                                        }
+                                    }
                                 }
                             }
                         }

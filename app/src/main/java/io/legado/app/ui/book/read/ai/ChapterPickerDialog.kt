@@ -47,7 +47,7 @@ class ChapterPickerDialog : BaseDialogFragment(R.layout.dialog_picker_chapter) {
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
         bookUrl = arguments?.getString("bookUrl") ?: ""
-        setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
 
         binding.rvList.layoutManager = LinearLayoutManager(requireContext())
 

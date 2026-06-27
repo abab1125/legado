@@ -139,7 +139,7 @@ class PromptPickerDialog : BaseDialogFragment(R.layout.dialog_prompt_picker) {
         private var checkedPosition = -1
 
         fun getCheckedItem(): WritingPrompt? =
-            if (checkedPosition in items.indices) items[checkedPosition] else null
+            if (checkedPosition in 0 until itemCount) getItem(checkedPosition) else null
 
         override fun getViewBinding(parent: ViewGroup): ItemPromptPickerBinding {
             return ItemPromptPickerBinding.inflate(inflater, parent, false)

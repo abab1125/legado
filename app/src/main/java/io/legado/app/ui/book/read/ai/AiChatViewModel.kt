@@ -22,7 +22,12 @@ import io.legado.app.help.book.BookHelp
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.sse.EventSource
+import okhttp3.sse.EventSourceListener
+import okhttp3.sse.EventSources
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
@@ -78,6 +83,8 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     }
 
     private val wordCountJobVersion = java.util.concurrent.atomic.AtomicLong(0L)
+
+    private val msgIdCounter = AtomicLong(0L)
 
     fun calculateWordCount(bookUrl: String, start: Int, end: Int) {
         val chapterSize = ReadBook.chapterSize
@@ -295,12 +302,48 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                         _messages.addAll(responseMsgs)
                     }
                 } else {
-                    // 直接保存完整 ChatMessage，保留 reasoningContent，
-                    // 确保下一轮序列化时能将 reasoning_content 回传给 API
-                    val response = requestOpenAiMessage(_messages.toList())
-                    if (response.content.isBlank()) throw Exception("响应内容为空")
+                    // 流式输出：先放占位消息，SSE 逐块更新内容
+                    val msgId = msgIdCounter.incrementAndGet()
                     synchronized(_messages) {
-                        _messages.add(response.copy(role = "assistant"))
+                        _messages.add(ChatMessage(id = msgId, role = "assistant", content = "", isStreaming = true))
+                    }
+                    messagesLiveData.postValue(_messages.toList())
+
+                    val finalMsg = requestOpenAiMessageStreaming(_messages.toList(), msgId,
+                        onDelta = { delta ->
+                            synchronized(_messages) {
+                                val idx = _messages.indexOfLast { it.id == msgId }
+                                if (idx >= 0) {
+                                    _messages[idx] = _messages[idx].copy(
+                                        content = _messages[idx].content + delta
+                                    )
+                                }
+                            }
+                            messagesLiveData.postValue(_messages.toList())
+                        },
+                        onReasoningDelta = { delta ->
+                            synchronized(_messages) {
+                                val idx = _messages.indexOfLast { it.id == msgId }
+                                if (idx >= 0) {
+                                    _messages[idx] = _messages[idx].copy(
+                                        reasoningContent = (_messages[idx].reasoningContent ?: "") + delta
+                                    )
+                                }
+                            }
+                            messagesLiveData.postValue(_messages.toList())
+                        }
+                    )
+
+                    if (finalMsg.content.isBlank() && finalMsg.reasoningContent.isNullOrBlank()) {
+                        throw Exception("响应内容为空")
+                    }
+                    synchronized(_messages) {
+                        val idx = _messages.indexOfLast { it.id == msgId }
+                        if (idx >= 0) {
+                            _messages[idx] = finalMsg.copy(isStreaming = false)
+                        } else {
+                            _messages.add(finalMsg.copy(role = "assistant"))
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -632,6 +675,120 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     }
 
     /**
+     * 流式请求方法：使用 SSE 逐块接收 OpenAI 兼容 API 的响应
+     * onDelta 和 onReasoningDelta 会在每块到达时回调（可在 UI 线程外调用）
+     */
+    private suspend fun requestOpenAiMessageStreaming(
+        chatMessages: List<ChatMessage>,
+        msgId: Long,
+        onDelta: (String) -> Unit,
+        onReasoningDelta: (String) -> Unit
+    ): ChatMessage = withContext(Dispatchers.IO) {
+        val url = AiConfig.apiUrl
+        val apiKey = AiConfig.apiKey
+        val model = AiConfig.model
+
+        val messagesJsonList = chatMessages.map { msg ->
+            val map = mutableMapOf<String, Any>("role" to msg.role)
+            if (msg.role == "tool") {
+                map["content"] = msg.content
+                msg.toolCallId?.let { map["tool_call_id"] = it }
+            } else if (!msg.toolCalls.isNullOrEmpty()) {
+                map["content"] = msg.content.ifBlank { "" }
+                if (!msg.reasoningContent.isNullOrBlank()) {
+                    map["reasoning_content"] = msg.reasoningContent!!
+                }
+                map["tool_calls"] = msg.toolCalls.map { tc ->
+                    mapOf(
+                        "id" to tc.id,
+                        "type" to "function",
+                        "function" to mapOf(
+                            "name" to tc.function.name,
+                            "arguments" to tc.function.arguments
+                        )
+                    )
+                }
+            } else if (msg.role == "assistant" && !msg.reasoningContent.isNullOrBlank()) {
+                map["content"] = msg.content
+                map["reasoning_content"] = msg.reasoningContent
+            } else {
+                map["content"] = msg.content
+            }
+            map
+        }
+
+        val requestBodyMap = mutableMapOf<String, Any>(
+            "model" to model,
+            "messages" to messagesJsonList,
+            "stream" to true
+        )
+
+        val jsonBody = GSON.toJson(requestBodyMap)
+        val body = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
+
+        val request = Request.Builder()
+            .url(url)
+            .post(body)
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Content-Type", "application/json")
+            .addHeader("Accept", "text/event-stream")
+            .build()
+
+        val aiHttpClient = okHttpClient.newBuilder()
+            .readTimeout(120, TimeUnit.SECONDS)
+            .build()
+
+        val factory = EventSources.createFactory(aiHttpClient)
+        val deferred = CompletableDeferred<ChatMessage>()
+        val accumulated = StringBuilder()
+        val accumulatedReasoning = StringBuilder()
+
+        factory.newEventSource(request, object : EventSourceListener() {
+            override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
+                if (data == "[DONE]") return
+                try {
+                    val json = GSON.fromJsonObject<Map<String, Any>>(data).getOrNull() ?: return
+                    val choices = json["choices"] as? List<*>
+                    val firstChoice = choices?.firstOrNull() as? Map<*, *> ?: return
+                    val delta = firstChoice["delta"] as? Map<*, *> ?: return
+
+                    val contentDelta = delta["content"] as? String
+                    val reasoningDelta = delta["reasoning_content"] as? String
+
+                    if (contentDelta != null) {
+                        accumulated.append(contentDelta)
+                        onDelta(contentDelta)
+                    }
+                    if (reasoningDelta != null) {
+                        accumulatedReasoning.append(reasoningDelta)
+                        onReasoningDelta(reasoningDelta)
+                    }
+                } catch (_: Exception) { }
+            }
+
+            override fun onFailure(eventSource: EventSource, t: Throwable?, response: okhttp3.Response?) {
+                deferred.complete(ChatMessage(
+                    id = msgId,
+                    role = "assistant",
+                    content = accumulated.toString(),
+                    reasoningContent = accumulatedReasoning.toString().ifBlank { null }
+                ))
+            }
+
+            override fun onClosed(eventSource: EventSource) {
+                deferred.complete(ChatMessage(
+                    id = msgId,
+                    role = "assistant",
+                    content = accumulated.toString(),
+                    reasoningContent = accumulatedReasoning.toString().ifBlank { null }
+                ))
+            }
+        })
+
+        return@withContext deferred.await()
+    }
+
+    /**
      * 不带工具调用的简单请求，返回纯文本（用于总结记忆等场景）
      */
     private suspend fun requestOpenAi(chatMessages: List<ChatMessage>): String {
@@ -721,12 +878,14 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 }
 
 data class ChatMessage(
+    val id: Long = System.nanoTime(),
     val role: String,
     val content: String = "",
     val references: List<ReferenceItem>? = null,
     val toolCallId: String? = null,
     val toolCalls: List<ToolCall>? = null,
-    val reasoningContent: String? = null
+    val reasoningContent: String? = null,
+    val isStreaming: Boolean = false
 )
 
 data class ToolCall(

@@ -16,9 +16,14 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class KnowledgeManageFragment(private val pos: Int) : VMBaseFragment<FragmentKnowledgeManageBinding>(R.layout.fragment_knowledge_manage),
+class KnowledgeManageFragment() : VMBaseFragment<FragmentKnowledgeManageBinding>(R.layout.fragment_knowledge_manage),
     MainFragmentInterface {
-    override val position: Int = pos
+
+    constructor(position: Int) : this() {
+        arguments = Bundle().apply { putInt("position", position) }
+    }
+
+    override val position: Int? get() = arguments?.getInt("position")
 
     private val adapter by lazy { KnowledgeManageAdapter { showEditDialog(it) } }
 

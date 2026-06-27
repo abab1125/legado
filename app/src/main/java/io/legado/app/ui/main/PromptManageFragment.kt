@@ -17,9 +17,14 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class PromptManageFragment(private val pos: Int) : VMBaseFragment<FragmentPromptManageBinding>(R.layout.fragment_prompt_manage),
+class PromptManageFragment() : VMBaseFragment<FragmentPromptManageBinding>(R.layout.fragment_prompt_manage),
     MainFragmentInterface {
-    override val position: Int = pos
+
+    constructor(position: Int) : this() {
+        arguments = Bundle().apply { putInt("position", position) }
+    }
+
+    override val position: Int? get() = arguments?.getInt("position")
 
     private val adapter by lazy {
         PromptManageAdapter(requireContext(),

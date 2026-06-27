@@ -29,7 +29,6 @@ import io.legado.app.utils.applyNavigationBarPadding
 import io.legado.app.utils.observeEvent
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.CoroutineScope
-import android.widget.PopupMenu
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -284,21 +283,21 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
 
     private fun insertNextChapter(chapter: BookChapter) {
         lifecycleScope.launch {
-            val book = viewModel.bookData.value ?: return@launch
-            val newChapter = BookChapter(
-                url = chapter.url + "_new_" + System.currentTimeMillis(),
-                title = "新章节",
-                bookUrl = book.bookUrl,
-                index = chapter.index + 1,
-                baseUrl = chapter.baseUrl
-            )
-            appDb.bookChapterDao.insert(newChapter)
-            // 后面所有章节 index +1
-            val allChapters = appDb.bookChapterDao.getChapterList(book.bookUrl)
-            allChapters.forEachIndexed { idx, ch ->
-                if (ch.url != newChapter.url && ch.index > chapter.index) {
-                    appDb.bookChapterDao.update(ch.copy(index = ch.index + 1))
-                }
+            val bookUrl = book?.bookUrl ?: return@launch
+            val baseUrl = chapter.baseUrl
+            withContext(IO) {
+                // 1) 先把后面章节 index+1，腾出位置
+                appDb.bookChapterDao.getChapterList(bookUrl)
+                    .filter { it.index > chapter.index }
+                    .forEach { appDb.bookChapterDao.update(it.copy(index = it.index + 1)) }
+                // 2) 再插入新章节
+                appDb.bookChapterDao.insert(BookChapter(
+                    url = chapter.url + "_new_" + System.currentTimeMillis(),
+                    title = "新章节",
+                    bookUrl = bookUrl,
+                    index = chapter.index + 1,
+                    baseUrl = baseUrl
+                ))
             }
             viewModel.upChapterListAdapter()
         }
@@ -345,35 +344,39 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
     private fun moveChapterUp(chapter: BookChapter) {
         if (chapter.index <= 0) return
         lifecycleScope.launch {
-            val book = viewModel.bookData.value ?: return@launch
-            val chapters = appDb.bookChapterDao.getChapterList(book.bookUrl)
-            val prevChapter = chapters[chapter.index - 1]
-            appDb.bookChapterDao.update(chapter.copy(index = chapter.index - 1))
-            appDb.bookChapterDao.update(prevChapter.copy(index = prevChapter.index + 1))
-            adapter.notifyDataSetChanged()
+            val bookUrl = book?.bookUrl ?: return@launch
+            withContext(IO) {
+                val chapters = appDb.bookChapterDao.getChapterList(bookUrl)
+                val prevChapter = chapters.find { it.index == chapter.index - 1 } ?: return@withContext
+                appDb.bookChapterDao.update(chapter.copy(index = chapter.index - 1))
+                appDb.bookChapterDao.update(prevChapter.copy(index = prevChapter.index + 1))
+            }
+            viewModel.upChapterListAdapter()
         }
     }
 
     private fun moveChapterDown(chapter: BookChapter) {
         lifecycleScope.launch {
-            val book = viewModel.bookData.value ?: return@launch
-            val chapters = appDb.bookChapterDao.getChapterList(book.bookUrl)
-            if (chapter.index >= chapters.size - 1) return@launch
-            val nextChapter = chapters[chapter.index + 1]
-            appDb.bookChapterDao.update(chapter.copy(index = chapter.index + 1))
-            appDb.bookChapterDao.update(nextChapter.copy(index = nextChapter.index - 1))
-            adapter.notifyDataSetChanged()
+            val bookUrl = book?.bookUrl ?: return@launch
+            withContext(IO) {
+                val chapters = appDb.bookChapterDao.getChapterList(bookUrl)
+                val nextChapter = chapters.find { it.index == chapter.index + 1 } ?: return@withContext
+                appDb.bookChapterDao.update(chapter.copy(index = chapter.index + 1))
+                appDb.bookChapterDao.update(nextChapter.copy(index = nextChapter.index - 1))
+            }
+            viewModel.upChapterListAdapter()
         }
     }
 
     private fun deleteChapter(chapter: BookChapter) {
         lifecycleScope.launch {
-            appDb.bookChapterDao.deleteByUrl(book?.bookUrl ?: return@launch, chapter.url)
-            // 重新整理序号
-            val chapters = appDb.bookChapterDao.getChapterList(book?.bookUrl ?: return@launch)
-            chapters.forEachIndexed { index, ch ->
-                if (ch.index != index) {
-                    appDb.bookChapterDao.update(ch.copy(index = index))
+            val bookUrl = book?.bookUrl ?: return@launch
+            withContext(IO) {
+                appDb.bookChapterDao.deleteByUrl(bookUrl, chapter.url)
+                appDb.bookChapterDao.getChapterList(bookUrl).forEachIndexed { index, ch ->
+                    if (ch.index != index) {
+                        appDb.bookChapterDao.update(ch.copy(index = index))
+                    }
                 }
             }
             viewModel.upChapterListAdapter()

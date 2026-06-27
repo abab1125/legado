@@ -13,7 +13,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
-        android:background="@color/md3_surface">
+        android:background="@color/md3_surfaceContainer">
 
         <TextView
             android:id="@+id/tv_title"

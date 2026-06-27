@@ -3,6 +3,7 @@ package io.legado.app.ui.book.toc
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import io.legado.app.R
@@ -195,6 +196,12 @@ class ChapterListAdapter(context: Context, val callback: Callback) :
                 callback.openSummary(item)
             }
         }
+        // 更多操作按钮点击
+        binding.ivMore.setOnClickListener {
+            getItem(holder.layoutPosition)?.let { item ->
+                callback.openChapterMenu(item, binding.ivMore)
+            }
+        }
     }
 
     private fun upHasCache(binding: ItemChapterListBinding, isDur: Boolean, cached: Boolean) =
@@ -215,6 +222,7 @@ class ChapterListAdapter(context: Context, val callback: Callback) :
         fun durChapterIndex(): Int
         fun onListChanged()
         fun openSummary(bookChapter: BookChapter)
+        fun openChapterMenu(bookChapter: BookChapter, anchor: View)
     }
 
 }

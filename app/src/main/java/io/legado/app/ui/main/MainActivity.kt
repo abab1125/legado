@@ -77,17 +77,19 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
     private val idBookshelf = 0
     private val idBookshelf1 = 11
     private val idBookshelf2 = 12
-    private val idExplore = 1
-    private val idRss = 2
-    private val idMy = 3
+    private val idPrompt = 1
+    private val idKnowledge = 2
+    private val idExplore = 3
+    private val idRss = 4
+    private val idMy = 5
     private var exitTime: Long = 0
     private var bookshelfReselected: Long = 0
     private var exploreReselected: Long = 0
     private var pagePosition = 0
     private val fragmentMap = hashMapOf<Int, Fragment>()
-    private var bottomMenuCount = 4
+    private var bottomMenuCount = 6
     private val EXIT_INTERVAL = 2000L
-    private val realPositions = arrayOf(idBookshelf, idExplore, idRss, idMy)
+    private val realPositions = intArrayOf(idBookshelf, idPrompt, idKnowledge, idExplore, idRss, idMy)
     private val adapter by lazy {
         TabFragmentPageAdapter(supportFragmentManager)
     }
@@ -155,6 +157,12 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         when (item.itemId) {
             R.id.menu_bookshelf ->
                 viewPagerMain.setCurrentItem(0, false)
+
+            R.id.menu_prompt ->
+                viewPagerMain.setCurrentItem(realPositions.indexOf(idPrompt), false)
+
+            R.id.menu_knowledge ->
+                viewPagerMain.setCurrentItem(realPositions.indexOf(idKnowledge), false)
 
             R.id.menu_discovery ->
                 viewPagerMain.setCurrentItem(realPositions.indexOf(idExplore), false)
@@ -382,7 +390,8 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             menu.findItem(R.id.menu_discovery).isVisible = showDiscovery
             menu.findItem(R.id.menu_rss).isVisible = showRss
         }
-        var index = 0
+        // 固定 Tab: bookshelf(0), prompt(1), knowledge(2), 后面 discovery/rss/my 按配置变动
+        var index = 2 // bookshelf, prompt, knowledge 的固定位置是 0,1,2
         if (showDiscovery) {
             index++
             realPositions[index] = idExplore
@@ -413,20 +422,19 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
     }
 
     private fun getFragmentId(position: Int): Int {
-        val id = realPositions[position]
-        if (id == idBookshelf) {
-            return if (AppConfig.bookGroupStyle == 1) idBookshelf2 else idBookshelf1
+        return when (realPositions[position]) {
+            idBookshelf -> if (AppConfig.bookGroupStyle == 1) idBookshelf2 else idBookshelf1
+            idPrompt -> 20
+            idKnowledge -> 21
+            else -> realPositions[position]
         }
-        return id
     }
 
     private inner class PageChangeCallback : ViewPager.SimpleOnPageChangeListener() {
-
         override fun onPageSelected(position: Int) {
             pagePosition = position
             binding.bottomNavigationView.menu[realPositions[position]].isChecked = true
         }
-
     }
 
     @Suppress("DEPRECATION")
@@ -443,6 +451,8 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             val fragmentId = getId(position)
             if ((fragmentId == idBookshelf1 && any is BookshelfFragment1)
                 || (fragmentId == idBookshelf2 && any is BookshelfFragment2)
+                || (fragmentId == 20 && any is PromptManageFragment)
+                || (fragmentId == 21 && any is KnowledgeManageFragment)
                 || (fragmentId == idExplore && any is ExploreFragment)
                 || (fragmentId == idRss && any is RssFragment)
                 || (fragmentId == idMy && any is MyFragment)
@@ -456,6 +466,8 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             return when (getId(position)) {
                 idBookshelf1 -> BookshelfFragment1(position)
                 idBookshelf2 -> BookshelfFragment2(position)
+                20 -> PromptManageFragment(position)
+                21 -> KnowledgeManageFragment(position)
                 idExplore -> ExploreFragment(position)
                 idRss -> RssFragment(position)
                 else -> MyFragment(position)

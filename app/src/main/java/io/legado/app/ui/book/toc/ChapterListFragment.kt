@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.View
+import android.widget.PopupMenu
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import io.legado.app.R
@@ -28,6 +29,7 @@ import io.legado.app.utils.applyNavigationBarPadding
 import io.legado.app.utils.observeEvent
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.CoroutineScope
+import android.widget.PopupMenu
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -234,5 +236,147 @@ class ChapterListFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_chapt
             }
         }
         dialog.show(parentFragmentManager, "chapter_summary")
+    }
+
+    override fun openChapterMenu(bookChapter: BookChapter, anchor: View) {
+        val popupMenu = PopupMenu(requireContext(), anchor)
+        popupMenu.menuInflater.inflate(R.menu.menu_chapter_context, popupMenu.menu)
+
+        popupMenu.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.insert_next_chapter -> {
+                    insertNextChapter(bookChapter)
+                    true
+                }
+                R.id.auto_name_chapter -> {
+                    autoNameChapter(bookChapter)
+                    true
+                }
+                R.id.manual_name_chapter -> {
+                    manualNameChapter(bookChapter)
+                    true
+                }
+                R.id.batch_name_chapters -> {
+                    batchNameChapters(bookChapter)
+                    true
+                }
+                R.id.organize_chapters -> {
+                    organizeChapters()
+                    true
+                }
+                R.id.move_chapter_up -> {
+                    moveChapterUp(bookChapter)
+                    true
+                }
+                R.id.move_chapter_down -> {
+                    moveChapterDown(bookChapter)
+                    true
+                }
+                R.id.delete_chapter -> {
+                    deleteChapter(bookChapter)
+                    true
+                }
+                else -> false
+            }
+        }
+        popupMenu.show()
+    }
+
+    private fun insertNextChapter(chapter: BookChapter) {
+        lifecycleScope.launch {
+            val book = viewModel.bookData.value ?: return@launch
+            val newChapter = BookChapter(
+                url = chapter.url + "_new_" + System.currentTimeMillis(),
+                title = "新章节",
+                bookUrl = book.bookUrl,
+                index = chapter.index + 1,
+                baseUrl = chapter.baseUrl
+            )
+            appDb.bookChapterDao.insert(newChapter)
+            // 后面所有章节 index +1
+            val allChapters = appDb.bookChapterDao.getChapterList(book.bookUrl)
+            allChapters.forEachIndexed { idx, ch ->
+                if (ch.url != newChapter.url && ch.index > chapter.index) {
+                    appDb.bookChapterDao.update(ch.copy(index = ch.index + 1))
+                }
+            }
+            viewModel.upChapterListAdapter()
+        }
+    }
+
+    private fun autoNameChapter(chapter: BookChapter) {
+        // TODO: AI 自动起名，暂时用默认名
+        lifecycleScope.launch {
+            val newName = "第${chapter.index + 1}章 新章节"
+            appDb.bookChapterDao.update(chapter.copy(title = newName))
+            viewModel.upChapterListAdapter()
+        }
+    }
+
+    private fun manualNameChapter(chapter: BookChapter) {
+        // TODO: 弹出输入框
+        lifecycleScope.launch {
+            val newName = "第${chapter.index + 1}章 新章节"
+            appDb.bookChapterDao.update(chapter.copy(title = newName))
+            viewModel.upChapterListAdapter()
+        }
+    }
+
+    private fun batchNameChapters(chapter: BookChapter) {
+        // TODO: 批量起名
+        lifecycleScope.launch {
+            viewModel.upChapterListAdapter()
+        }
+    }
+
+    private fun organizeChapters() {
+        lifecycleScope.launch {
+            val book = viewModel.bookData.value ?: return@launch
+            val chapters = appDb.bookChapterDao.getChapterList(book.bookUrl)
+            chapters.forEachIndexed { index, ch ->
+                if (ch.index != index) {
+                    appDb.bookChapterDao.update(ch.copy(index = index))
+                }
+            }
+            adapter.notifyDataSetChanged()
+        }
+    }
+
+    private fun moveChapterUp(chapter: BookChapter) {
+        if (chapter.index <= 0) return
+        lifecycleScope.launch {
+            val book = viewModel.bookData.value ?: return@launch
+            val chapters = appDb.bookChapterDao.getChapterList(book.bookUrl)
+            val prevChapter = chapters[chapter.index - 1]
+            appDb.bookChapterDao.update(chapter.copy(index = chapter.index - 1))
+            appDb.bookChapterDao.update(prevChapter.copy(index = prevChapter.index + 1))
+            adapter.notifyDataSetChanged()
+        }
+    }
+
+    private fun moveChapterDown(chapter: BookChapter) {
+        lifecycleScope.launch {
+            val book = viewModel.bookData.value ?: return@launch
+            val chapters = appDb.bookChapterDao.getChapterList(book.bookUrl)
+            if (chapter.index >= chapters.size - 1) return@launch
+            val nextChapter = chapters[chapter.index + 1]
+            appDb.bookChapterDao.update(chapter.copy(index = chapter.index + 1))
+            appDb.bookChapterDao.update(nextChapter.copy(index = nextChapter.index - 1))
+            adapter.notifyDataSetChanged()
+        }
+    }
+
+    private fun deleteChapter(chapter: BookChapter) {
+        lifecycleScope.launch {
+            appDb.bookChapterDao.deleteByUrl(book?.bookUrl ?: return@launch, chapter.url)
+            // 重新整理序号
+            val chapters = appDb.bookChapterDao.getChapterList(book?.bookUrl ?: return@launch)
+            chapters.forEachIndexed { index, ch ->
+                if (ch.index != index) {
+                    appDb.bookChapterDao.update(ch.copy(index = index))
+                }
+            }
+            viewModel.upChapterListAdapter()
+        }
     }
 }

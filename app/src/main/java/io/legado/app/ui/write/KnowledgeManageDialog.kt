@@ -50,9 +50,8 @@ class KnowledgeManageDialog : BaseDialogFragment(R.layout.dialog_knowledge_manag
     }
 
     private fun loadItems() {
-        if (bookUrl.isBlank()) return
         lifecycleScope.launch(Dispatchers.IO) {
-            val list = appDb.knowledgePointDao.getByBook(bookUrl)
+            val list = appDb.knowledgePointDao.all
             withContext(Dispatchers.Main) {
                 items = list.toMutableList()
                 adapter.setItems(items.toList())
@@ -77,7 +76,6 @@ class KnowledgeManageDialog : BaseDialogFragment(R.layout.dialog_knowledge_manag
                 if (title.isNullOrBlank() || content.isNullOrBlank()) return@setPositiveButton
                 lifecycleScope.launch(Dispatchers.IO) {
                     val kp = KnowledgePoint(
-                        bookUrl = bookUrl,
                         title = title,
                         content = content,
                         tags = "custom"

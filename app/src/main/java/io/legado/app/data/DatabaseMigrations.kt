@@ -20,8 +20,29 @@ object DatabaseMigrations {
             migration_31_32, migration_32_33, migration_33_34, migration_34_35,
             migration_35_36, migration_36_37, migration_37_38, migration_38_39,
             migration_39_40, migration_40_41, migration_41_42, migration_42_43,
-            migration_96_97, migration_97_98,
+            migration_96_97, migration_97_98, migration_98_99,
         )
+    }
+
+    private val migration_98_99 = object : Migration(98, 99) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // knowledge_points 去掉 bookUrl/chapterIndex，改为全局知识点
+            db.execSQL(
+                """CREATE TABLE IF NOT EXISTS `knowledge_points_new` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `title` TEXT NOT NULL,
+                    `content` TEXT NOT NULL,
+                    `tags` TEXT NOT NULL,
+                    `category` TEXT NOT NULL DEFAULT 'note',
+                    `sortOrder` INTEGER NOT NULL DEFAULT 0,
+                    `createTime` INTEGER NOT NULL DEFAULT 0,
+                    `updateTime` INTEGER NOT NULL DEFAULT 0
+                )"""
+            )
+            db.execSQL("INSERT INTO `knowledge_points_new` (`id`, `title`, `content`, `tags`, `category`, `sortOrder`, `createTime`, `updateTime`) SELECT `id`, `title`, `content`, `tags`, `category`, `sortOrder`, `createTime`, `updateTime` FROM `knowledge_points`")
+            db.execSQL("DROP TABLE `knowledge_points`")
+            db.execSQL("ALTER TABLE `knowledge_points_new` RENAME TO `knowledge_points`")
+        }
     }
 
     private val migration_97_98 = object : Migration(97, 98) {

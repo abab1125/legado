@@ -46,6 +46,8 @@
     <string name="enable">Enable</string>
     <string name="replace_purify_search">Search Replacement</string>
     <string name="bookshelf">Bookshelf</string>
+    <string name="prompt">提示词</string>
+    <string name="knowledge">知识点</string>
     <string name="favorites">Favorites</string>
     <string name="favorite">Favorite</string>
     <string name="in_favorites">in Favorites</string>

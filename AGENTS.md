@@ -8,6 +8,21 @@
 
 ---
 
+## ⚡ 铁律：跨文件改动先跑 CodeGraph
+
+涉及**重构、加字段、增删方法、改数据源、改 DAO** 等牵一发动全身的操作，必须先查影响范围：
+
+```bash
+cd /Users/ma/开发/workSpace/legado
+codegraph impact "类名"   # 改它炸哪些地方
+codegraph callers "类名"  # 谁在用，改了会不会断链
+codegraph callees "类名"  # 它依赖了谁
+```
+
+单文件 bugfix 不用查，但跨文件的改动不做纯 grep 盲改。
+
+---
+
 ## 一、项目背景
 
 **基座仓库**：Jingshiro/legado（gedoor/legado 的第三方增强 fork）

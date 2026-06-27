@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/insert_next_chapter"
+        android:icon="@drawable/ic_add"
+        android:title="插入下一章" />
+
+    <item
+        android:id="@+id/auto_name_chapter"
+        android:icon="@drawable/ic_auto"
+        android:title="自动起名" />
+
+    <item
+        android:id="@+id/manual_name_chapter"
+        android:icon="@drawable/ic_edit"
+        android:title="手动起名" />
+
+    <item
+        android:id="@+id/batch_name_chapters"
+        android:icon="@drawable/ic_edit"
+        android:title="批量章节起名" />
+
+    <item
+        android:id="@+id/organize_chapters"
+        android:icon="@drawable/ic_sort"
+        android:title="整理章节序号" />
+
+    <item
+        android:id="@+id/move_chapter_up"
+        android:icon="@drawable/ic_arrow_up"
+        android:title="上移章节" />
+
+    <item
+        android:id="@+id/move_chapter_down"
+        android:icon="@drawable/ic_arrow_down"
+        android:title="下移章节" />
+
+    <item
+        android:id="@+id/delete_chapter"
+        android:title="删除章节" />
+
+</menu>

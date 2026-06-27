@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/white">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:background="#FAFAFA">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#222222"
+            android:text="选择提示词" />
+
+        <ImageView
+            android:id="@+id/iv_close"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/shape_circle"
+            android:backgroundTint="#F0F0F0"
+            android:padding="6dp"
+            android:src="@drawable/ic_baseline_close"
+            android:contentDescription="关闭" />
+    </LinearLayout>
+
+    <!-- Scroll content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:paddingBottom="80dp">
+
+            <!-- Search Bar (去掉了多余 FrameLayout) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_card_white"
+                android:padding="8dp 12dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔍"
+                    android:textSize="15sp"
+                    android:layout_marginEnd="8dp" />
+
+                <EditText
+                    android:id="@+id/et_search"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:hint="搜索提示词或分类..."
+                    android:textSize="14sp"
+                    android:singleLine="true" />
+            </LinearLayout>
+
+            <!-- Filter pills -->
+            <LinearLayout
+                android:id="@+id/layout_filters"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:id="@+id/filter_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📂 全部"
+                    android:textSize="12sp"
+                    android:textColor="#1565C0"
+                    android:background="@drawable/bg_filter_active"
+                    android:padding="5dp 12dp"
+                    android:layout_marginEnd="8dp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/filter_character"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="👤 角色"
+                    android:textSize="12sp"
+                    android:textColor="#666666"
+                    android:background="@drawable/bg_filter_inactive"
+                    android:padding="5dp 12dp"
+                    android:layout_marginEnd="8dp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/filter_world"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🌍 世界观"
+                    android:textSize="12sp"
+                    android:textColor="#666666"
+                    android:background="@drawable/bg_filter_inactive"
+                    android:padding="5dp 12dp"
+                    android:layout_marginEnd="8dp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/filter_style"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✏️ 风格"
+                    android:textSize="12sp"
+                    android:textColor="#666666"
+                    android:background="@drawable/bg_filter_inactive"
+                    android:padding="5dp 12dp"
+                    android:layout_marginEnd="8dp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/filter_outline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📋 大纲"
+                    android:textSize="12sp"
+                    android:textColor="#666666"
+                    android:background="@drawable/bg_filter_inactive"
+                    android:padding="5dp 12dp"
+                    android:gravity="center" />
+            </LinearLayout>
+
+            <!-- Prompt list -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_prompts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Save button -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FAFAFA"
+        android:padding="12dp 16dp 16dp">
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="保存配置"
+            android:textSize="15sp"
+            android:textColor="@android:color/white"
+            android:background="@drawable/shape_fillet_btn" />
+    </FrameLayout>
+
+</LinearLayout>

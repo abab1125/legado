@@ -27,6 +27,8 @@ object AiConfig {
     private const val KEY_AI_API_KEY = "ai_api_key"
     private const val KEY_AI_MODEL = "ai_model"
     private const val KEY_AI_PERSONA = "ai_persona"
+    private const val KEY_AI_PERSONA_TITLE = "ai_persona_title"
+    private const val KEY_AI_PERSONA_MODE = "ai_persona_mode"
     private const val KEY_AI_MEMORY = "ai_memory"
     private const val KEY_AI_AVATAR = "ai_avatar"
     private const val KEY_USER_AVATAR = "user_avatar"
@@ -54,6 +56,19 @@ object AiConfig {
         get() = appCtx.getPrefString(KEY_AI_PERSONA, "你是一个擅长分析文学作品的 AI 助手，请结合用户发送的当下正在阅读的章节内容，回答用户的问题。如果用户想探讨剧情人物，请积极互动。") ?: ""
         set(value) {
             appCtx.putPrefString(KEY_AI_PERSONA, value)
+        }
+
+    var personaTitle: String
+        get() = appCtx.getPrefString(KEY_AI_PERSONA_TITLE, "文学作品分析助手") ?: ""
+        set(value) {
+            appCtx.putPrefString(KEY_AI_PERSONA_TITLE, value)
+        }
+
+    // "template" or "custom"
+    var personaMode: String
+        get() = appCtx.getPrefString(KEY_AI_PERSONA_MODE, "template") ?: "template"
+        set(value) {
+            appCtx.putPrefString(KEY_AI_PERSONA_MODE, value)
         }
 
     var memoryList: List<AiMemoryItem>

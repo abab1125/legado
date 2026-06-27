@@ -28,6 +28,14 @@ class AiConfigDialog : BaseDialogFragment(R.layout.dialog_ai_config) {
     private val binding by viewBinding(DialogAiConfigBinding::bind)
     private val viewModel by viewModels<AiChatViewModel>()
 
+    // Are we in template or custom mode?
+    private var currentMode: String = "template"
+
+    companion object {
+        private const val TAG_TEMPLATE = "template"
+        private const val TAG_CUSTOM = "custom"
+    }
+
     override fun onStart() {
         super.onStart()
         setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -61,22 +69,68 @@ class AiConfigDialog : BaseDialogFragment(R.layout.dialog_ai_config) {
         binding.etApiUrl.setText(AiConfig.apiUrl)
         binding.etApiKey.setText(AiConfig.apiKey)
         binding.etModel.setText(AiConfig.model)
-        binding.etPersona.setText(AiConfig.persona)
         binding.etUserAvatar.setText(AiConfig.userAvatar)
         binding.etAiAvatar.setText(AiConfig.aiAvatar)
         binding.swtToolEnabled.isChecked = AiConfig.toolEnabled
+
+        // Restore persona mode and data
+        currentMode = if (AiConfig.personaMode == "custom") "custom" else "template"
+
+        if (currentMode == "template") {
+            binding.tvSelectedPromptTitle.text = AiConfig.personaTitle.ifBlank { "文学作品分析助手" }
+        } else {
+            binding.etCustomPersona.setText(AiConfig.persona)
+        }
+
+        updateTabStyles()
+        updateVisibility()
+
         updateMemoryLength()
     }
 
     private fun bindEvent() {
+        // === Tab switching ===
+        binding.tabTemplate.setOnClickListener {
+            currentMode = TAG_TEMPLATE
+            updateTabStyles()
+            updateVisibility()
+        }
+        binding.tabCustom.setOnClickListener {
+            currentMode = TAG_CUSTOM
+            updateTabStyles()
+            updateVisibility()
+        }
+
+        // === Template selector click → open picker ===
+        binding.layoutTemplateSelector.setOnClickListener {
+            val picker = PromptPickerDialog.newInstance()
+            picker.onPromptSelected = { prompt ->
+                binding.tvSelectedPromptTitle.text = prompt.title
+                AiConfig.personaTitle = prompt.title
+                AiConfig.persona = prompt.content
+                toastOnUi("已选择：${prompt.title}")
+            }
+            picker.show(parentFragmentManager, "prompt_picker")
+        }
+
+        // === Bottom save ===
         binding.btnSave.setOnClickListener {
             AiConfig.apiUrl = binding.etApiUrl.text?.toString() ?: ""
             AiConfig.apiKey = binding.etApiKey.text?.toString() ?: ""
             AiConfig.model = binding.etModel.text?.toString() ?: ""
-            AiConfig.persona = binding.etPersona.text?.toString() ?: ""
             AiConfig.userAvatar = binding.etUserAvatar.text?.toString() ?: ""
             AiConfig.aiAvatar = binding.etAiAvatar.text?.toString() ?: ""
             AiConfig.toolEnabled = binding.swtToolEnabled.isChecked
+
+            // Save persona based on current mode
+            AiConfig.personaMode = currentMode
+            if (currentMode == TAG_CUSTOM) {
+                val customText = binding.etCustomPersona.text?.toString() ?: ""
+                AiConfig.persona = customText
+                AiConfig.personaTitle = ""
+            }
+            // In template mode, persona + personaTitle are already set when selected from picker
+
             toastOnUi("配置已保存")
             dismiss()
         }
@@ -161,6 +215,24 @@ class AiConfigDialog : BaseDialogFragment(R.layout.dialog_ai_config) {
                 }
             }
         }
+    }
+
+    private fun updateTabStyles() {
+        val isTemplate = currentMode == TAG_TEMPLATE
+        binding.tabTemplate.apply {
+            setBackgroundResource(if (isTemplate) R.drawable.bg_filter_active else R.drawable.bg_filter_inactive)
+            setTextColor(if (isTemplate) requireContext().getColor(R.color.md_blue_500) else requireContext().getColor(R.color.secondaryText))
+        }
+        binding.tabCustom.apply {
+            setBackgroundResource(if (!isTemplate) R.drawable.bg_filter_active else R.drawable.bg_filter_inactive)
+            setTextColor(if (!isTemplate) requireContext().getColor(R.color.md_blue_500) else requireContext().getColor(R.color.secondaryText))
+        }
+    }
+
+    private fun updateVisibility() {
+        val isTemplate = currentMode == TAG_TEMPLATE
+        binding.layoutTemplateSelector.visibility = if (isTemplate) View.VISIBLE else View.GONE
+        binding.layoutCustomPersona.visibility = if (!isTemplate) View.VISIBLE else View.GONE
     }
 
     /**

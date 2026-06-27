@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
@@ -99,6 +100,7 @@
                     android:layout_weight="1"
                     android:text="测试模型可用性" />
             </LinearLayout>
+
             <io.legado.app.ui.widget.text.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -127,20 +129,103 @@
                     android:lines="1" />
             </io.legado.app.ui.widget.text.TextInputLayout>
 
+            <!-- ===== Start: 基础人设与提示词 (replaces old et_persona) ===== -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:paddingStart="4dp"
+                android:text="@string/ai_hint_persona"
+                android:textColor="#D32F2F"
+                android:textSize="13sp" />
+
+            <!-- Tab: 提示词模板 / 自定义提示词 -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_tab_container">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tab_template"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="提示词模板"
+                        android:textSize="13sp"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/tab_custom"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="自定义提示词"
+                        android:textSize="13sp"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- Template mode: single select bar -->
+            <LinearLayout
+                android:id="@+id/layout_template_selector"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_card_white"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingStart="12dp"
+                android:paddingEnd="6dp">
+
+                <TextView
+                    android:id="@+id/tv_selected_prompt_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="14sp"
+                    android:textColor="#333333"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:text="文学作品分析助手" />
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_arrow_up"
+                    android:rotation="180"
+                    android:contentDescription="展开" />
+            </LinearLayout>
+
+            <!-- Custom mode: text area -->
             <io.legado.app.ui.widget.text.TextInputLayout
+                android:id="@+id/layout_custom_persona"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="@string/ai_hint_persona">
+                android:visibility="gone"
+                android:hint="在此输入自定义提示词">
 
                 <io.legado.app.lib.theme.view.ThemeEditText
-                    android:id="@+id/et_persona"
+                    android:id="@+id/et_custom_persona"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="top|start"
                     android:inputType="textMultiLine"
-                    android:minLines="3" />
+                    android:minLines="4" />
             </io.legado.app.ui.widget.text.TextInputLayout>
+            <!-- ===== End: 基础人设与提示词 ===== -->
 
             <LinearLayout
                 android:layout_width="match_parent"

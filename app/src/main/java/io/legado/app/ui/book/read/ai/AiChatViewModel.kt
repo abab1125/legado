@@ -22,9 +22,6 @@ import io.legado.app.help.book.BookHelp
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.sse.EventSource
-import okhttp3.sse.EventSourceListener
-import okhttp3.sse.EventSources
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -738,54 +735,51 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             .readTimeout(120, TimeUnit.SECONDS)
             .build()
 
-        val factory = EventSources.createFactory(aiHttpClient)
-        val deferred = CompletableDeferred<ChatMessage>()
         val accumulated = StringBuilder()
         val accumulatedReasoning = StringBuilder()
 
-        factory.newEventSource(request, object : EventSourceListener() {
-            override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
-                if (data == "[DONE]") return
-                try {
-                    val json = GSON.fromJsonObject<Map<String, Any>>(data).getOrNull() ?: return
-                    val choices = json["choices"] as? List<*>
-                    val firstChoice = choices?.firstOrNull() as? Map<*, *> ?: return
-                    val delta = firstChoice["delta"] as? Map<*, *> ?: return
+        withContext(Dispatchers.IO) {
+            try {
+                val response = aiHttpClient.newCall(request).execute()
+                val body = response.body ?: throw Exception("响应体为空")
+                val reader = body.charStream().buffered()
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    val l = line ?: continue
+                    if (l.startsWith("data: ")) {
+                        val data = l.removePrefix("data: ")
+                        if (data == "[DONE]") break
+                        try {
+                            val json = GSON.fromJsonObject<Map<String, Any>>(data).getOrNull() ?: continue
+                            val choices = json["choices"] as? List<*>
+                            val firstChoice = choices?.firstOrNull() as? Map<*, *> ?: continue
+                            val delta = firstChoice["delta"] as? Map<*, *> ?: continue
 
-                    val contentDelta = delta["content"] as? String
-                    val reasoningDelta = delta["reasoning_content"] as? String
+                            val contentDelta = delta["content"] as? String
+                            val reasoningDelta = delta["reasoning_content"] as? String
 
-                    if (contentDelta != null) {
-                        accumulated.append(contentDelta)
-                        onDelta(contentDelta)
+                            if (contentDelta != null) {
+                                accumulated.append(contentDelta)
+                                onDelta(contentDelta)
+                            }
+                            if (reasoningDelta != null) {
+                                accumulatedReasoning.append(reasoningDelta)
+                                onReasoningDelta(reasoningDelta)
+                            }
+                        } catch (_: Exception) { }
                     }
-                    if (reasoningDelta != null) {
-                        accumulatedReasoning.append(reasoningDelta)
-                        onReasoningDelta(reasoningDelta)
-                    }
-                } catch (_: Exception) { }
+                }
+            } catch (e: Exception) {
+                // on error, return partial content
             }
+        }
 
-            override fun onFailure(eventSource: EventSource, t: Throwable?, response: okhttp3.Response?) {
-                deferred.complete(ChatMessage(
-                    id = msgId,
-                    role = "assistant",
-                    content = accumulated.toString(),
-                    reasoningContent = accumulatedReasoning.toString().ifBlank { null }
-                ))
-            }
-
-            override fun onClosed(eventSource: EventSource) {
-                deferred.complete(ChatMessage(
-                    id = msgId,
-                    role = "assistant",
-                    content = accumulated.toString(),
-                    reasoningContent = accumulatedReasoning.toString().ifBlank { null }
-                ))
-            }
-        })
-
-        return@withContext deferred.await()
+        return@withContext ChatMessage(
+            id = msgId,
+            role = "assistant",
+            content = accumulated.toString(),
+            reasoningContent = accumulatedReasoning.toString().ifBlank { null }
+        )
     }
 
     /**

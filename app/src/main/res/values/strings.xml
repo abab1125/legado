@@ -283,6 +283,7 @@
     <string name="book_thought">Thoughts</string>
     <string name="bookmark_and_thought">Bookmarks &amp; Thoughts</string>
     <string name="write_thought">Write thought</string>
+    <string name="interact">Interact</string>
     <string name="thought_hint">Write down your thought...</string>
     <string name="thought_saved">Thought saved</string>
     <string name="thought_deleted">Thought deleted</string>
@@ -1453,4 +1454,25 @@
     <string name="import_from_clipboard">剪贴板导入</string>
     <string name="import_from_file">文件导入</string>
     <string name="action_import_theme">导入主题</string>
+
+    <!-- @引用 picker 弹窗 -->
+    <string name="ref_pick_chapter">选择引用章节</string>
+    <string name="ref_pick_knowledge">选择引用知识点</string>
+    <string name="ref_pick_prompt">选择引用提示词</string>
+    <string name="ref_search_chapter">搜索章节名...</string>
+    <string name="ref_search_knowledge">搜索知识点...</string>
+    <string name="ref_search_prompt">搜索提示词...</string>
+    <string name="ref_confirm">确认引用</string>
+    <string name="ref_history">引用历史</string>
+
+    <!-- Knowledge / Prompt picker 分类筛选 -->
+    <string name="ref_filter_all">全部</string>
+    <string name="ref_filter_character">人物</string>
+    <string name="ref_filter_place">地点</string>
+    <string name="ref_filter_event">事件</string>
+    <string name="ref_filter_note">笔记</string>
+    <string name="ref_filter_other">其他</string>
+    <string name="ref_filter_world">世界观</string>
+    <string name="ref_filter_style">风格</string>
+    <string name="ref_filter_outline">大纲</string>
 </resources>

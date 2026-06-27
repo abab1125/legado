@@ -2,6 +2,7 @@ package io.legado.app.ui.book.read.ai.tool
 
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
+import io.legado.app.data.entities.BookChapter
 import io.legado.app.data.entities.BookGroup
 import io.legado.app.data.entities.ReplaceRule
 import io.legado.app.data.entities.RssSource
@@ -19,6 +20,7 @@ import io.legado.app.utils.fromJsonArray
 import io.legado.app.utils.fromJsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -36,6 +38,19 @@ sealed class ToolExecuteResult {
         val action: suspend () -> String
     ) : ToolExecuteResult()
 }
+
+/**
+ * 临时缓存 insert_chapter_text 的正文，等待 insert_chapter_at 确认后写入数据库
+ */
+data class TempChapterData(
+    val chapterTitle: String,
+    val chapterContent: String
+)
+
+/**
+ * 临时缓存：key = bookUrl, value = 待插入的章节正文
+ */
+private val tempChapterCache = ConcurrentHashMap<String, TempChapterData>()
 
 object ToolRouter {
 
@@ -81,6 +96,9 @@ object ToolRouter {
                     "delete_book_source" -> batchDeleteBookSource(args)
                     "delete_rss_source" -> batchDeleteRssSource(args)
                     "delete_book" -> batchDeleteBook(args)
+                    // ===== 创作工具 =====
+                    "insert_chapter_text" -> ToolExecuteResult.Data(handleInsertChapterText(args))
+                    "insert_chapter_at" -> handleInsertChapterAt(args)
                     else -> ToolExecuteResult.Data("""{"error":"未知工具: $name"}""")
                 }
             } catch (e: Exception) {
@@ -700,5 +718,85 @@ object ToolRouter {
                 }
             }
         }
+    }
+
+    // ========== 创作工具 ==========
+
+    /**
+     * insert_chapter_text：将 AI 输出的正文暂存到缓存，等待 insert_chapter_at 确认
+     */
+    private fun handleInsertChapterText(args: Map<*, *>): String {
+        val bookUrl = args["bookUrl"] as? String ?: return """{"error":"bookUrl 参数不能为空"}"""
+        val chapterTitle = args["chapterTitle"] as? String ?: return """{"error":"chapterTitle 参数不能为空"}"""
+        val chapterContent = args["chapterContent"] as? String ?: return """{"error":"chapterContent 参数不能为空"}"""
+        if (chapterContent.isBlank()) return """{"error":"正文内容不能为空"}"""
+        tempChapterCache[bookUrl] = TempChapterData(chapterTitle, chapterContent)
+        return GSON.toJson(mapOf("success" to true, "data" to mapOf(
+            "message" to "正文已暂存，等待用户确认插入位置",
+            "chapterTitle" to chapterTitle,
+            "contentLength" to chapterContent.length)))
+    }
+
+    /**
+     * insert_chapter_at：将缓存的正文章节插入到指定位置，需用户确认
+     */
+    private suspend fun handleInsertChapterAt(args: Map<*, *>): ToolExecuteResult {
+        val bookUrl = args["bookUrl"] as? String ?: return ToolExecuteResult.Data("""{"error":"bookUrl 参数不能为空"}""")
+        val insertAfterIndex = (args["insertAfterChapterIndex"] as? Number)?.toInt()
+            ?: return ToolExecuteResult.Data("""{"error":"insertAfterChapterIndex 参数不能为空"}""")
+        val cached = tempChapterCache[bookUrl]
+            ?: return ToolExecuteResult.Data("""{"error":"未找到暂存的正文内容，请先调用 insert_chapter_text"}""")
+        val book = appDb.bookDao.getBook(bookUrl)
+            ?: return ToolExecuteResult.Data("""{"error":"书架中未找到该书籍"}""")
+        val targetIndex = insertAfterIndex + 1
+        val chapters = appDb.bookChapterDao.getChapterList(bookUrl)
+        val afterChapterTitle = chapters.find { it.index == insertAfterIndex }?.title
+            ?: if (insertAfterIndex == -1) "开头（第一章之前）" else "未知章节"
+        val positionDesc = if (insertAfterIndex == -1) "第一章之前（开头）" else "第${afterChapterTitle}之后"
+        return ToolExecuteResult.BatchConfirmation(
+            description = "将《${cached.chapterTitle}》（${cached.chapterContent.length}字）插入到「${book.name}」的$positionDesc"
+        ) {
+            val chapter = tempChapterCache.remove(bookUrl) ?: throw Exception("缓存已过期，请重新生成")
+            insertChapterAfter(book, bookUrl, insertAfterIndex, chapter)
+            GSON.toJson(mapOf("success" to true, "data" to mapOf(
+                "message" to "已将《${chapter.chapterTitle}》插入到指定位置",
+                "bookUrl" to bookUrl,
+                "insertedTitle" to chapter.chapterTitle,
+                "insertedIndex" to targetIndex)))
+        }
+    }
+
+    /**
+     * 核心函数：将新章节插入到指定位置（afterIndex 之后），后续章节自动重排
+     *
+     * @param book 书籍实体
+     * @param bookUrl 书籍 URL
+     * @param afterIndex 插入到哪一章之后（0-based），-1 表示插入到第一章之前
+     * @param data 待插入的章节标题和正文
+     */
+    internal suspend fun insertChapterAfter(
+        book: Book,
+        bookUrl: String,
+        afterIndex: Int,
+        data: TempChapterData
+    ) {
+        // 1) 从后往前给后面的章节 index+1（防 UNIQUE(bookUrl,index) 冲突）
+        val chapters = appDb.bookChapterDao.getChapterList(bookUrl)
+        chapters.filter { it.index > afterIndex }
+            .sortedByDescending { it.index }
+            .forEach { appDb.bookChapterDao.update(it.copy(index = it.index + 1)) }
+        // 2) 创建新章节
+        val newIndex = afterIndex + 1
+        val baseUrl = chapters.firstOrNull()?.baseUrl ?: bookUrl
+        val newChapter = BookChapter(
+            url = bookUrl + "_ai_" + System.currentTimeMillis(),
+            title = data.chapterTitle,
+            bookUrl = bookUrl,
+            index = newIndex,
+            baseUrl = baseUrl
+        )
+        appDb.bookChapterDao.insert(newChapter)
+        // 3) 写入正文文件
+        BookHelp.saveText(book, newChapter, data.chapterContent)
     }
 }

@@ -266,7 +266,35 @@ object AiToolDef {
                 )
             ),
 
-            // ===== 新增工具（P2：知识闭环）=====
+            // ===== 新增工具（P0：创作工具）=====
+            tool(
+                "insert_chapter_text",
+                "为当前创作书籍新增一段章节正文内容。" +
+                "调用此工具后AI将正文暂存，然后需要再调用 insert_chapter_at 来指定插入位置。" +
+                "注意不能仅调用此工具而不调 insert_chapter_at，否则正文会丢失。" +
+                "章节正文可能很长，请确保传递完整内容。",
+                required = listOf("bookUrl", "chapterContent", "chapterTitle"),
+                properties = mapOf(
+                    "bookUrl" to prop("string", "当前创作书籍的 bookUrl（从【当前阅读书籍信息】获取）"),
+                    "chapterContent" to prop("string", "新增章节的完整正文内容"),
+                    "chapterTitle" to prop("string", "新章节的标题，如「第5章 转折」")
+                )
+            ),
+            tool(
+                "insert_chapter_at",
+                "将 insert_chapter_text 缓存的正文插入到指定位置。" +
+                "系统会自动将插入位置之后的原章节 index+1，不会覆盖任何原有内容。" +
+                "用户确认后执行，请一次性提供准确的插入位置。",
+                required = listOf("bookUrl", "insertAfterChapterIndex"),
+                properties = mapOf(
+                    "bookUrl" to prop("string", "当前创作书籍的 bookUrl（从【当前阅读书籍信息】获取）"),
+                    "insertAfterChapterIndex" to prop("integer",
+                        "插入到哪一章之后（0-based）。例如插入在第5章的位置则传入4。" +
+                        "传入-1表示插入到第一章之前（作为新第一章）。")
+                )
+            ),
+
+            // ===== 已有工具（P2：知识闭环）=====
             tool(
                 "get_thoughts",
                 "获取读书想法（划线+评注）列表，支持按书名筛选和分页。",

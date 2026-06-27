@@ -895,6 +895,18 @@ class ReadBookActivity : BaseReadBookActivity(),
                 return true
             }
 
+            R.id.menu_interact -> {
+                val text = selectedText
+                if (text.isNotBlank()) {
+                    startActivity<io.legado.app.ui.book.read.ai.AiChatActivity> {
+                        putExtra("selectedText", text)
+                    }
+                } else {
+                    toastOnUi("请先选择文本")
+                }
+                return true
+            }
+
             R.id.menu_thought -> binding.readView.curPage.let {
                 val thought = it.createThought()
                 if (thought == null) {

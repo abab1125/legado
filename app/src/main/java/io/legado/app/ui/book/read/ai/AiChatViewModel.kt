@@ -139,7 +139,11 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         }
     }
 
-    private suspend fun buildSystemPrompt(start: Int, end: Int): String {
+    private suspend fun buildSystemPrompt(
+        start: Int, end: Int,
+        references: List<ReferenceItem>? = null
+    ): String {
+        val unavailable = "（内容不可用）"
         return withContext(Dispatchers.IO) {
             buildString {
                 append("【人设与要求】\n")
@@ -208,11 +212,57 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                         }
                     }
                 }
+
+                // 注入用户引用的参考信息（@章节/@知识点/@提示词）
+                if (!references.isNullOrEmpty()) {
+                    append("\n\n【用户引用的参考信息】\n")
+                    for (ref in references) {
+                        when (ref.type) {
+                            "chapter" -> {
+                                val refBook = if (ref.bookUrl != null) appDb.bookDao.getBook(ref.bookUrl) else book
+                                val refChapter = if (ref.bookUrl != null && ref.chapterIndex != null)
+                                    appDb.bookChapterDao.getChapter(ref.bookUrl, ref.chapterIndex) else null
+                                if (refBook != null && refChapter != null) {
+                                    val refContent = BookHelp.getContent(refBook, refChapter)
+                                    append("--- ${refChapter.title} ---\n")
+                                    append(refContent ?: unavailable)
+                                    append("\n")
+                                } else {
+                                    append("【章节】${ref.title}${unavailable}\n")
+                                }
+                            }
+                            "knowledge" -> {
+                                if (ref.id != null) {
+                                    val kp = appDb.knowledgePointDao.getById(ref.id)
+                                    if (kp != null) {
+                                        append("【知识点：${kp.title}】\n${kp.content}\n")
+                                    } else {
+                                        append("【知识点】${ref.title}${unavailable}\n")
+                                    }
+                                } else {
+                                    append("【知识点】${ref.title}${unavailable}\n")
+                                }
+                            }
+                            "prompt" -> {
+                                if (ref.id != null) {
+                                    val wp = appDb.writingPromptDao.getById(ref.id)
+                                    if (wp != null) {
+                                        append("【提示词：${wp.title}】\n${wp.content}\n")
+                                    } else {
+                                        append("【提示词】${ref.title}${unavailable}\n")
+                                    }
+                                } else {
+                                    append("【提示词】${ref.title}${unavailable}\n")
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    fun sendMessage(userText: String, start: Int, end: Int) {
+    fun sendMessage(userText: String, start: Int, end: Int, references: List<ReferenceItem>? = null) {
         if (!isGenerating.compareAndSet(false, true)) return
         isGeneratingLiveData.postValue(true)
         if (userText.isBlank()) {
@@ -221,14 +271,14 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         }
 
         synchronized(_messages) {
-            _messages.add(ChatMessage("user", userText))
+            _messages.add(ChatMessage("user", userText, references = references))
         }
         syncCache()
         messagesLiveData.postValue(_messages.toList())
 
         execute {
             try {
-                val newSystemPrompt = buildSystemPrompt(start, end)
+                val newSystemPrompt = buildSystemPrompt(start, end, references)
                 synchronized(_messages) {
                     if (_messages.isNotEmpty() && _messages.first().role == "system") {
                         _messages[0] = ChatMessage("system", newSystemPrompt)
@@ -673,6 +723,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 data class ChatMessage(
     val role: String,
     val content: String = "",
+    val references: List<ReferenceItem>? = null,
     val toolCallId: String? = null,
     val toolCalls: List<ToolCall>? = null,
     val reasoningContent: String? = null
@@ -686,6 +737,18 @@ data class ToolCall(
 data class FunctionCall(
     val name: String,
     val arguments: String
+)
+
+/**
+ * 引用项——记录用户在消息中通过 @ 引用的参考信息
+ * type: "chapter" / "knowledge" / "prompt"
+ */
+data class ReferenceItem(
+    val type: String,
+    val title: String,
+    val id: Long? = null,
+    val bookUrl: String? = null,
+    val chapterIndex: Int? = null
 )
 
 data class ConfirmationRequest(

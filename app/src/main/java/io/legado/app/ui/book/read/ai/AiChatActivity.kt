@@ -42,6 +42,9 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
         )
     }
 
+    /** 当前引用的参考信息列表 */
+    private val currentReferences = mutableListOf<ReferenceItem>()
+
     /** 是否为独立模式（从"我的"页面进入，无书籍上下文） */
     private val isStandalone: Boolean get() = intent.getBooleanExtra("isStandalone", false) || ReadBook.book == null
 
@@ -56,6 +59,9 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
         bindEvent()
         observeData()
         setupKeyboardAdjustment()
+
+        // 从阅读器传过来的选中文本，预填到输入框
+        val incomingText = intent.getStringExtra("selectedText")
 
         if (isStandalone) {
             // 独立模式：隐藏章节选择区域和预置提示词栏，直接初始化
@@ -79,6 +85,12 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 ReadBook.durChapterIndex + 1
             )
             updateWordCount()
+        }
+
+        // 预填选中文本到输入框
+        if (!incomingText.isNullOrBlank()) {
+            binding.etInput.setText(incomingText)
+            binding.etInput.setSelection(incomingText.length)
         }
     }
 
@@ -131,8 +143,13 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                     end = binding.etChapterEnd.text.toString().toIntOrNull()
                         ?: (ReadBook.durChapterIndex + 1)
                 }
-                viewModel.sendMessage(text, start, end)
+                val refs = if (currentReferences.isNotEmpty()) currentReferences.toList() else null
+                viewModel.sendMessage(text, start, end, refs)
                 binding.etInput.setText("")
+                // 发送后清空引用
+                currentReferences.clear()
+                binding.layoutRefChips.removeAllViews()
+                binding.layoutRefChips.visibility = View.GONE
             }
         }
 
@@ -141,6 +158,77 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
             binding.etInput.setText(AiChatViewModel.VOICE_DESIGN_PROMPT)
             binding.etInput.setSelection(binding.etInput.text.length)
         }
+
+        // ===== @引用按钮 =====
+        binding.btnRefChapter.setOnClickListener {
+            val bookUrl = ReadBook.book?.bookUrl ?: run {
+                toastOnUi("请先打开一本书")
+                return@setOnClickListener
+            }
+            val dialog = ChapterPickerDialog.newInstance(bookUrl)
+            dialog.setOnSelectedListener { ref -> appendRefTag(ref) }
+            dialog.show(supportFragmentManager, "chapter_picker")
+        }
+
+        binding.btnRefKnowledge.setOnClickListener {
+            val dialog = KnowledgePickerDialog()
+            dialog.setOnSelectedListener { ref -> appendRefTag(ref) }
+            dialog.show(supportFragmentManager, "knowledge_picker")
+        }
+
+        binding.btnRefPrompt.setOnClickListener {
+            val dialog = PromptPickerDialog()
+            dialog.setOnSelectedListener { ref -> appendRefTag(ref) }
+            dialog.show(supportFragmentManager, "prompt_picker")
+        }
+
+        binding.btnRefHistory.setOnClickListener {
+            toastOnUi("引用历史功能开发中")
+        }
+    }
+
+    /**
+     * 追加 @引用标签到输入框，并记录引用信息
+     */
+    private fun appendRefTag(ref: ReferenceItem) {
+        addReference(ref)
+        val tag = "@${ref.title}"
+        val input = binding.etInput.text
+        if (input.isNotEmpty() && !input.endsWith(" ")) {
+            binding.etInput.append(" $tag ")
+        } else {
+            binding.etInput.append("$tag ")
+        }
+    }
+
+    /**
+     * 添加一个引用：显示芯片并存储 ReferenceItem
+     */
+    private fun addReference(ref: ReferenceItem) {
+        currentReferences.add(ref)
+        val density = resources.displayMetrics.density
+        val chip = TextView(this).apply {
+            text = ref.title
+            textSize = 11f
+            setPadding((density * 8).toInt(), 0, (density * 8).toInt(), 0)
+        }
+        // 根据类型着色
+        val color = when (ref.type) {
+            "chapter" -> Color.parseColor("#6aaaff")
+            "knowledge" -> Color.parseColor("#6acc6a")
+            "prompt" -> Color.parseColor("#cc6acc")
+            else -> Color.GRAY
+        }
+        chip.setTextColor(color)
+        chip.setBackgroundResource(R.drawable.bg_search_round)
+        val lp = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        lp.setMargins(0, 0, (density * 4).toInt(), 0)
+        chip.layoutParams = lp
+        binding.layoutRefChips.addView(chip)
+        binding.layoutRefChips.visibility = View.VISIBLE
     }
 
     private fun updateWordCount() {

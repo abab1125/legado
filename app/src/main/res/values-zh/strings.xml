@@ -279,6 +279,7 @@
     <string name="book_thought">想法</string>
     <string name="bookmark_and_thought">书签/想法</string>
     <string name="write_thought">写想法</string>
+    <string name="interact">互动</string>
     <string name="thought_hint">写下你的想法...</string>
     <string name="thought_saved">想法已保存</string>
     <string name="thought_deleted">想法已删除</string>

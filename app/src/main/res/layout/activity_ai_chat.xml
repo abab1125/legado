@@ -56,6 +56,80 @@
                     android:paddingBottom="4dp" />
             </LinearLayout>
 
+            <!-- 引用按钮行 -->
+            <LinearLayout
+                android:id="@+id/layout_reference_actions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="6dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/btn_ref_chapter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📖 @章节"
+                    android:textSize="12sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/btn_ref_knowledge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💡 知识点"
+                    android:textSize="12sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/btn_ref_prompt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✨ @提示词"
+                    android:textSize="12sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp" />
+
+                <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/btn_ref_history"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🕐 引用历史"
+                    android:textSize="11sp"
+                    android:textColor="#4a6a8a"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp" />
+            </LinearLayout>
+
+            <!-- 引用芯片行 -->
+            <LinearLayout
+                android:id="@+id/layout_ref_chips"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="6dp"
+                android:visibility="gone"
+                android:gravity="center_vertical" />
+
             <LinearLayout
                 android:id="@+id/layout_chapter_range"
                 android:layout_width="match_parent"

@@ -1057,6 +1057,7 @@
     <string name="sys_tts_config_summary">Open the system tts settings interface</string>
     <string name="cannot_timed_non_playback">When the non-playback state is not legal</string>
     <string name="all_bookmark">All bookmarks</string>
+    <string name="all_bookmark_and_thought">All bookmarks and thoughts</string>
     <string name="change_source_batch">Batch source switching</string>
     <string name="book_type_different">Different types of books</string>
     <string name="soure_change_source">Whether to confirm the source change</string>
@@ -1442,7 +1443,7 @@
     <string name="ai_tool_enabled">启用工具调用（允许AI操作书架/书源等数据）</string>
     <string name="ai_confirm_title">AI 操作确认</string>
     <string name="reading_skill">Legado Skill</string>
-    <string name="reading_skill_desc">AI Agent 阅读助手，管理书架、笔记与统计</string>
+    <string name="reading_skill_desc">Let your Agent manage your Legado bookshelf, sources and other info</string>
     <string name="ai_assistant">AI 助手</string>
     <string name="ai_assistant_desc">直接与 AI 对话，管理书架和书源</string>
     <string name="ai_summarize">归纳记忆</string>

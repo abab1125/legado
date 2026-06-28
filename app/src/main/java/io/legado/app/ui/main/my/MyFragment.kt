@@ -25,7 +25,6 @@ import io.legado.app.lib.theme.primaryColor
 import io.legado.app.service.WebService
 import io.legado.app.ui.about.AboutActivity
 import io.legado.app.ui.about.ReadRecordActivity
-import io.legado.app.ui.book.thought.ObsidianExportDialog
 import io.legado.app.ui.book.bookmark.AllBookmarkActivity
 import io.legado.app.ui.book.read.ai.AiChatActivity
 import io.legado.app.ui.main.my.ReadingSkillActivity
@@ -352,14 +351,9 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
             }
         }
 
-        // 书签
+        // 书签与想法
         binding.itemBookmark.setOnClickListener {
             startActivity<AllBookmarkActivity>()
-        }
-
-        // 导出到Obsidian
-        binding.itemObsidianExport.setOnClickListener {
-            showDialogFragment(ObsidianExportDialog.newInstance())
         }
 
         // 文件管理

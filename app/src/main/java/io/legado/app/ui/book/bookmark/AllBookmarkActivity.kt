@@ -11,6 +11,7 @@ import io.legado.app.constant.AppLog
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Bookmark
 import io.legado.app.databinding.ActivityAllBookmarkBinding
+import io.legado.app.ui.book.thought.ObsidianExportDialog
 import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.utils.applyNavigationBarPadding
 import io.legado.app.utils.showDialogFragment
@@ -72,6 +73,10 @@ class AllBookmarkActivity : VMBaseActivity<ActivityAllBookmarkBinding, AllBookma
 
             R.id.menu_export_md -> exportDir.launch {
                 requestCode = 2
+            }
+
+            R.id.menu_export_obsidian -> {
+                showDialogFragment(ObsidianExportDialog.newInstance())
             }
         }
         return super.onCompatOptionsItemSelected(item)

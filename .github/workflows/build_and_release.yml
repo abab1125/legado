@@ -65,6 +65,7 @@ jobs:
           tag_name: ${{ env.VERSION }}
           name: Legado ${{ env.VERSION }}
           files: apk_output/*.apk
+          generate_release_notes: true
           draft: false
           prerelease: false
         env:

@@ -8,6 +8,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.viewModels
@@ -202,31 +203,66 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
     }
 
     /**
-     * 添加一个引用：显示芯片并存储 ReferenceItem
+     * 添加一个引用：显示可删除芯片并存储 ReferenceItem
      */
     private fun addReference(ref: ReferenceItem) {
         currentReferences.add(ref)
         val density = resources.displayMetrics.density
-        val chip = TextView(this).apply {
+
+        val chip = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(
+                (density * 8).toInt(), (density * 3).toInt(),
+                (density * 4).toInt(), (density * 3).toInt()
+            )
+            setBackgroundResource(R.drawable.bg_search_round)
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.setMargins(0, 0, (density * 4).toInt(), 0)
+            layoutParams = lp
+        }
+
+        // 名称
+        val label = TextView(this).apply {
             text = ref.title
             textSize = 11f
-            setPadding((density * 8).toInt(), 0, (density * 8).toInt(), 0)
+            val color = when (ref.type) {
+                "chapter" -> Color.parseColor("#6aaaff")
+                "knowledge" -> Color.parseColor("#6acc6a")
+                "prompt" -> Color.parseColor("#cc6acc")
+                else -> Color.GRAY
+            }
+            setTextColor(color)
         }
-        // 根据类型着色
-        val color = when (ref.type) {
-            "chapter" -> Color.parseColor("#6aaaff")
-            "knowledge" -> Color.parseColor("#6acc6a")
-            "prompt" -> Color.parseColor("#cc6acc")
-            else -> Color.GRAY
+        chip.addView(label)
+
+        // × 删除按钮
+        val closeBtn = ImageView(this).apply {
+            setImageResource(R.drawable.ic_baseline_close)
+            val size = (density * 12).toInt()
+            layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                marginStart = (density * 4).toInt()
+            }
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            setColorFilter(Color.parseColor("#888888"))
+            contentDescription = "取消引用"
+            setOnClickListener {
+                val parent = binding.layoutRefChips
+                val idx = parent.indexOfChild(chip)
+                if (idx >= 0 && idx < currentReferences.size) {
+                    currentReferences.removeAt(idx)
+                }
+                parent.removeView(chip)
+                if (currentReferences.isEmpty()) {
+                    parent.visibility = View.GONE
+                }
+            }
         }
-        chip.setTextColor(color)
-        chip.setBackgroundResource(R.drawable.bg_search_round)
-        val lp = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        lp.setMargins(0, 0, (density * 4).toInt(), 0)
-        chip.layoutParams = lp
+        chip.addView(closeBtn)
+
         binding.layoutRefChips.addView(chip)
         binding.layoutRefChips.visibility = View.VISIBLE
     }

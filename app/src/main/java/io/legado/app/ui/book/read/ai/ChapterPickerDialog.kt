@@ -153,7 +153,7 @@ class ChapterAdapter(
         if (isSelected) {
             val accent = ctx.getColor(R.color.accent)
             holder.itemView.setBackgroundColor(
-                android.graphics.Color.argb(25, android.graphics.Color.red(accent), android.graphics.Color.green(accent), android.graphics.Color.blue(accent))
+                android.graphics.Color.argb(60, android.graphics.Color.red(accent), android.graphics.Color.green(accent), android.graphics.Color.blue(accent))
             )
         } else {
             val outValue = android.util.TypedValue()

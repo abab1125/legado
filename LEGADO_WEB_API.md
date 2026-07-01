@@ -494,9 +494,12 @@ curl "http://<ip>:1122/getReadTime?bookName=书名"
 
 #### GET `/getDetailedReadRecords`
 
-获取详细阅读记录，可按书名筛选。
+获取详细阅读记录，支持多维度筛选。
 
-- **Parameters**: `bookName` (string, optional)
+- **Parameters**:
+  - `bookName` (string, optional) — 按书名模糊筛选
+  - `startTime` (number, optional, 毫秒时间戳) — 筛选开始时间 >= startTime 的记录
+  - `endTime` (number, optional, 毫秒时间戳) — 筛选结束时间 <= endTime 的记录
 - **Response**: `DetailedReadRecord[]`
 
 ```typescript
@@ -513,6 +516,8 @@ curl "http://<ip>:1122/getReadTime?bookName=书名"
 ```bash
 curl "http://<ip>:1122/getDetailedReadRecords"
 curl "http://<ip>:1122/getDetailedReadRecords?bookName=书名"
+curl "http://<ip>:1122/getDetailedReadRecords?startTime=1700000000000&endTime=1700100000000"
+curl "http://<ip>:1122/getDetailedReadRecords?bookName=书名&startTime=1700000000000&endTime=1700100000000"
 ```
 
 ---

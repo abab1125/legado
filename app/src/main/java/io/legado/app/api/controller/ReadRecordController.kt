@@ -34,15 +34,25 @@ object ReadRecordController {
     }
 
     /**
-     * 获取详细阅读记录，可按书名筛选
+     * 获取详细阅读记录，支持多维度筛选
+     * @param bookName 书名（模糊匹配，可选）
+     * @param startTime 起始时间戳（可选，毫秒）
+     * @param endTime 结束时间戳（可选，毫秒）
      */
     fun getDetailedReadRecords(parameters: Map<String, List<String>>): ReturnData {
         val returnData = ReturnData()
         val bookName = parameters["bookName"]?.firstOrNull()
-        val records = if (bookName.isNullOrBlank()) {
-            appDb.detailedReadRecordDao.all()
-        } else {
-            appDb.detailedReadRecordDao.getByBookName(bookName)
+        val startTime = parameters["startTime"]?.firstOrNull()?.toLongOrNull()
+        val endTime = parameters["endTime"]?.firstOrNull()?.toLongOrNull()
+        val records = when {
+            !bookName.isNullOrBlank() && startTime != null && endTime != null ->
+                appDb.detailedReadRecordDao.search(bookName, startTime, endTime)
+            !bookName.isNullOrBlank() ->
+                appDb.detailedReadRecordDao.searchByBookName(bookName)
+            startTime != null && endTime != null ->
+                appDb.detailedReadRecordDao.getByTimeRange(startTime, endTime)
+            else ->
+                appDb.detailedReadRecordDao.all()
         }
         return returnData.setData(records)
     }

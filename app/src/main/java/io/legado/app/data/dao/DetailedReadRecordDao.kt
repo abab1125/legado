@@ -20,6 +20,15 @@ interface DetailedReadRecordDao {
     @Query("select * from detailedReadRecord where bookName = :bookName order by startTime asc")
     fun getByBookName(bookName: String): List<DetailedReadRecord>
 
+    @Query("select * from detailedReadRecord where bookName like '%' || :bookName || '%' order by startTime asc")
+    fun searchByBookName(bookName: String): List<DetailedReadRecord>
+
+    @Query("select * from detailedReadRecord where startTime >= :startTime and endTime <= :endTime order by startTime asc")
+    fun getByTimeRange(startTime: Long, endTime: Long): List<DetailedReadRecord>
+
+    @Query("select * from detailedReadRecord where bookName like '%' || :bookName || '%' and startTime >= :startTime and endTime <= :endTime order by startTime asc")
+    fun search(bookName: String, startTime: Long, endTime: Long): List<DetailedReadRecord>
+
     @Query("select min(startTime) from detailedReadRecord where bookName = :bookName")
     fun getEarliestStartTime(bookName: String): Long?
 

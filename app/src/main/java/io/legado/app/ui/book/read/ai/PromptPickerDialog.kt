@@ -244,6 +244,21 @@ class PromptAdapter(
                 holder.itemView.context.getColor(R.color.accent)
             )
 
+        val ctx = holder.itemView.context
+        if (isSelected) {
+            val accent = ctx.getColor(R.color.accent)
+            holder.itemView.setBackgroundColor(
+                android.graphics.Color.argb(60,
+                    android.graphics.Color.red(accent),
+                    android.graphics.Color.green(accent),
+                    android.graphics.Color.blue(accent))
+            )
+        } else {
+            val outValue = android.util.TypedValue()
+            ctx.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
+            holder.itemView.setBackgroundResource(outValue.resourceId)
+        }
+
         holder.itemView.setOnClickListener { onItemClick(position) }
     }
 

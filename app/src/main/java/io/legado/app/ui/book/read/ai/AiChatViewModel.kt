@@ -862,8 +862,10 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                     normalized.dropLast("/chat/completions".length) + "/models"
                 normalized.endsWith("/completions", ignoreCase = true) ->
                     normalized.dropLast("/completions".length).substringBeforeLast('/') + "/models"
+                normalized.endsWith("/models", ignoreCase = true) ->
+                    normalized
                 else ->
-                    normalized.substringBeforeLast('/') + "/models"
+                    normalized + "/models"
             }
         } catch (e: Exception) {
             chatUrl.substringBeforeLast("/chat") + "/models"

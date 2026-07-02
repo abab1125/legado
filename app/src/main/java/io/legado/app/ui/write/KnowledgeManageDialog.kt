@@ -44,8 +44,16 @@ class KnowledgeManageDialog : BaseDialogFragment(R.layout.dialog_knowledge_manag
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
         binding.recycler.adapter = adapter
-        binding.btnClose.setOnClickListener { dismiss() }
-        binding.btnAdd.setOnClickListener { showAddDialog() }
+        binding.titleBar.setNavigationOnClickListener { dismiss() }
+        binding.titleBar.menu.add("添加").apply {
+            setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS)
+        }
+        binding.titleBar.toolbar.setOnMenuItemClickListener { item ->
+            when (item.title.toString()) {
+                "添加" -> { showAddDialog(); true }
+                else -> false
+            }
+        }
         loadItems()
     }
 

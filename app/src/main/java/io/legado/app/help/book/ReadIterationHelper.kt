@@ -64,7 +64,11 @@ object ReadIterationHelper {
      * 获取标签颜色（从偏好设置读取，未设置则使用默认）
      */
     fun getTagColor(): Int {
-        return appCtx.getPrefInt(PreferKey.readIterationTagColor, DEFAULT_TAG_COLOR)
+        return if (io.legado.app.help.config.AppConfig.isNightTheme) {
+            appCtx.getPrefInt(PreferKey.readIterationTagColorNight, 0xFF050505.toInt())
+        } else {
+            appCtx.getPrefInt(PreferKey.readIterationTagColor, DEFAULT_TAG_COLOR)
+        }
     }
 
     /**

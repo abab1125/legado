@@ -101,55 +101,40 @@ class CoverConfigFragment : PreferenceFragment(),
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
         when (preference.key) {
             "coverRule" -> showDialogFragment(CoverRuleConfigDialog())
-            PreferKey.defaultCover ->
-                if (getPrefString(preference.key).isNullOrEmpty()) {
-                    selectImage.launch {
-                        requestCode = requestCodeCover
-                        mode = HandleFileContract.IMAGE
-                    }
-                } else {
-                    context?.selector(
-                        items = arrayListOf(
-                            getString(R.string.delete),
-                            getString(R.string.select_image)
-                        )
-                    ) { _, i ->
-                        if (i == 0) {
+            PreferKey.defaultCover,
+            PreferKey.defaultCoverDark -> {
+                val isDark = preference.key == PreferKey.defaultCoverDark
+                val reqCode = if (isDark) requestCodeCoverDark else requestCodeCover
+                val items = arrayListOf(
+                    getString(R.string.select_image),
+                    "选择图集压缩包"
+                )
+                if (!getPrefString(preference.key).isNullOrEmpty()) {
+                    items.add(0, getString(R.string.delete))
+                }
+                context?.selector(items = items) { _, i ->
+                    val action = items[i]
+                    when (action) {
+                        getString(R.string.delete) -> {
                             removePref(preference.key)
                             BookCover.upDefaultCover()
-                        } else {
+                        }
+                        getString(R.string.select_image) -> {
                             selectImage.launch {
-                                requestCode = requestCodeCover
+                                requestCode = reqCode
                                 mode = HandleFileContract.IMAGE
+                            }
+                        }
+                        "选择图集压缩包" -> {
+                            selectImage.launch {
+                                requestCode = reqCode
+                                mode = HandleFileContract.FILE
+                                allowExtensions = arrayOf("zip")
                             }
                         }
                     }
                 }
-
-            PreferKey.defaultCoverDark ->
-                if (getPrefString(preference.key).isNullOrEmpty()) {
-                    selectImage.launch {
-                        requestCode = requestCodeCoverDark
-                        mode = HandleFileContract.IMAGE
-                    }
-                } else {
-                    context?.selector(
-                        items = arrayListOf(
-                            getString(R.string.delete),
-                            getString(R.string.select_image)
-                        )
-                    ) { _, i ->
-                        if (i == 0) {
-                            removePref(preference.key)
-                            BookCover.upDefaultCover()
-                        } else {
-                            selectImage.launch {
-                                requestCode = requestCodeCoverDark
-                                mode = HandleFileContract.IMAGE
-                            }
-                        }
-                    }
-                }
+            }
         }
         return super.onPreferenceTreeClick(preference)
     }
@@ -171,20 +156,32 @@ class CoverConfigFragment : PreferenceFragment(),
     private fun setCoverFromUri(preferenceKey: String, uri: Uri) {
         readUri(uri) { fileDoc, inputStream ->
             kotlin.runCatching {
-                var file = requireContext().externalFiles
-                val suffix = if (fileDoc.name.contains(".9.png", true)) {
-                    ".9.png"
+                val isZip = fileDoc.name?.endsWith(".zip", true) == true
+                val md5 = uri.inputStream(requireContext()).getOrThrow().use {
+                    MD5Utils.md5Encode(it)
+                }
+                if (isZip) {
+                    val targetDir = java.io.File(requireContext().externalFiles, "covers/$md5")
+                    targetDir.mkdirs()
+                    io.legado.app.utils.compress.ZipUtils.unZipToPath(inputStream, targetDir) { name: String ->
+                        val n = name.lowercase()
+                        n.endsWith(".jpg") || n.endsWith(".png") || n.endsWith(".webp") || n.endsWith(".jpeg") || n.endsWith(".bmp")
+                    }
+                    putPrefString(preferenceKey, targetDir.absolutePath)
                 } else {
-                    "." + fileDoc.name.substringAfterLast(".")
+                    var file = requireContext().externalFiles
+                    val suffix = if (fileDoc.name?.contains(".9.png", true) == true) {
+                        ".9.png"
+                    } else {
+                        "." + fileDoc.name?.substringAfterLast(".")
+                    }
+                    val fileName = md5 + suffix
+                    file = FileUtils.createFileIfNotExist(file, "covers", fileName)
+                    FileOutputStream(file).use {
+                        inputStream.copyTo(it)
+                    }
+                    putPrefString(preferenceKey, file.absolutePath)
                 }
-                val fileName = uri.inputStream(requireContext()).getOrThrow().use {
-                    MD5Utils.md5Encode(it) + suffix
-                }
-                file = FileUtils.createFileIfNotExist(file, "covers", fileName)
-                FileOutputStream(file).use {
-                    inputStream.copyTo(it)
-                }
-                putPrefString(preferenceKey, file.absolutePath)
                 BookCover.upDefaultCover()
             }.onFailure {
                 appCtx.toastOnUi(it.localizedMessage)

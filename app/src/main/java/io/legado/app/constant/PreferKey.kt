@@ -222,6 +222,7 @@ object PreferKey {
     const val obsidianVaultSubPath = "obsidianVaultSubPath"
     const val obsidianLocalDirUri = "obsidianLocalDirUri"
     const val readIterationTagColor = "readIterationTagColor"
+    const val readIterationTagColorNight = "readIterationTagColorNight"
     const val readIterationPopup = "readIterationPopup"
     const val readIterationShowTag = "readIterationShowTag"
     const val showBookplate = "showBookplate"

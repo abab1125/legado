@@ -42,7 +42,12 @@ object ThemeExportHelper {
         val coverShowNameN: Boolean,
         val coverShowAuthorN: Boolean,
         val readIterationTagColor: Int,
-        val isNightTheme: Boolean
+        val isNightTheme: Boolean,
+        val readIterationTagColorNight: Int? = null,
+        val bottomIconBookshelf: String? = null,
+        val bottomIconExplore: String? = null,
+        val bottomIconRss: String? = null,
+        val bottomIconMy: String? = null
     )
 
     suspend fun exportFullTheme(context: Context, uri: Uri, themeConfig: ThemeConfig.Config) {
@@ -64,6 +69,13 @@ object ThemeExportHelper {
                 val coverShowAuthorN = context.getPrefBoolean(PreferKey.coverShowAuthorN, true)
                 val readIterationTagColor =
                     context.getPrefInt(PreferKey.readIterationTagColor, 0xCCB5451B.toInt())
+                val readIterationTagColorNight =
+                    context.getPrefInt(PreferKey.readIterationTagColorNight, 0xFF050505.toInt())
+
+                val bottomIconBookshelf = context.getPrefString(PreferKey.bottomIconBookshelf)
+                val bottomIconExplore = context.getPrefString(PreferKey.bottomIconExplore)
+                val bottomIconRss = context.getPrefString(PreferKey.bottomIconRss)
+                val bottomIconMy = context.getPrefString(PreferKey.bottomIconMy)
 
                 // Copy theme background image if it's local
                 exportThemeConfig.backgroundImgPath?.let { path ->
@@ -110,6 +122,23 @@ object ThemeExportHelper {
                     file.copyTo(targetFile, overwrite = true)
                 }
 
+                // Copy bottom icons if local
+                val copyBottomIcon: (String?) -> Unit = { iconStr ->
+                    if (!iconStr.isNullOrEmpty() && !iconStr.startsWith("http")) {
+                        val path = if (iconStr.contains(File.separator)) iconStr
+                        else FileUtils.getPath(context.filesDir, "bottomIcons", iconStr)
+                        if (FileUtils.exist(path)) {
+                            val file = File(path)
+                            val targetFile = File(exportDir, "bottomIcon_${file.name}")
+                            file.copyTo(targetFile, overwrite = true)
+                        }
+                    }
+                }
+                copyBottomIcon(bottomIconBookshelf)
+                copyBottomIcon(bottomIconExplore)
+                copyBottomIcon(bottomIconRss)
+                copyBottomIcon(bottomIconMy)
+
                 // Build full theme object and write JSON
                 val fullTheme = FullTheme(
                     themeConfig = exportThemeConfig,
@@ -120,7 +149,12 @@ object ThemeExportHelper {
                     coverShowNameN = coverShowNameN,
                     coverShowAuthorN = coverShowAuthorN,
                     readIterationTagColor = readIterationTagColor,
-                    isNightTheme = isNightTheme
+                    isNightTheme = isNightTheme,
+                    readIterationTagColorNight = readIterationTagColorNight,
+                    bottomIconBookshelf = bottomIconBookshelf,
+                    bottomIconExplore = bottomIconExplore,
+                    bottomIconRss = bottomIconRss,
+                    bottomIconMy = bottomIconMy
                 )
                 val jsonFile = File(exportDir, FULL_THEME_JSON)
                 jsonFile.writeText(GSON.toJson(fullTheme))
@@ -221,7 +255,7 @@ object ThemeExportHelper {
                 importReadConfig.bgStrEInk =
                     restoreReadBg(importReadConfig.bgTypeEInk, importReadConfig.bgStrEInk)
 
-                // Restore cover files
+                // Restore cover files and bottom icons
                 importDir.listFiles()?.forEach { file ->
                     if (file.name.startsWith("cover_")) {
                         val isDark = file.name.startsWith("cover_dark_")
@@ -232,6 +266,12 @@ object ThemeExportHelper {
                         val targetFile = File(targetDir, file.name)
                         file.copyTo(targetFile, overwrite = true)
                         context.putPrefString(prefKey, targetFile.absolutePath)
+                    } else if (file.name.startsWith("bottomIcon_")) {
+                        val targetDir = File(context.filesDir, "bottomIcons")
+                        targetDir.mkdirs()
+                        val originalName = file.name.removePrefix("bottomIcon_")
+                        val targetFile = File(targetDir, originalName)
+                        file.copyTo(targetFile, overwrite = true)
                     }
                 }
 
@@ -260,6 +300,13 @@ object ThemeExportHelper {
                 context.putPrefBoolean(PreferKey.coverShowNameN, fullTheme.coverShowNameN)
                 context.putPrefBoolean(PreferKey.coverShowAuthorN, fullTheme.coverShowAuthorN)
                 context.putPrefInt(PreferKey.readIterationTagColor, fullTheme.readIterationTagColor)
+                fullTheme.readIterationTagColorNight?.let {
+                    context.putPrefInt(PreferKey.readIterationTagColorNight, it)
+                }
+                fullTheme.bottomIconBookshelf?.let { context.putPrefString(PreferKey.bottomIconBookshelf, it) }
+                fullTheme.bottomIconExplore?.let { context.putPrefString(PreferKey.bottomIconExplore, it) }
+                fullTheme.bottomIconRss?.let { context.putPrefString(PreferKey.bottomIconRss, it) }
+                fullTheme.bottomIconMy?.let { context.putPrefString(PreferKey.bottomIconMy, it) }
 
                 BookCover.upDefaultCover()
 

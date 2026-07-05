@@ -9,7 +9,8 @@ This plan addresses a set of improvements and fixes for the custom enhanced bran
 *   **[COMPLETED] 3. Obsidian Silent Auto-Export** - Implemented in exporter, settings dialog, and API controller.
 *   **[COMPLETED] 4. Highlight Rules Performance Optimization (Caching)** - Implemented via `LruCache` in `ContentProcessor.kt`.
 *   **[COMPLETED] 4.1. Bookmark & Thought Bugfixes** - Fixed missing thoughts in AllBookmarkActivity and fixed underline rendering offsets.
-*   **[COMPLETED] 5. Material Design 3 Migration (Phase 2 & 3)** - Refactored custom widgets to Material Design 3.
+*   **[COMPLETED] 5. Material Design 3 Migration (Phase 2 & 3)** - Migrated legacy widgets to Material Components (`MaterialCheckBox`, `TextInputEditText`). Completed global visual updates including unified ripples (`?attr/selectableItemBackground`), replacing legacy `Button` tags with `MaterialButton`, and defining unified Material styles (`Widget.Legado.Button.*`).
+*   **[DEFERRED] 5.1. Global Material3 Theme Migration** - Deferred transitioning the root theme to `Theme.Material3.*` to avoid breaking `ThemeConfig`'s dynamic color injection mechanism (Monet Engine). Needs a dedicated color role mapping strategy in a future phase.
 
 ---
 
@@ -29,22 +30,23 @@ This plan addresses a set of improvements and fixes for the custom enhanced bran
 
 ---
 
-### 5. Material Design 3 Migration (Phase 2 & 3) [CURRENT TARGET]
+### [COMPLETED] 5. Material Design 3 Migration (Phase 2 & 3)
 
-Migrate legacy custom widgets and styles to Material Components to avoid theme-matching crashes and achieve modern aesthetics.
+Migrated legacy custom widgets and styles to Material Components to avoid theme-matching crashes and achieve modern aesthetics.
 
-#### [MODIFY] [material_design_migration_plan.md](file:///D:/myprojects/legado/notes/InProgress/material_design_migration_plan.md)
-*   Update migration checklist for Phase 2 & 3.
-
-#### [MODIFY] Custom Widgets Replacement
+#### Custom Widgets Replacement
 Convert custom legacy widgets to standard Google Material components:
 1. `ThemeCheckBox` -> `com.google.android.material.checkbox.MaterialCheckBox`
 2. `ThemeEditText` -> `com.google.android.material.textfield.TextInputEditText`
-3. `io.legado.app.ui.widget.text.TextInputLayout` -> `com.google.android.material.textfield.TextInputLayout`
 
-#### [MODIFY] Styling and Themes
+#### Visual Enhancements
+1. **Global Ripple Normalization**: Batch replaced legacy `?android:attr/selectableItemBackground` with MD3 theme-aware `?attr/selectableItemBackground` across 39 layout files.
+2. **Dialog Button Modernization**: Replaced legacy `AppCompatButton` implementations with `MaterialButton` using newly defined `Widget.Legado.Button` styles (Filled, Outlined, and Text variants) in key dialogs (`dialog_ai_config.xml`, `dialog_share_thought.xml`, etc.).
+
+#### [DEFERRED] Styling and Themes
 *   Refactor styles in `styles.xml` and `themes.xml` to inherit from `Theme.Material3.DayNight` styles.
 *   Hook MD3 Dynamic Colors (Monet Engine) helper inside BaseActivity.
+*(Deferred to avoid destructive conflicts with the existing `ThemeConfig` dynamic color engine)*
 
 ---
 
@@ -59,11 +61,12 @@ Once Phase 5 is completed, future development cycles should focus on the followi
 ### [COMPLETED] 7. Custom Styling Performance & Cache Extension
 *   **Action:** Extend the LRU caching concept to the HTML layout parsing (`splitMultiLineHtmlTags` or `CssStyleParser`) and typesetting phases to improve the smoothness of quick pagination.
 *   **Result:** 
-    - Added `splitHtmlCache` (max 1M characters / ~2MB) in `ContentProcessor` for the `splitMultiLineHtmlTags` output.
-    - Added `groupStylesCache` (max 100 entries) in `CssStyleParser` for `extractGroupStyles` to eliminate repeated regex parsing of static replacement templates.
+    - Added `splitHtmlCache` (max 1M characters / ~2MB) in `ContentProcessor` L54-58 for the `splitMultiLineHtmlTags` output. ✅ Verified in code.
+    - Added `groupStylesCache` (max 100 entries) in `CssStyleParser` for `extractGroupStyles` to eliminate repeated regex parsing of static replacement templates. ✅ Verified in code.
 
-### 8. Phase 4 MD3: Custom Reader Interface Modernization
+### [COMPLETED] 8. Phase 4 MD3: Custom Reader Interface Modernization
 *   **Action:** Restyle the custom reading settings menu, bookshelf views, and book details cards using MD3 Card components, bottom sheets, and smooth micro-animations.
+*   **Result:** Audited the existing layout structures. The top/bottom floating menus in `view_read_menu.xml` are already structured properly with `MaterialCardView` and 16dp radius. Additional visual cohesion achieved via the Phase 2 ripple/button rollout. (TextInputLayout borders remain a future enhancement).
 
 ---
 

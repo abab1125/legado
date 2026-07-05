@@ -2,19 +2,18 @@ package io.legado.app.lib.theme.view
 
 import android.content.Context
 import android.util.AttributeSet
-import androidx.appcompat.widget.AppCompatCheckBox
-import io.legado.app.lib.theme.accentColor
-import io.legado.app.utils.applyTint
+import com.google.android.material.checkbox.MaterialCheckBox
 
-class ThemeCheckBox(context: Context, attrs: AttributeSet) : AppCompatCheckBox(context, attrs) {
+/**
+ * 主题感知的 CheckBox，继承自 MaterialCheckBox。
+ * MaterialCheckBox 在 MaterialComponents 主题下会自动从 colorPrimary 着色，
+ * 无需手动 applyTint。
+ *
+ * 保留 setOnUserCheckedChangeListener 以区分用户操作与代码设值触发的 checked 变化。
+ */
+class ThemeCheckBox(context: Context, attrs: AttributeSet) : MaterialCheckBox(context, attrs) {
 
     private var isUserAction = false
-
-    init {
-        if (!isInEditMode) {
-            applyTint(context.accentColor)
-        }
-    }
 
     override fun performClick(): Boolean {
         isUserAction = true
@@ -35,3 +34,4 @@ class ThemeCheckBox(context: Context, attrs: AttributeSet) : AppCompatCheckBox(c
     }
 
 }
+

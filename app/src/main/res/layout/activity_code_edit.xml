@@ -151,9 +151,9 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_previous"
-                style="?android:attr/buttonBarButtonStyle"
+                style="@style/Widget.Legado.Button.Text"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -161,9 +161,9 @@
                 android:textColor="@color/primaryText"
                 android:textSize="14sp" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_next"
-                style="?android:attr/buttonBarButtonStyle"
+                style="@style/Widget.Legado.Button.Text"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -171,9 +171,9 @@
                 android:textColor="@color/primaryText"
                 android:textSize="14sp" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_replace"
-                style="?android:attr/buttonBarButtonStyle"
+                style="@style/Widget.Legado.Button.Text"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -181,9 +181,9 @@
                 android:textColor="@color/primaryText"
                 android:textSize="14sp" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_replace_all"
-                style="?android:attr/buttonBarButtonStyle"
+                style="@style/Widget.Legado.Button.Text"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/selectableItemBackground"
+    android:background="?attr/selectableItemBackground"
     android:clipToPadding="false"
     android:padding="16dp"
     android:scrollbars="none">
@@ -64,7 +64,7 @@
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:layout_gravity="center"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/edit"
         android:padding="6dp"
         android:scrollbars="none"

@@ -241,6 +241,14 @@
             app:cpv_dialogType="preset"
             app:iconSpaceReserved="false" />
 
+        <io.legado.app.lib.prefs.ColorPreference
+            android:defaultValue="0xFF050505"
+            android:key="readIterationTagColorNight"
+            android:summary="@string/read_iteration_tag_color_summary"
+            android:title="阅读状态栏标签颜色(夜间)"
+            app:cpv_dialogType="preset"
+            app:iconSpaceReserved="false" />
+
     </io.legado.app.lib.prefs.PreferenceCategory>
 
     <io.legado.app.lib.prefs.PreferenceCategory

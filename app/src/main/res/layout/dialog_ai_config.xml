@@ -83,17 +83,17 @@
                 android:layout_marginTop="8dp"
                 android:orientation="horizontal">
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_fetch_models"
-                    style="@style/Widget.AppCompat.Button.Borderless"
+                    style="@style/Widget.Legado.Button.Text"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="拉取模型列表" />
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_test_model"
-                    style="@style/Widget.AppCompat.Button.Borderless"
+                    style="@style/Widget.Legado.Button.Text"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -181,27 +181,28 @@
                     android:text="0" />
             </LinearLayout>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_view_memory"
-                style="@style/Widget.AppCompat.Button.Borderless"
+                style="@style/Widget.Legado.Button.Text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="查看记忆列表" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_clear_memory"
-                style="@style/Widget.AppCompat.Button.Borderless"
+                style="@style/Widget.Legado.Button.Text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="@string/ai_clear_memory" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_save"
+                style="@style/Widget.Legado.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="12dp"
                 android:text="@string/ai_save_config" />
 
         </LinearLayout>

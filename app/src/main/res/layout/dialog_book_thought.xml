@@ -101,7 +101,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:background="?android:attr/selectableItemBackground"
+                    android:background="?attr/selectableItemBackground"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="6dp"
                     android:text="@string/thought_underline_style"

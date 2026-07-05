@@ -13,7 +13,7 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:src="@drawable/exo_icon_play"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:layout_marginEnd="16dp" />
 
     <!-- 进度条 -->
@@ -30,6 +30,6 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:src="@drawable/exo_icon_fullscreen_enter"
-        android:background="?android:attr/selectableItemBackgroundBorderless" />
+        android:background="?attr/selectableItemBackgroundBorderless" />
 
 </LinearLayout>

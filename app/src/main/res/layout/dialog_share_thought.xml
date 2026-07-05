@@ -87,27 +87,23 @@
             android:orientation="horizontal"
             android:layout_marginTop="12dp">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_save"
+                style="@style/Widget.Legado.Button.Outlined"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="6dp"
-                android:background="?attr/selectableItemBackground"
-                android:text="@string/action_save"
-                android:textColor="?attr/colorPrimary"
-                android:textSize="16sp" />
+                android:text="@string/action_save" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_share"
+                style="@style/Widget.Legado.Button"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
-                android:background="?attr/selectableItemBackground"
-                android:text="@string/share"
-                android:textColor="?attr/colorPrimary"
-                android:textSize="16sp" />
+                android:text="@string/share" />
 
         </LinearLayout>
 

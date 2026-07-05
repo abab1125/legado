@@ -73,7 +73,7 @@
                 android:id="@+id/iv_search_content_up"
                 android:layout_width="36dp"
                 android:layout_height="match_parent"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/go_to_top"
                 android:src="@drawable/ic_arrow_drop_up"
                 android:tooltipText="@string/go_to_top"
@@ -84,7 +84,7 @@
                 android:id="@+id/iv_search_content_down"
                 android:layout_width="36dp"
                 android:layout_height="match_parent"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/go_to_bottom"
                 android:src="@drawable/ic_arrow_drop_down"
                 android:tooltipText="@string/go_to_bottom"
@@ -96,7 +96,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:ellipsize="middle"
                 android:gravity="center_vertical"
                 android:paddingLeft="10dp"
@@ -124,7 +124,7 @@
                 android:id="@+id/ll_search_results"
                 android:layout_width="60dp"
                 android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:contentDescription="结果"
                 android:focusable="true"
@@ -166,7 +166,7 @@
                 android:id="@+id/ll_main_menu"
                 android:layout_width="60dp"
                 android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:contentDescription="@string/main_menu"
                 android:focusable="true"
@@ -206,7 +206,7 @@
                 android:id="@+id/ll_search_exit"
                 android:layout_width="60dp"
                 android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:contentDescription="退出"
                 android:focusable="true"
@@ -246,7 +246,7 @@
             <!--            android:id="@+id/ll_setting"-->
             <!--            android:layout_width="50dp"-->
             <!--            android:layout_height="50dp"-->
-            <!--            android:background="?android:attr/selectableItemBackgroundBorderless"-->
+            <!--            android:background="?attr/selectableItemBackgroundBorderless"-->
             <!--            android:clickable="true"-->
             <!--            android:contentDescription="@string/setting"-->
             <!--            android:focusable="true"-->

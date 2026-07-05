@@ -198,7 +198,8 @@ class ThemeConfigFragment : PreferenceFragment(),
                 upPreferenceSummary(key, getPrefString(key))
             }
 
-            PreferKey.readIterationTagColor -> {
+            PreferKey.readIterationTagColor,
+            PreferKey.readIterationTagColorNight -> {
                 postEvent(EventBus.UP_BOOKSHELF, "")
             }
         }

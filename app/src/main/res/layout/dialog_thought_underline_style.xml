@@ -141,7 +141,7 @@
                 android:id="@+id/tv_color_value"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="?attr/selectableItemBackground"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="6dp"
                 android:text="@string/underline_follow_accent"

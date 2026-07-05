@@ -95,6 +95,7 @@ class ObsidianExportDialog : BaseDialogFragment(R.layout.dialog_obsidian_export)
         AppConfig.obsidianLocalDirUri?.let {
             binding.editLocalPath.setText(it)
         }
+        binding.cbAutoExport.isChecked = AppConfig.obsidianAutoExport
     }
 
     private fun saveConfig() {
@@ -102,6 +103,7 @@ class ObsidianExportDialog : BaseDialogFragment(R.layout.dialog_obsidian_export)
         AppConfig.obsidianApiUrl = binding.editApiUrl.text.toString().trim()
         AppConfig.obsidianApiKey = binding.editApiKey.text.toString().trim()
         AppConfig.obsidianVaultSubPath = binding.editVaultPath.text.toString().trim()
+        AppConfig.obsidianAutoExport = binding.cbAutoExport.isChecked
     }
 
     private fun startExport() {

@@ -769,6 +769,7 @@ class TextChapterLayout(
                             end = absStartX + x1
                         )
                     )
+                    lineText.append(ChapterProvider.indentChar)
                     indentX = x1
                 }
                 textLine.indentWidth = indentX

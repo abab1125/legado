@@ -1234,6 +1234,10 @@
     <string name="obsidian_connection_failed">Connection failed</string>
     <string name="obsidian_connection_failed_detail">Connection failed: %1$s</string>
     <string name="obsidian_api_url_empty">Please enter the API URL</string>
+    <string name="obsidian_auto_export">自动导出至 Obsidian（静默）</string>
+    <string name="web_service_security_warning">安全提示</string>
+    <string name="web_service_security_warning_msg">开启 Web 服务将在本地网络暴露 API 接口，任何同网段的设备均可访问您的数据。\n\n请确保您处于可信网络环境中（如家庭或个人热点），切勿在公共网络下开启。</string>
+    <string name="do_not_show_again">以后不再提示</string>
     <string name="user_tutorial">User Tutorial</string>
     <string name="change_source_delay">Change source delay</string>
     <string name="change_source_progress">Result %1$d, Progress %2$d / %3$d: %4$s</string>

@@ -233,4 +233,6 @@ object PreferKey {
     const val bottomIconExplore = "bottomIconExplore"
     const val bottomIconRss = "bottomIconRss"
     const val bottomIconMy = "bottomIconMy"
+    const val showWebServiceWarning = "showWebServiceWarning"
+    const val obsidianAutoExport = "obsidianAutoExport"
 }

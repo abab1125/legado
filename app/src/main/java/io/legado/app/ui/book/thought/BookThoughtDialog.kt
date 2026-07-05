@@ -111,6 +111,7 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
                         )
                     }
                     postEvent(EventBus.REFRESH_BOOK_THOUGHT, true)
+                    ThoughtObsidianExporter.exportBookAsync(_bookThought!!.bookName, _bookThought!!.bookAuthor)
                     context?.toastOnUi(R.string.thought_saved)
                     dismiss()
                 }
@@ -121,6 +122,7 @@ class BookThoughtDialog() : BaseDialogFragment(R.layout.dialog_book_thought, tru
                         appDb.bookThoughtDao.delete(_bookThought!!)
                     }
                     postEvent(EventBus.REFRESH_BOOK_THOUGHT, true)
+                    ThoughtObsidianExporter.exportBookAsync(_bookThought!!.bookName, _bookThought!!.bookAuthor)
                     context?.toastOnUi(R.string.thought_deleted)
                     dismiss()
                 }

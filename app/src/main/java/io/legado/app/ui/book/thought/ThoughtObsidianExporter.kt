@@ -7,6 +7,9 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.utils.createFileIfNotExist
 import io.legado.app.utils.exists
 import io.legado.app.utils.writeText
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -32,6 +35,17 @@ object ThoughtObsidianExporter {
             0 -> exportViaApi(fileName, markdown)
             1 -> exportViaLocalFile(fileName, markdown)
             else -> throw IllegalArgumentException("Unknown export method")
+        }
+    }
+
+    /**
+     * 在后台协程中静默自动导出，仅在 obsidianAutoExport 开启时执行。
+     * 任何失败均静默处理，不打扰用户。
+     */
+    fun exportBookAsync(bookName: String, bookAuthor: String) {
+        if (!AppConfig.obsidianAutoExport) return
+        CoroutineScope(Dispatchers.IO).launch {
+            runCatching { exportBook(bookName, bookAuthor) }
         }
     }
 

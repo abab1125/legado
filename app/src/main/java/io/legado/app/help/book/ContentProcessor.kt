@@ -1,6 +1,7 @@
 package io.legado.app.help.book
 
 import android.os.Build
+import android.util.LruCache
 import io.legado.app.constant.AppLog
 import io.legado.app.constant.AppPattern
 import io.legado.app.constant.AppPattern.spaceRegex
@@ -32,6 +33,30 @@ class ContentProcessor private constructor(
         private val processors = hashMapOf<String, WeakReference<ContentProcessor>>()
         private val isAndroid8 = Build.VERSION.SDK_INT in 26..27
 
+        /**
+         * 高亮规则处理结果的 LRU 缓存。
+         * Key: "内容长度|内容哈希|规则id|pattern|replacement"
+         * Value: applyHighlightRule 的处理结果
+         * 容量控制：上限 400 万字符（约 8MB 内存），根据内容长度计算 sizeOf。
+         * 规则更新时全量清除。
+         */
+        private val highlightCache = object : LruCache<String, String>(4 * 1024 * 1024) {
+            override fun sizeOf(key: String, value: String): Int {
+                return value.length
+            }
+        }
+
+        /**
+         * 跨行 HTML 标签拆分处理的 LRU 缓存。
+         * Key: "内容长度|内容哈希"
+         * 容量控制：上限 100 万字符（约 2MB 内存）。
+         */
+        private val splitHtmlCache = object : LruCache<String, String>(1024 * 1024) {
+            override fun sizeOf(key: String, value: String): Int {
+                return value.length
+            }
+        }
+
         fun get(book: Book) = get(book.name, book.origin)
 
         fun get(bookName: String, bookOrigin: String): ContentProcessor {
@@ -45,6 +70,9 @@ class ContentProcessor private constructor(
         }
 
         fun upReplaceRules() {
+            // 规则变更，所有缓存失效
+            highlightCache.evictAll()
+            splitHtmlCache.evictAll()
             processors.forEach {
                 it.value.get()?.upReplaceRules()
             }
@@ -246,6 +274,11 @@ class ContentProcessor private constructor(
      * @return 应用高亮样式后的 HTML 内容
      */
     private fun applyHighlightRule(content: String, rule: ReplaceRule): String {
+        // LRU 缓存命中检查：key = 内容长度|内容哈希|规则id|pattern|replacement
+        // 用 length 辅助 hashCode 以极大降低碰撞概率（length 相同且 hashCode 相同才可能误命中）
+        val cacheKey = "${content.length}|${content.hashCode()}|${rule.id}|${rule.pattern}|${rule.replacement}"
+        highlightCache.get(cacheKey)?.let { return it }
+
         val regex = if (rule.isRegex) {
             val options = mutableSetOf<RegexOption>()
             if (rule.isDotAll) options.add(RegexOption.DOT_MATCHES_ALL)
@@ -295,7 +328,9 @@ class ContentProcessor private constructor(
             sb.append(content, lastEnd, content.length)
         }
 
-        return sb.toString()
+        val result = sb.toString()
+        highlightCache.put(cacheKey, result)
+        return result
     }
 
     /**
@@ -304,6 +339,9 @@ class ContentProcessor private constructor(
      * 变为: <font color="red">第一行</font>\n<font color="red">第二行</font>
      */
     private fun splitMultiLineHtmlTags(content: String): String {
+        val cacheKey = "${content.length}|${content.hashCode()}"
+        splitHtmlCache.get(cacheKey)?.let { return it }
+
         val result = StringBuilder()
         val tagStack = mutableListOf<String>() // 存储未闭合的开标签原文
         val tagPattern = Regex("""<(/?)(\w+)(\s[^>]*)?>""", RegexOption.IGNORE_CASE)
@@ -349,7 +387,9 @@ class ContentProcessor private constructor(
                 i++
             }
         }
-        return result.toString()
+        val finalResult = result.toString()
+        splitHtmlCache.put(cacheKey, finalResult)
+        return finalResult
     }
 
 }

@@ -1,6 +1,7 @@
 package io.legado.app.utils
 
 import android.graphics.Color
+import android.util.LruCache
 import androidx.annotation.ColorInt
 
 /**
@@ -145,6 +146,8 @@ object CssStyleParser {
         return HighlightStyle(isBold, isItalic, isUnderline, color, fontSizePx, fontFamily)
     }
 
+    private val groupStylesCache = LruCache<String, Map<Int, HighlightStyle>>(100)
+
     /**
      * 从替换模板中提取各捕获组的样式
      * 替换模板示例: <b><font color="red">$1</font></b><i>$2</i>
@@ -152,6 +155,8 @@ object CssStyleParser {
      * @return Map<Int, HighlightStyle> 捕获组索引 -> 样式
      */
     fun extractGroupStyles(replacement: String): Map<Int, HighlightStyle> {
+        groupStylesCache.get(replacement)?.let { return it }
+
         val result = mutableMapOf<Int, HighlightStyle>()
 
         // 匹配 $N 周围所有开闭标签
@@ -175,6 +180,7 @@ object CssStyleParser {
             }
         }
 
+        groupStylesCache.put(replacement, result)
         return result
     }
 

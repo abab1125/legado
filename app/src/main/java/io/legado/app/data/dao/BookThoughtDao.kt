@@ -15,6 +15,9 @@ interface BookThoughtDao {
     @get:Query("SELECT * FROM book_thoughts ORDER BY createTime DESC")
     val all: List<BookThought>
 
+    @Query("SELECT * FROM book_thoughts ORDER BY createTime DESC")
+    fun flowAll(): Flow<List<BookThought>>
+
     @Query(
         """
         SELECT * FROM book_thoughts

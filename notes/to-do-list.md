@@ -68,7 +68,7 @@
 
 | 功能 | 说明 | 状态 |
 |------|------|------|
-| 阅读记录排除订阅源 | [[implementation_plan_read_record]] 中 ReadRssActivity/VideoPlayerActivity 排除 RSS 源详细记录 | ⚠️ |
+| 阅读记录排除订阅源 | [[implementation_plan_read_record]] 中 ReadRssActivity/VideoPlayerActivity 排除 RSS 源详细记录 | ✅ |
 
 ---
 

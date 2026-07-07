@@ -809,13 +809,18 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         }
         // 用具体数据类解析，避免泛型擦除导致 Map<String, Any> 强转 null 崩溃
         val modelList = GSON.fromJsonObject<ModelList>(responseString).getOrNull()
-            ?: GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()?.let { raw ->
-                // 兜底：部分厂商返回结构不一致时按 Map 解析
-                (raw["data"] as? List<*>)?.mapNotNull { item ->
-                    (item as? Map<*, *>)?.get("id") as? String
+        val ids = if (modelList != null) {
+            modelList.data.mapNotNull { it.id }
+        } else {
+            // 兜底：部分厂商返回结构不一致时按 Map 解析
+            GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
+                ?.let { raw ->
+                    (raw["data"] as? List<*>)?.mapNotNull { item ->
+                        (item as? Map<*, *>)?.get("id") as? String
+                    }
                 }.orEmpty()
-            } ?: return@withContext emptyList()
-        modelList.data.mapNotNull { it.id }.sorted()
+        }.sorted()
+        ids
     }
 
     /**
@@ -846,10 +851,19 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             if (!response.isSuccessful) throw Exception("HTTP ${response.code}: $bodyStr")
             bodyStr
         }
-        val jsonObject = GSON.fromJsonObject<ChatCompletion>(responseString).getOrNull()
-            ?: GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
-            ?: throw Exception("响应解析失败")
-        val content = jsonObject.choices.firstOrNull()?.message?.content
+        val chatObj = GSON.fromJsonObject<ChatCompletion>(responseString).getOrNull()
+        val content = if (chatObj != null) {
+            chatObj.choices.firstOrNull()?.message?.content
+        } else {
+            // 兜底：按 Map 解析
+            GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
+                ?.let { raw ->
+                    val choices = raw["choices"] as? List<*>
+                    val first = choices?.firstOrNull() as? Map<*, *>
+                    val message = first?.get("message") as? Map<*, *>
+                    message?.get("content") as? String
+                }
+        }
         content ?: "(无回复)"
     }
 

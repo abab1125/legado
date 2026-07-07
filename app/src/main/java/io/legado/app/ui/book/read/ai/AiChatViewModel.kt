@@ -807,11 +807,15 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             if (!response.isSuccessful) throw Exception("HTTP ${response.code}: $bodyStr")
             bodyStr
         }
-        val jsonObject = GSON.fromJsonObject<Map<String, Any>>(responseString).getOrThrow()
-        val dataList = jsonObject["data"] as? List<*> ?: return@withContext emptyList()
-        dataList.mapNotNull { item ->
-            (item as? Map<*, *>)?.get("id") as? String
-        }.sorted()
+        // 用具体数据类解析，避免泛型擦除导致 Map<String, Any> 强转 null 崩溃
+        val modelList = GSON.fromJsonObject<ModelList>(responseString).getOrNull()
+            ?: GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()?.let { raw ->
+                // 兜底：部分厂商返回结构不一致时按 Map 解析
+                (raw["data"] as? List<*>)?.mapNotNull { item ->
+                    (item as? Map<*, *>)?.get("id") as? String
+                }.orEmpty()
+            } ?: return@withContext emptyList()
+        modelList.data.mapNotNull { it.id }.sorted()
     }
 
     /**
@@ -842,11 +846,11 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             if (!response.isSuccessful) throw Exception("HTTP ${response.code}: $bodyStr")
             bodyStr
         }
-        val jsonObject = GSON.fromJsonObject<Map<String, Any>>(responseString).getOrThrow()
-        val choices = jsonObject["choices"] as? List<*>
-        val firstChoice = choices?.firstOrNull() as? Map<*, *>
-        val messageMap = firstChoice?.get("message") as? Map<*, *>
-        messageMap?.get("content") as? String ?: "(无回复)"
+        val jsonObject = GSON.fromJsonObject<ChatCompletion>(responseString).getOrNull()
+            ?: GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
+            ?: throw Exception("响应解析失败")
+        val content = jsonObject.choices.firstOrNull()?.message?.content
+        content ?: "(无回复)"
     }
 
     /**
@@ -930,3 +934,42 @@ object AiChatCache {
     @Volatile
     var state: State = State()
 }
+
+/**
+ * /models 接口响应的标准 OpenAI 结构
+ * GSON 默认忽略未知字段（如 "object"），只需声明需要的 data 字段
+ */
+data class ModelList(
+    val data: List<ModelInfo> = emptyList()
+)
+
+data class ModelInfo(
+    val id: String? = null,
+    val `object`: String? = null,
+    val owned_by: String? = null,
+    val created: Any? = null
+)
+
+/**
+ * chat/completions 响应结构（用于测试模型可用性）
+ */
+data class ChatCompletion(
+    val id: String? = null,
+    val `object`: String? = null,
+    val model: String? = null,
+    val choices: List<ChatChoice> = emptyList(),
+    val usage: Any? = null
+)
+
+data class ChatChoice(
+    val index: Int? = null,
+    val message: ChatMessageContent? = null,
+    val finish_reason: String? = null
+)
+
+data class ChatMessageContent(
+    val role: String? = null,
+    val content: String? = null,
+    val reasoning_content: String? = null,
+    val tool_calls: List<Any>? = null
+)

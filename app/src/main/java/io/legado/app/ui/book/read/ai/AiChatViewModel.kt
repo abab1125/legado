@@ -839,7 +839,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         val requestBodyMap = mapOf(
             "model" to model,
             "messages" to messagesJsonList,
-            "max_tokens" to 50
+            "max_tokens" to 256
         )
         val jsonBody = GSON.toJson(requestBodyMap)
         val body = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())

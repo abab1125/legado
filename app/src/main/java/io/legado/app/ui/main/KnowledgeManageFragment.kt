@@ -11,6 +11,7 @@ import io.legado.app.data.entities.KnowledgePoint
 import io.legado.app.databinding.FragmentKnowledgeManageBinding
 import io.legado.app.ui.widget.recycler.VerticalDivider
 import io.legado.app.utils.applyNavigationBarPadding
+import io.legado.app.utils.setAddButton
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch

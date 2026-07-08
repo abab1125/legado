@@ -11,6 +11,7 @@ import io.legado.app.data.entities.WritingPrompt
 import io.legado.app.databinding.FragmentPromptManageBinding
 import io.legado.app.ui.widget.recycler.VerticalDivider
 import io.legado.app.utils.applyNavigationBarPadding
+import io.legado.app.utils.setAddButton
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers.IO

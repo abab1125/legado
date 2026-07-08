@@ -103,6 +103,7 @@ class ReaderProvider : ContentProvider() {
                 SimpleCursor(it)
             }
         }
+        return null
     }
 
     override fun query(

@@ -693,7 +693,7 @@ class AnalyzeUrl(
                     )
                 }
             }
-            postMultipart(type, bodyMap)
+            postMultipart(type, bodyMap as Map<String, Any>)
         }
     }
 

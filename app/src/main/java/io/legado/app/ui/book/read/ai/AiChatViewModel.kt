@@ -795,7 +795,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
      * 拉取供应商提供的模型列表（调用 /models 接口）
      * 返回模型 ID 列表
      */
-    suspend fun fetchModels(apiUrl: String, apiKey: *** List<String> = withContext(Dispatchers.IO) {
+    suspend fun fetchModels(apiUrl: String, apiKey: String): List<String> = withContext(Dispatchers.IO) {
         // 将 chat/completions URL 转换为 /models URL（自动补全 base 路径）
         val modelsUrl = normalizeApiUrl(apiUrl, "models")
         val request = Request.Builder()
@@ -827,7 +827,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     /**
      * 测试模型是否可用：发送一条 "hi" 消息，成功收到回复则可用
      */
-    suspend fun testModel(apiUrl: String, apiKey: *** model: String): String = withContext(Dispatchers.IO) {
+    suspend fun testModel(apiUrl: String, apiKey: String, model: String): String = withContext(Dispatchers.IO) {
         val testMessages = listOf(
             ChatMessage(role = "user", content = "hi")
         )

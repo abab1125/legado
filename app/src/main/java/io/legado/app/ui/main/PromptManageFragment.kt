@@ -36,12 +36,12 @@ class PromptManageFragment() : BaseFragment(R.layout.fragment_prompt_manage),
     }
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) = binding.run {
-        tvTitle.setText(R.string.prompt)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.addItemDecoration(VerticalDivider(requireContext()))
         recyclerView.adapter = adapter
         recyclerView.applyNavigationBarPadding()
-        ivAdd.setOnClickListener { showEditDialog(null) }
+
+        titleBar.setAddButton { showEditDialog(null) }
     }
 
     override fun onResume() {

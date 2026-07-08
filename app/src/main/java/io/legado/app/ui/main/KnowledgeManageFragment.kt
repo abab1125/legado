@@ -32,12 +32,12 @@ class KnowledgeManageFragment() : BaseFragment(R.layout.fragment_knowledge_manag
     }
 
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) = binding.run {
-        tvTitle.setText(R.string.knowledge)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.addItemDecoration(VerticalDivider(requireContext()))
         recyclerView.adapter = adapter
         recyclerView.applyNavigationBarPadding()
-        ivAdd.setOnClickListener { showEditDialog(null) }
+
+        titleBar.setAddButton { showEditDialog(null) }
     }
 
     override fun onResume() {

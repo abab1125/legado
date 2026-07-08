@@ -21,6 +21,7 @@ object DatabaseMigrations {
             migration_35_36, migration_36_37, migration_37_38, migration_38_39,
             migration_39_40, migration_40_41, migration_41_42, migration_42_43,
             migration_96_97, migration_97_98, migration_98_99,
+            migration_99_100,
         )
     }
 
@@ -504,4 +505,12 @@ object DatabaseMigrations {
     )
     class Migration_84_85 : AutoMigrationSpec
 
+    @Suppress("ClassName")
+    private val migration_99_100 = object : Migration(99, 100) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `knowledge_points` ADD COLUMN `subCategory` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `knowledge_points` ADD COLUMN `novelName` TEXT NOT NULL DEFAULT ''")
+        }
+    }
+}
 }

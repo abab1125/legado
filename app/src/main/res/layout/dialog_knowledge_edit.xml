@@ -16,6 +16,7 @@
         android:gravity="center"
         android:layout_marginBottom="16dp" />
 
+    <!-- 标题 -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -31,6 +32,7 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- 大类分类 -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -41,6 +43,7 @@
         android:layout_marginBottom="8dp" />
 
     <RadioGroup
+        android:id="@+id/rg_category"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -88,6 +91,70 @@
 
     </RadioGroup>
 
+    <!-- 人物子分类（仅当 rb_character 选中时可见） -->
+    <LinearLayout
+        android:id="@+id/layout_sub_category"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="人物子类"
+            android:textSize="13sp"
+            android:textColor="@color/secondaryText"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="4dp" />
+
+        <RadioGroup
+            android:id="@+id/rg_sub_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rb_sub_classic"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="经典角色"
+                android:textSize="13sp"
+                android:checked="true" />
+
+            <RadioButton
+                android:id="@+id/rb_sub_novel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="小说角色"
+                android:textSize="13sp" />
+
+        </RadioGroup>
+
+        <!-- 小说名（仅当小说角色选中时可见） -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_novel_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="小说名"
+            android:visibility="gone"
+            android:layout_marginTop="4dp"
+            app:boxStrokeColor="@color/primary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_novel_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textSize="14sp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+    </LinearLayout>
+
+    <!-- 内容 -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -106,6 +173,7 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- 保存 -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_save"
         android:layout_width="match_parent"

@@ -472,7 +472,148 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 viewModel.saveSession(start, end)
                 return true
             }
+            R.id.menu_ai_extract_characters -> {
+                showExtractCharacterDialog()
+                return true
+            }
         }
         return super.onCompatOptionsItemSelected(item)
     }
+
+    /**
+     * 展示提取角色对话框：让用户选择要提取的章节范围，执行并保存结果
+     */
+    private fun showExtractCharacterDialog() {
+        if (isStandalone) {
+            toastOnUi("请在阅读书籍时使用该功能")
+            return
+        }
+        val book = ReadBook.book ?: run {
+            toastOnUi("请先打开一本书")
+            return
+        }
+        val bookUrl = book.bookUrl
+        val bookName = book.name.ifBlank { "未命名" }
+        val totalChapters = ReadBook.chapterSize
+
+        // 构造章节选择布局
+        val dp = resources.displayMetrics.density
+        val container = ScrollView(this)
+        val contentLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((16 * dp).toInt(), (12 * dp).toInt(), (16 * dp).toInt(), (4 * dp).toInt())
+        }
+
+        // 说明文字
+        contentLayout.addView(TextView(this).apply {
+            text = "选择要提取的章节范围（提取的小说角色会保存到知识库「小说角色」子类目下）"
+            textSize = 13f
+            setTextColor(android.graphics.Color.parseColor("#888888"))
+            setPadding(0, 0, 0, (12 * dp).toInt())
+        })
+
+        // 当前章节提示
+        val currentChapter = ReadBook.durChapterIndex + 1
+
+        // 起始章节
+        val startInput = com.google.android.material.textfield.TextInputEditText(this).apply {
+            hint = "起始章节"
+            setText("1")
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            textSize = 14f
+        }
+        contentLayout.addView(com.google.android.material.textfield.TextInputLayout(this).apply {
+            addView(startInput)
+            setPadding(0, 0, 0, (8 * dp).toInt())
+        })
+
+        // 结束章节
+        val endInput = com.google.android.material.textfield.TextInputEditText(this).apply {
+            hint = "结束章节"
+            setText(totalChapters.toString())
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            textSize = 14f
+        }
+        contentLayout.addView(com.google.android.material.textfield.TextInputLayout(this).apply {
+            addView(endInput)
+            setPadding(0, 0, 0, (8 * dp).toInt())
+        })
+
+        // 提示
+        contentLayout.addView(TextView(this).apply {
+            text = "共 $totalChapters 章，建议每次选择 10-30 章效果最佳"
+            textSize = 12f
+            setTextColor(android.graphics.Color.parseColor("#aaaaaa"))
+            setPadding(0, (4 * dp).toInt(), 0, (12 * dp).toInt())
+        })
+
+        container.addView(contentLayout)
+
+        // 进度 / 结果显示区域
+        val progressText = TextView(this).apply {
+            textSize = 13f
+            setTextColor(android.graphics.Color.parseColor("#888888"))
+            setPadding((16 * dp).toInt(), (12 * dp).toInt(), (16 * dp).toInt(), (4 * dp).toInt())
+            gravity = android.view.Gravity.CENTER
+        }
+
+        val dialog = alert("提取小说角色") {
+            setCustomView(container)
+            yesButton {
+                val start = startInput.text.toString().toIntOrNull() ?: 1
+                val end = endInput.text.toString().toIntOrNull() ?: totalChapters
+                if (start < 1 || end > totalChapters || start > end) {
+                    toastOnUi("章节范围无效（1-$totalChapters）")
+                    return@yesButton
+                }
+
+                // 禁用按钮
+                dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.isEnabled = false
+                dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.isEnabled = false
+
+                val chapterIndexes = (start - 1 until end).toList()
+                lifecycleScope.launch {
+                    try {
+                        viewModel.extractCharacters(
+                            bookUrl = bookUrl,
+                            bookName = bookName,
+                            chapterIndexes = chapterIndexes,
+                            onProgress = { cur, tot, phase ->
+                                runOnUiThread {
+                                    progressText.text = if (tot > 0) "$phase ($cur/$tot)" else phase
+                                }
+                            },
+                            onResult = { roles ->
+                                runOnUiThread {
+                                    if (roles.isEmpty()) {
+                                        toastOnUi("未提取到任何角色，请尝试扩大章节范围")
+                                        dialog.dismiss()
+                                    } else {
+                                        val names = roles.joinToString("、") { it.name }
+                                        toastOnUi("提取到 ${roles.size} 个角色：$names")
+                                        dialog.dismiss()
+                                        alert("提取结果") {
+                                            setMessage(
+                                                roles.joinToString("\n\n") { "• ${it.name}\n  ${it.description}" }
+                                            )
+                                            okButton()
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            toastOnUi("提取失败：${e.message}")
+                        }
+                    }
+                }
+            }
+            noButton()
+        }
+        // 把 progressText 加到 dialog body 底部
+        dialog.findViewById<android.widget.LinearLayout>(android.R.id.custom)
+            ?.addView(progressText)
+    }
+
 }

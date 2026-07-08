@@ -6,6 +6,10 @@ import androidx.room.PrimaryKey
 
 /**
  * 全局知识点——人物档案、地名设定、事件脉络、创作笔记等
+ *
+ * category: character / place / event / note / other
+ * subCategory: 人物子类 — ""(经典角色) / "novel-character"(小说角色)
+ * novelName: 当 subCategory="novel-character" 时，记录归属小说名
  */
 @Entity(
     tableName = "knowledge_points"
@@ -22,6 +26,12 @@ data class KnowledgePoint(
     // 分类: character/place/event/note/other
     @ColumnInfo(defaultValue = "note")
     val category: String = "note",
+    // 子分类: "" / "novel-character" 等
+    @ColumnInfo(defaultValue = "")
+    val subCategory: String = "",
+    // 归属小说名称（仅 novel-character 子类使用）
+    @ColumnInfo(defaultValue = "")
+    val novelName: String = "",
     // 排序序号
     @ColumnInfo(defaultValue = "0")
     val sortOrder: Int = 0,

@@ -33,6 +33,7 @@ class KnowledgeEditDialog : BaseDialogFragment(R.layout.dialog_knowledge_edit) {
             originalPoint?.let { p ->
                 etTitle.setText(p.title)
                 etContent.setText(p.content)
+                // 大类
                 when (p.category) {
                     "character" -> rbCharacter.isChecked = true
                     "place" -> rbPlace.isChecked = true
@@ -40,7 +41,35 @@ class KnowledgeEditDialog : BaseDialogFragment(R.layout.dialog_knowledge_edit) {
                     "note" -> rbNote.isChecked = true
                     else -> rbOther.isChecked = true
                 }
+                // 人物子类
+                if (p.category == "character") {
+                    layoutSubCategory.visibility = View.VISIBLE
+                    when (p.subCategory) {
+                        "novel-character" -> {
+                            rbSubNovel.isChecked = true
+                            layoutNovelName.visibility = View.VISIBLE
+                            etNovelName.setText(p.novelName)
+                        }
+                        else -> rbSubClassic.isChecked = true
+                    }
+                }
             }
+        }
+
+        // 人物大类选中时显示子分类区域
+        rgCategory.setOnCheckedChangeListener { _, checkedId ->
+            if (checkedId == R.id.rb_character) {
+                layoutSubCategory.visibility = View.VISIBLE
+            } else {
+                layoutSubCategory.visibility = View.GONE
+                layoutNovelName.visibility = View.GONE
+            }
+        }
+
+        // 小说角色选中时显示小说名输入框
+        rgSubCategory.setOnCheckedChangeListener { _, checkedId ->
+            layoutNovelName.visibility =
+                if (checkedId == R.id.rb_sub_novel) View.VISIBLE else View.GONE
         }
 
         btnSave.setOnClickListener {
@@ -57,15 +86,26 @@ class KnowledgeEditDialog : BaseDialogFragment(R.layout.dialog_knowledge_edit) {
                 rbNote.isChecked -> "note"
                 else -> "other"
             }
+            val subCategory = if (category == "character" && rbSubNovel.isChecked) {
+                "novel-character"
+            } else ""
+            val novelName = if (subCategory == "novel-character") {
+                etNovelName.text.toString().trim()
+            } else ""
+
             val point = originalPoint?.copy(
                 title = title,
                 content = content,
                 category = category,
+                subCategory = subCategory,
+                novelName = novelName,
                 updateTime = System.currentTimeMillis()
             ) ?: KnowledgePoint(
                 title = title,
                 content = content,
-                category = category
+                category = category,
+                subCategory = subCategory,
+                novelName = novelName
             )
             lifecycleScope.launch {
                 withContext(Dispatchers.IO) {

@@ -20,6 +20,7 @@ import io.legado.app.utils.viewbindingdelegate.viewBinding
 
 /**
  * 知识点选择弹窗——在 AI 聊天中通过 @知识点 引用知识点
+ * 支持分类 pill 筛选，角色卡显示小说名前缀
  */
 class KnowledgePickerDialog : BaseDialogFragment(R.layout.dialog_picker_knowledge) {
 
@@ -65,10 +66,16 @@ class KnowledgePickerDialog : BaseDialogFragment(R.layout.dialog_picker_knowledg
             val list = if (filtered.isNotEmpty()) filtered else allItems
             if (selectedIndex >= list.size) return@setOnClickListener
             val kp = list[selectedIndex]
+            // 角色卡引用时，title 带上小说名前缀
+            val title = if (kp.subCategory == "novel-character" && kp.novelName.isNotBlank()) {
+                "${kp.novelName}/${kp.title}"
+            } else {
+                kp.title
+            }
             onSelected?.invoke(
                 ReferenceItem(
                     type = "knowledge",
-                    title = kp.title,
+                    title = title,
                     id = kp.id
                 )
             )
@@ -171,26 +178,22 @@ class KnowledgePickerDialog : BaseDialogFragment(R.layout.dialog_picker_knowledg
         }
     }
 
-    private fun getCategoryLabel(category: String): String {
-        return when (category) {
-            "character" -> getString(R.string.ref_filter_character)
-            "place" -> getString(R.string.ref_filter_place)
-            "event" -> getString(R.string.ref_filter_event)
-            "note" -> getString(R.string.ref_filter_note)
-            "other" -> getString(R.string.ref_filter_other)
-            else -> category
-        }
+    private fun getCategoryLabel(category: String): String = when (category) {
+        "character" -> getString(R.string.ref_filter_character)
+        "place" -> getString(R.string.ref_filter_place)
+        "event" -> getString(R.string.ref_filter_event)
+        "note" -> getString(R.string.ref_filter_note)
+        "other" -> getString(R.string.ref_filter_other)
+        else -> category
     }
 
-    private fun getCategoryKey(label: String): String {
-        return when (label) {
-            getString(R.string.ref_filter_character) -> "character"
-            getString(R.string.ref_filter_place) -> "place"
-            getString(R.string.ref_filter_event) -> "event"
-            getString(R.string.ref_filter_note) -> "note"
-            getString(R.string.ref_filter_other) -> "other"
-            else -> label
-        }
+    private fun getCategoryKey(label: String): String = when (label) {
+        getString(R.string.ref_filter_character) -> "character"
+        getString(R.string.ref_filter_place) -> "place"
+        getString(R.string.ref_filter_event) -> "event"
+        getString(R.string.ref_filter_note) -> "note"
+        getString(R.string.ref_filter_other) -> "other"
+        else -> label
     }
 
     private fun applyFilters(query: String, category: String) {
@@ -232,7 +235,13 @@ class KnowledgeAdapter(
         val kp = items[position]
         val b = holder.binding
         b.tvTitle.text = kp.title
-        b.tvSubtitle.text = kp.content.take(80)
+        // 小说角色子标题显示小说名
+        val subtitle = if (kp.subCategory == "novel-character" && kp.novelName.isNotBlank()) {
+            "📖 ${kp.novelName} · ${kp.content.take(60)}"
+        } else {
+            kp.content.take(80)
+        }
+        b.tvSubtitle.text = subtitle
         b.tvSubtitle.visibility = View.VISIBLE
 
         val isSelected = position == selectedPos

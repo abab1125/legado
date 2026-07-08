@@ -791,6 +791,234 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         return response.content.ifBlank { throw Exception("响应内容为空") }
     }
 
+    // =========================================================================
+    // 小说角色提取
+    // =========================================================================
+
+    /**
+     * 角色提取结果
+     */
+    data class CharacterExtractResult(
+        val name: String,
+        val description: String = "",
+        val personality: String = "",
+        val background: String = "",
+        val speakingStyle: String = ""
+    )
+
+    /**
+     * 从小说指定章节中提取角色，结果写入 KnowledgePoint DB
+     *
+     * @param bookUrl 书籍 URL
+     * @param bookName 书籍名称
+     * @param chapterIndexes 要提取的章节索引列表（从 0 开始）
+     * @param onProgress 进度回调：current,total,phase
+     * @param onResult 角色提取完成回调
+     */
+    suspend fun extractCharacters(
+        bookUrl: String,
+        bookName: String,
+        chapterIndexes: List<Int>,
+        onProgress: (current: Int, total: Int, phase: String) -> Unit,
+        onResult: (List<CharacterExtractResult>) -> Unit
+    ) = withContext(Dispatchers.IO) {
+        val book = ReadBook.book ?: throw Exception("未打开书籍")
+        if (chapterIndexes.isEmpty()) throw Exception("请选择至少一个章节")
+        val bookNameFinal = bookName.ifBlank { book.name.ifBlank { "未命名小说" } }
+
+        // 1. 读取所有选中的章节内容
+        onProgress(0, chapterIndexes.size, "读取章节内容")
+        val chunks = mutableListOf<String>()
+        for ((idx, ci) in chapterIndexes.withIndex()) {
+            onProgress(idx + 1, chapterIndexes.size, "读取第 ${ci + 1} 章")
+            val chapter = appDb.bookChapterDao.getChapterList(bookUrl, ci, ci).firstOrNull()
+                ?: continue
+            val content = io.legado.app.help.book.BookHelp.getContent(book, chapter) ?: ""
+            if (content.isNotBlank()) {
+                // 截取章节前 4000 字避免超长
+                val display = if (content.length > 4000) content.substring(0, 4000) + "\n……（截断）" else content
+                val title = chapter.title.ifBlank { "第${ci + 1}章" }
+                chunks.add("【$title】\n$display")
+            }
+        }
+        if (chunks.isEmpty()) throw Exception("未能读取到章节内容")
+
+        // 2. 逐段发送粗提炼（每次一批最多 3 段，减少 API 调用次数）
+        onProgress(0, chunks.size, "AI 分析中")
+        val rawSummaries = mutableListOf<String>()
+        val batchSize = 3
+        for (batchStart in chunks.indices step batchSize) {
+            val batch = chunks.subList(batchStart, minOf(batchStart + batchSize, chunks.size))
+            val batchPrompt = buildChunkBatchPrompt(batch, rawSummaries.size + 1, chunks.size)
+            onProgress(batchStart + batch.size, chunks.size, "分析第 ${batchStart + 1}-${batchStart + batch.size} 段")
+            try {
+                val response = requestOpenAi(
+                    listOf(
+                        ChatMessage(role = "user", content = batchPrompt)
+                    )
+                )
+                rawSummaries.add(response)
+            } catch (e: Exception) {
+                rawSummaries.add("（分析失败：${e.message}）")
+            }
+        }
+
+        // 3. 合并 + 提取角色
+        onProgress(0, 0, "正在合并提取角色")
+        val mergePrompt = buildMergePrompt(rawSummaries)
+        val mergedResponse = try {
+            requestOpenAi(
+                listOf(
+                    ChatMessage(role = "user", content = mergePrompt)
+                )
+            )
+        } catch (e: Exception) {
+            throw Exception("合并提取失败：${e.message}")
+        }
+
+        // 4. JSON 解析
+        val roles = parseCharacterJson(mergedResponse)
+
+        // 5. 写入 DB
+        if (roles.isNotEmpty()) {
+            for (role in roles) {
+                val content = buildCharacterContent(role)
+                appDb.knowledgePointDao.insert(
+                    KnowledgePoint(
+                        title = role.name,
+                        content = content,
+                        tags = bookNameFinal,
+                        category = "character",
+                        subCategory = "novel-character",
+                        novelName = bookNameFinal,
+                        sortOrder = 0,
+                        createTime = System.currentTimeMillis(),
+                        updateTime = System.currentTimeMillis()
+                    )
+                )
+            }
+        }
+        onResult(roles)
+    }
+
+    /**
+     * 批次粗提炼提示词（可从 Whisnya 的 buildNovelChunkPrompt 改造而来）
+     */
+    private fun buildChunkBatchPrompt(
+        chunks: List<String>,
+        startIndex: Int,
+        total: Int
+    ): String {
+        val batchText = chunks.joinToString("\n\n---\n\n")
+        return """请阅读以下小说片段（第 ${startIndex}-${startIndex + chunks.size - 1} 段 / 共 $total 段），并提炼信息。
+
+请输出：
+1. 本片段剧情摘要
+2. 出现的主要角色
+3. 角色关系与性格线索
+4. 重要世界观、地点、事件
+
+要求：
+- 简洁但不要漏掉关键设定
+- 不要加入原文没有的信息
+
+小说片段：
+$batchText"""
+    }
+
+    /**
+     * 合并+提取角色提示词（从 Whisnya 的 buildNovelMergePrompt 改造而来）
+     */
+    private fun buildMergePrompt(summaries: List<String>): String {
+        val joinedSummaries = summaries.joinToString("\n\n---\n\n")
+        return """请合并以下小说分段摘要，生成可用于角色扮演聊天的小说设定档，并提取适合 AI 扮演的角色。
+
+请只输出 JSON，不要使用 Markdown 代码块：
+{
+  "summary": "小说总设定与剧情摘要",
+  "roles": [
+    {
+      "name": "角色名",
+      "description": "角色简介",
+      "personality": "性格设定",
+      "background": "背景故事",
+      "speakingStyle": "说话风格"
+    }
+  ]
+}
+
+要求：
+- 优先提取女性角色，但不要编造不存在的角色
+- 每个角色只输出 name、description、personality、background、speakingStyle 这 5 个字段，不要输出开场白、补充设定或其他字段
+- 只输出反复出现、戏份充足或推动主线的重要角色；把出场次数明显低、戏份明显少、路人、临时名字删掉，不要放进 roles
+- roles 最多 5 个，只保留最主要的人物
+- 所有字段都用中文
+- JSON 必须可解析
+
+分段摘要：
+$joinedSummaries"""
+    }
+
+    /**
+     * 从角色提取 JSON 中解析结果
+     */
+    private fun parseCharacterJson(json: String): List<CharacterExtractResult> {
+        var text = json.trim()
+        // 剥 Markdown 代码块 fence
+        if (text.startsWith("```")) {
+            text = text.replaceFirst(Regex("^```(?:json)?\\s*"), "")
+                .replaceFirst(Regex("\\s*```$"), "")
+        }
+        // 尝试提取顶层 JSON 对象
+        val objStart = text.indexOf('{')
+        val objEnd = text.lastIndexOf('}')
+        if (objStart >= 0 && objEnd > objStart) {
+            text = text.substring(objStart, objEnd + 1)
+        }
+        return try {
+            val map = io.legado.app.utils.GSON.fromJson(text, Map::class.java) as? Map<*, *>
+            val rawRoles = map?.get("roles") as? List<*>
+            if (rawRoles != null) {
+                rawRoles.mapNotNull { item ->
+                    val roleMap = item as? Map<*, *> ?: return@mapNotNull null
+                    val name = (roleMap["name"] as? String)?.trim() ?: return@mapNotNull null
+                    if (name.isEmpty()) return@mapNotNull null
+                    CharacterExtractResult(
+                        name = name,
+                        description = (roleMap["description"] as? String)?.trim() ?: "",
+                        personality = (roleMap["personality"] as? String)?.trim() ?: "",
+                        background = (roleMap["background"] as? String)?.trim() ?: "",
+                        speakingStyle = (roleMap["speakingStyle"] as? String)?.trim() ?: ""
+                    )
+                }
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    /**
+     * 格式化为角色卡内容（KnowledgePoint.content）
+     */
+    private fun buildCharacterContent(role: CharacterExtractResult): String {
+        return buildString {
+            if (role.description.isNotBlank()) {
+                append("简介：${role.description}\n\n")
+            }
+            if (role.personality.isNotBlank()) {
+                append("性格：${role.personality}\n\n")
+            }
+            if (role.background.isNotBlank()) {
+                append("背景：${role.background}\n\n")
+            }
+            if (role.speakingStyle.isNotBlank()) {
+                append("说话风格：${role.speakingStyle}")
+            }
+        }.trim()
+    }
+
     /**
      * 拉取供应商提供的模型列表（调用 /models 接口）
      * 返回模型 ID 列表

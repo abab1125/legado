@@ -21,6 +21,18 @@ interface KnowledgePointDao {
     @Query("SELECT * FROM knowledge_points WHERE category = :category ORDER BY sortOrder, createTime")
     fun getByCategory(category: String): List<KnowledgePoint>
 
+    /** 查某人物的经典角色（subCategory 为空） */
+    @Query("SELECT * FROM knowledge_points WHERE category = :category AND (subCategory IS NULL OR subCategory = '') ORDER BY sortOrder, createTime")
+    fun getByCategoryNoSub(category: String): List<KnowledgePoint>
+
+    /** 查某子分类 + 小说名下的所有条目 */
+    @Query("SELECT * FROM knowledge_points WHERE subCategory = :subCategory AND novelName = :novelName ORDER BY sortOrder, createTime")
+    fun getBySubAndNovel(subCategory: String, novelName: String): List<KnowledgePoint>
+
+    /** 查某子分类下所有不重复的小说名 */
+    @Query("SELECT DISTINCT novelName FROM knowledge_points WHERE subCategory = :subCategory AND novelName != '' ORDER BY novelName")
+    fun getDistinctNovelNames(subCategory: String): List<String>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg point: KnowledgePoint): List<Long>
 

@@ -35,11 +35,11 @@ class ReaderProvider : ContentProvider() {
                 addURI(authority, "bookSources/delete", RequestCode.DeleteBookSources.ordinal)
                 addURI(authority, "bookSource/query", RequestCode.GetBookSource.ordinal)
                 addURI(authority, "bookSources/query", RequestCode.GetBookSources.ordinal)
-                addURI(authority, "rssSource/insert", RequestCode.SaveBookSource.ordinal)
-                addURI(authority, "rssSources/insert", RequestCode.SaveBookSources.ordinal)
-                addURI(authority, "rssSources/delete", RequestCode.DeleteBookSources.ordinal)
-                addURI(authority, "rssSource/query", RequestCode.GetBookSource.ordinal)
-                addURI(authority, "rssSources/query", RequestCode.GetBookSources.ordinal)
+                addURI(authority, "rssSource/insert", RequestCode.SaveRssSource.ordinal)
+                addURI(authority, "rssSources/insert", RequestCode.SaveRssSources.ordinal)
+                addURI(authority, "rssSources/delete", RequestCode.DeleteRssSources.ordinal)
+                addURI(authority, "rssSource/query", RequestCode.GetRssSource.ordinal)
+                addURI(authority, "rssSources/query", RequestCode.GetRssSources.ordinal)
                 addURI(authority, "book/insert", RequestCode.SaveBook.ordinal)
                 addURI(authority, "books/query", RequestCode.GetBookshelf.ordinal)
                 addURI(authority, "book/refreshToc/query", RequestCode.RefreshToc.ordinal)
@@ -65,7 +65,7 @@ class ReaderProvider : ContentProvider() {
         if (sMatcher.match(uri) < 0) return -1
         when (RequestCode.entries[sMatcher.match(uri)]) {
             RequestCode.DeleteBookSources -> BookSourceController.deleteSources(selection)
-            RequestCode.DeleteRssSources -> BookSourceController.deleteSources(selection)
+            RequestCode.DeleteRssSources -> RssSourceController.deleteSources(selection)
             else -> throw IllegalStateException(
                 "Unexpected value: " + RequestCode.entries[sMatcher.match(uri)].name
             )
@@ -78,37 +78,31 @@ class ReaderProvider : ContentProvider() {
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
         if (sMatcher.match(uri) < 0) return null
         runBlocking {
-            when (RequestCode.entries[sMatcher.match(uri)]) {
-                RequestCode.SaveBookSource -> values?.let {
-                    BookSourceController.saveSource(values.getAsString(postBodyKey))
+            // 安全提取 JSON 字符串，避免 null as Map 崩溃
+            val postData = values?.let { cv ->
+                val jsonRaw = cv.get(postBodyKey)
+                when (jsonRaw) {
+                    is String -> jsonRaw
+                    is Map<*, *> -> Gson().toJson(jsonRaw)
+                    null -> null
+                    else -> Gson().toJson(jsonRaw)
                 }
-
-                RequestCode.SaveBookSources -> values?.let {
-                    BookSourceController.saveSources(values.getAsString(postBodyKey))
-                }
-
-                RequestCode.SaveRssSource -> values?.let {
-                    RssSourceController.saveSource(values.getAsString(postBodyKey))
-                }
-
-                RequestCode.SaveRssSources -> values?.let {
-                    RssSourceController.saveSources(values.getAsString(postBodyKey))
-                }
-
-                RequestCode.SaveBook -> values?.let {
-                    BookController.saveBook(values.getAsString(postBodyKey))
-                }
-
-                RequestCode.SaveBookProgress -> values?.let {
-                    BookController.saveBookProgress(values.getAsString(postBodyKey))
-                }
-
-                else -> throw IllegalStateException(
-                    "Unexpected value: " + RequestCode.entries[sMatcher.match(uri)].name
-                )
+            }
+            if (postData == null) {
+                return@runBlocking SimpleCursor(ReturnData().setErrorMsg("数据不能为空"))
+            }
+            return@runBlocking when (RequestCode.entries[sMatcher.match(uri)]) {
+                RequestCode.SaveBookSource -> BookSourceController.saveSource(postData)
+                RequestCode.SaveBookSources -> BookSourceController.saveSources(postData)
+                RequestCode.SaveRssSource -> RssSourceController.saveSource(postData)
+                RequestCode.SaveRssSources -> RssSourceController.saveSources(postData)
+                RequestCode.SaveBook -> BookController.saveBook(postData)
+                RequestCode.SaveBookProgress -> BookController.saveBookProgress(postData)
+                else -> ReturnData().setErrorMsg("未知的请求类型")
+            }.let {
+                SimpleCursor(it)
             }
         }
-        return null
     }
 
     override fun query(

@@ -635,7 +635,8 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             bodyStr.ifBlank { throw Exception("Empty response body") }
         }
 
-        val jsonObject = GSON.fromJsonObject<Map<String, Any>>(responseString).getOrThrow()
+        val jsonObject = GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
+            ?: throw Exception("模型返回了非 JSON 格式的内容")
         val choices = jsonObject["choices"] as? List<*>
         val firstChoice = choices?.firstOrNull() as? Map<*, *>
         val messageMap = firstChoice?.get("message") as? Map<*, *> ?: throw Exception("解析响应失败")
@@ -794,9 +795,9 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
      * 拉取供应商提供的模型列表（调用 /models 接口）
      * 返回模型 ID 列表
      */
-    suspend fun fetchModels(apiUrl: String, apiKey: String): List<String> = withContext(Dispatchers.IO) {
-        // 将 chat/completions URL 转换为 /models URL
-        val modelsUrl = buildModelsUrl(apiUrl)
+    suspend fun fetchModels(apiUrl: String, apiKey: *** List<String> = withContext(Dispatchers.IO) {
+        // 将 chat/completions URL 转换为 /models URL（自动补全 base 路径）
+        val modelsUrl = normalizeApiUrl(apiUrl, "models")
         val request = Request.Builder()
             .url(modelsUrl)
             .get()
@@ -826,7 +827,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     /**
      * 测试模型是否可用：发送一条 "hi" 消息，成功收到回复则可用
      */
-    suspend fun testModel(apiUrl: String, apiKey: String, model: String): String = withContext(Dispatchers.IO) {
+    suspend fun testModel(apiUrl: String, apiKey: *** model: String): String = withContext(Dispatchers.IO) {
         val testMessages = listOf(
             ChatMessage(role = "user", content = "hi")
         )
@@ -841,7 +842,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         val jsonBody = GSON.toJson(requestBodyMap)
         val body = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
         val request = Request.Builder()
-            .url(apiUrl)
+            .url(normalizeApiUrl(apiUrl, "chat/completions"))
             .post(body)
             .addHeader("Authorization", "Bearer $apiKey")
             .addHeader("Content-Type", "application/json")
@@ -851,42 +852,50 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             if (!response.isSuccessful) throw Exception("HTTP ${response.code}: $bodyStr")
             bodyStr
         }
-        val chatObj = GSON.fromJsonObject<ChatCompletion>(responseString).getOrNull()
-        val content = if (chatObj != null) {
-            chatObj.choices.firstOrNull()?.message?.content
-        } else {
-            // 兜底：按 Map 解析
-            GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
-                ?.let { raw ->
-                    val choices = raw["choices"] as? List<*>
-                    val first = choices?.firstOrNull() as? Map<*, *>
-                    val message = first?.get("message") as? Map<*, *>
-                    message?.get("content") as? String
-                }
-        }
+        // 使用 Map<String, Any?> 安全解析，避免 null 强转崩溃
+        val raw = GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
+            ?: throw Exception("模型返回了非 JSON 格式的内容")
+        
+        val choices = raw["choices"] as? List<*>
+        val first = choices?.firstOrNull() as? Map<*, *>
+        val message = first?.get("message") as? Map<*, *>
+        val content = message?.get("content") as? String
         content ?: "(无回复)"
     }
 
     /**
-     * 将 chat/completions URL 推断为对应的 /models URL
-     * 例如：https://api.openai.com/v1/chat/completions -> https://api.openai.com/v1/models
+     * 规范化 API URL，自动补全指定后缀。
+     * 支持的输入格式：
+     *   - `https://api.openai.com/v1`                          → 补 `/chat/completions` 或 `/models`
+     *   - `https://api.openai.com/v1/`                         → 同上（去尾斜杠后再补）
+     *   - `https://api.openai.com/v1/chat/completions`         → 替换为对应 /models
+     *   - `https://api.openai.com/v1/models`                   → 替换为对应 /chat/completions
+     *   - `https://example.com/manifest/v1`                    → 补 `/chat/completions` 或 `/models`
+     *   - `https://example.com/manifest/v1/chat/completions`   → 替换为对应 /models
+     * 后缀由 [appendPath] 决定，传 "chat/completions" 或 "models"。
      */
-    private fun buildModelsUrl(chatUrl: String): String {
+    private fun normalizeApiUrl(apiUrl: String, appendPath: String): String {
         return try {
-            // 去掉 /chat/completions 后缀，拼接 /models
-            val normalized = chatUrl.trimEnd('/')
+            val normalized = apiUrl.trim().trimEnd('/')
+            val target = appendPath.trimStart('/')
             when {
-                normalized.endsWith("/chat/completions", ignoreCase = true) ->
-                    normalized.dropLast("/chat/completions".length) + "/models"
-                normalized.endsWith("/completions", ignoreCase = true) ->
-                    normalized.dropLast("/completions".length).substringBeforeLast('/') + "/models"
-                normalized.endsWith("/models", ignoreCase = true) ->
-                    normalized
-                else ->
-                    normalized + "/models"
+                // 已是目标路径
+                normalized.endsWith("/$target", ignoreCase = true) -> normalized
+                // 是 chat/completions，要 models
+                appendPath == "models" && normalized.endsWith("/chat/completions", ignoreCase = true) ->
+                    normalized.removeSuffix("/chat/completions") + "/models"
+                // 是 models，要 chat/completions
+                appendPath == "chat/completions" && normalized.endsWith("/models", ignoreCase = true) ->
+                    normalized.removeSuffix("/models") + "/chat/completions"
+                // 旧 /completions（非 chat）兜底
+                normalized.endsWith("/completions", ignoreCase = true) && target == "models" ->
+                    normalized.substringBeforeLast('/') + "/models"
+                // 否则当作 base URL，拼接目标路径
+                else -> "$normalized/$target"
             }
         } catch (e: Exception) {
-            chatUrl.substringBeforeLast("/chat") + "/models"
+            // 异常兜底：原 URL + 目标路径
+            "${apiUrl.trim().trimEnd('/')}/${appendPath.trimStart('/')}"
         }
     }
 }

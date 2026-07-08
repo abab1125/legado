@@ -124,7 +124,8 @@ class ChapterSummaryDialog : BaseDialogFragment(R.layout.dialog_chapter_summary)
                         bodyStr
                     }
 
-                    val jsonObject = GSON.fromJsonObject<Map<String, Any>>(responseString).getOrThrow()
+                    val jsonObject = GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
+                        ?: throw Exception("模型返回了非 JSON 格式的内容")
                     val choices = jsonObject["choices"] as? List<*>
                     val firstChoice = choices?.firstOrNull() as? Map<*, *>
                     val messageMap = firstChoice?.get("message") as? Map<*, *>

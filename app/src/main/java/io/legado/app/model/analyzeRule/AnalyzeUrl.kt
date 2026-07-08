@@ -682,7 +682,8 @@ class AnalyzeUrl(
     suspend fun upload(fileName: String, file: Any, contentType: String): StrResponse {
         return getProxyClient(proxy).newCallStrResponse(retry) {
             url(urlNoQuery)
-            val bodyMap = GSON.fromJsonObject<HashMap<String, Any>>(body).getOrNull()!!
+            val bodyMap = GSON.fromJsonObject<HashMap<String, Any?>>(body).getOrNull()
+                ?: throw IllegalArgumentException("请求体 JSON 格式错误或为空")
             bodyMap.forEach { entry ->
                 if (entry.value.toString() == "fileRequest") {
                     bodyMap[entry.key] = mapOf(

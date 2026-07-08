@@ -3,6 +3,7 @@
 package io.legado.app.utils
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.os.Build
@@ -30,7 +31,9 @@ fun Toolbar.setMoreIconColor(color: Int) {
 fun TitleBar.setAddButton(onAdd: () -> Unit) {
     menu.add(R.string.add).apply {
         setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        icon = resources.getDrawable(R.drawable.ic_add, context.theme)
+        icon = resources.getDrawable(R.drawable.ic_add, context.theme)?.mutate()?.apply {
+            colorFilter = PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+        }
     }
     toolbar.setOnMenuItemClickListener { onAdd(); true }
 }

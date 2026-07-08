@@ -796,32 +796,34 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
      * 返回模型 ID 列表
      */
     suspend fun fetchModels(apiUrl: String, apiKey: String): List<String> = withContext(Dispatchers.IO) {
-        // 将 chat/completions URL 转换为 /models URL（自动补全 base 路径）
-        val modelsUrl = normalizeApiUrl(apiUrl, "models")
-        val request = Request.Builder()
-            .url(modelsUrl)
-            .get()
-            .addHeader("Authorization", "Bearer $apiKey")
-            .build()
-        val responseString = okHttpClient.newCall(request).execute().use { response ->
-            val bodyStr = response.body.string()
-            if (!response.isSuccessful) throw Exception("HTTP ${response.code}: $bodyStr")
-            bodyStr
+        val triedUrls = linkedSetOf(
+            normalizeApiUrl(apiUrl, "models"),
+            buildModelsUrlLegacy(apiUrl)
+        )
+
+        var lastError: Exception? = null
+        for (modelsUrl in triedUrls) {
+            try {
+                val request = Request.Builder()
+                    .url(modelsUrl)
+                    .get()
+                    .addHeader("Authorization", "Bearer $apiKey")
+                    .build()
+                val responseString = okHttpClient.newCall(request).execute().use { response ->
+                    val bodyStr = response.body.string()
+                    if (!response.isSuccessful) throw Exception("HTTP ${response.code}: $bodyStr")
+                    bodyStr
+                }
+                val ids = parseModelIds(responseString)
+                if (ids.isNotEmpty()) {
+                    return@withContext ids
+                }
+            } catch (e: Exception) {
+                lastError = e
+            }
         }
-        // 用具体数据类解析，避免泛型擦除导致 Map<String, Any> 强转 null 崩溃
-        val modelList = GSON.fromJsonObject<ModelList>(responseString).getOrNull()
-        val ids = if (modelList != null) {
-            modelList.data.mapNotNull { it.id }
-        } else {
-            // 兜底：部分厂商返回结构不一致时按 Map 解析
-            GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
-                ?.let { raw ->
-                    (raw["data"] as? List<*>)?.mapNotNull { item ->
-                        (item as? Map<*, *>)?.get("id") as? String
-                    }
-                }.orEmpty()
-        }.sorted()
-        ids
+
+        throw lastError ?: Exception("未获取到任何模型")
     }
 
     /**
@@ -841,26 +843,75 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         )
         val jsonBody = GSON.toJson(requestBodyMap)
         val body = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
-        val request = Request.Builder()
-            .url(normalizeApiUrl(apiUrl, "chat/completions"))
-            .post(body)
-            .addHeader("Authorization", "Bearer $apiKey")
-            .addHeader("Content-Type", "application/json")
-            .build()
-        val responseString = okHttpClient.newCall(request).execute().use { response ->
-            val bodyStr = response.body.string()
-            if (!response.isSuccessful) throw Exception("HTTP ${response.code}: $bodyStr")
-            bodyStr
+
+        // 先用原始 URL，失败后用规范化 URL
+        val triedUrls = linkedSetOf(
+            apiUrl.trim().trimEnd('/'),
+            normalizeApiUrl(apiUrl, "chat/completions")
+        )
+
+        var lastError: Exception? = null
+        for (url in triedUrls) {
+            try {
+                val request = Request.Builder()
+                    .url(url)
+                    .post(body)
+                    .addHeader("Authorization", "Bearer $apiKey")
+                    .addHeader("Content-Type", "application/json")
+                    .build()
+                val responseString = okHttpClient.newCall(request).execute().use { response ->
+                    val bodyStr = response.body.string()
+                    if (!response.isSuccessful) throw Exception("HTTP ${response.code}: $bodyStr")
+                    bodyStr
+                }
+                // 使用 Map<String, Any?> 安全解析，避免 null 强转崩溃
+                val raw = GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
+                    ?: throw Exception("模型返回了非 JSON 格式的内容")
+                val choices = raw["choices"] as? List<*>
+                val first = choices?.firstOrNull() as? Map<*, *>
+                val message = first?.get("message") as? Map<*, *>
+                val content = message?.get("content") as? String
+                return@withContext content ?: "(无回复)"
+            } catch (e: Exception) {
+                lastError = e
+            }
         }
-        // 使用 Map<String, Any?> 安全解析，避免 null 强转崩溃
-        val raw = GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
-            ?: throw Exception("模型返回了非 JSON 格式的内容")
-        
-        val choices = raw["choices"] as? List<*>
-        val first = choices?.firstOrNull() as? Map<*, *>
-        val message = first?.get("message") as? Map<*, *>
-        val content = message?.get("content") as? String
-        content ?: "(无回复)"
+
+        throw lastError ?: Exception("测试失败")
+    }
+
+    private fun parseModelIds(responseString: String): List<String> {
+        val modelList = GSON.fromJsonObject<ModelList>(responseString).getOrNull()
+        val ids = if (modelList != null) {
+            modelList.data.mapNotNull { it.id }
+        } else {
+            GSON.fromJsonObject<Map<String, Any?>>(responseString).getOrNull()
+                ?.let { raw ->
+                    (raw["data"] as? List<*>)?.mapNotNull { item ->
+                        (item as? Map<*, *>)?.get("id") as? String
+                    }
+                }.orEmpty()
+        }
+        return ids.sorted()
+    }
+
+    /**
+     * 旧版 /models URL 推断逻辑，保留作兼容回退。
+     */
+    private fun buildModelsUrlLegacy(chatUrl: String): String {
+        return try {
+            val normalized = chatUrl.trimEnd('/')
+            when {
+                normalized.endsWith("/chat/completions", ignoreCase = true) ->
+                    normalized.dropLast("/chat/completions".length) + "/models"
+                normalized.endsWith("/completions", ignoreCase = true) ->
+                    normalized.dropLast("/completions".length).substringBeforeLast('/') + "/models"
+                else ->
+                    normalized.substringBeforeLast('/') + "/models"
+            }
+        } catch (e: Exception) {
+            chatUrl.substringBeforeLast("/chat") + "/models"
+        }
     }
 
     /**

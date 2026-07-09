@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.ViewGroup
+import androidx.lifecycle.lifecycleScope
 import androidx.appcompat.app.AlertDialog
 import android.graphics.Color
 import android.text.Editable

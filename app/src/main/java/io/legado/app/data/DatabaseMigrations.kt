@@ -513,4 +513,3 @@ object DatabaseMigrations {
         }
     }
 }
-}

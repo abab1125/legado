@@ -18,6 +18,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import io.legado.app.data.appDb
+import io.legado.app.data.entities.KnowledgePoint
 import io.legado.app.help.book.BookHelp
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request

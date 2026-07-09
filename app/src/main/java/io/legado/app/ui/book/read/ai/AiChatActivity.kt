@@ -3,6 +3,8 @@ package io.legado.app.ui.book.read.ai
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import android.graphics.Color
 import android.text.Editable
 import android.text.TextWatcher
@@ -592,7 +594,8 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
         outerLayout.addView(progressText)
 
         val selectedCount: () -> Int = { checkedChapters.count { it } }
-        val dialog = alert("提取小说角色（已选 ${selectedCount()} 章）") {
+        var dialog: AlertDialog? = null
+        dialog = alert("提取小说角色（已选 ${selectedCount()} 章）") {
             setCustomView(outerLayout)
             yesButton {
                 val selected = checkedChapters.indices.filter { checkedChapters[it] }
@@ -602,8 +605,8 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 }
 
                 // 禁用按钮
-                dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.isEnabled = false
-                dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.isEnabled = false
+                dialog?.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.isEnabled = false
+                dialog?.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.isEnabled = false
 
                 lifecycleScope.launch {
                     try {
@@ -620,11 +623,11 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                         runOnUiThread {
                             if (roles.isEmpty()) {
                                 toastOnUi("未提取到任何角色，请尝试扩大章节范围")
-                                dialog.dismiss()
+                                dialog?.dismiss()
                             } else {
                                 val names = roles.joinToString("、") { it.name }
                                 toastOnUi("提取到 ${roles.size} 个角色：$names")
-                                dialog.dismiss()
+                                dialog?.dismiss()
                                 alert("提取结果") {
                                     setMessage(
                                         roles.joinToString("\n\n") { "• ${it.name}\n  ${it.description}" }

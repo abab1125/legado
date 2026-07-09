@@ -665,3 +665,5 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
             }
         }
     }
+
+}

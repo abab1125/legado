@@ -23,9 +23,7 @@ class KnowledgeManageAdapter(
     private val onItemClick: (DisplayItem) -> Unit,
     private val onCollapseCategory: () -> Unit
 ) : DiffRecyclerAdapter<DisplayItem, ItemKnowledgeBinding>(context) {
-
     private var showCollapseBtn = false
-    private var currentItems: List<DisplayItem> = emptyList()
 
     override val diffItemCallback: DiffUtil.ItemCallback<DisplayItem>
         get() = object : DiffUtil.ItemCallback<DisplayItem>() {
@@ -52,8 +50,7 @@ class KnowledgeManageAdapter(
 
     fun setItems(items: List<DisplayItem>, showCollapse: Boolean) {
         showCollapseBtn = showCollapse
-        currentItems = items
-        submitList(items)
+        super.setItems(items)
     }
 
     override fun convert(holder: ItemViewHolder, binding: ItemKnowledgeBinding, item: DisplayItem, payloads: MutableList<Any>) {
@@ -67,9 +64,22 @@ class KnowledgeManageAdapter(
     private fun bindCategory(binding: ItemKnowledgeBinding, cat: DisplayItem.Category) {
         binding.tvTitle.text = getCategoryLabel(cat.category) + "  (${cat.count})"
         binding.tvContent.text = ""
-        binding.tvTag.text = if (showCollapseBtn) "⇱ 收起" else ""
+        // "收起"按钮文字
+        if (showCollapseBtn && cat.category == "character") {
+            binding.tvTag.text = "⇱ 收起"
+            binding.tvTag.visibility = View.VISIBLE
+        } else {
+            binding.tvTag.text = ""
+            binding.tvTag.visibility = View.GONE
+        }
         binding.tvTime.text = getCategoryDesc(cat.category)
-        // 一级分类不可点击编辑，但点击 tag 区域可折叠
+
+        // tvTag（收起按钮）绑点击
+        binding.tvTag.setOnClickListener {
+            if (showCollapseBtn && cat.category == "character") {
+                onCollapseCategory()
+            }
+        }
     }
 
     private fun bindNovelGroup(binding: ItemKnowledgeBinding, group: DisplayItem.NovelGroup) {
@@ -80,28 +90,31 @@ class KnowledgeManageAdapter(
         }
         binding.tvContent.text = ""
         binding.tvTag.text = ""
+        binding.tvTag.visibility = View.GONE
         binding.tvTime.text = ""
     }
 
     private fun bindKnowledge(binding: ItemKnowledgeBinding, kp: KnowledgePoint) {
         binding.tvTitle.text = kp.title
         binding.tvContent.text = kp.content
-        binding.tvTag.text = getCategoryLabel(kp.category)
+        binding.tvTag.visibility = View.GONE
         binding.tvTime.text = formatTime(kp.updateTime)
     }
 
     override fun registerListener(holder: ItemViewHolder, binding: ItemKnowledgeBinding) {
         holder.itemView.setOnClickListener {
             val pos = holder.layoutPosition
-            if (pos >= 0 && pos < currentItems.size) {
-                onItemClick(currentItems[pos])
+            val items = getItems()
+            if (pos >= 0 && pos < items.size) {
+                onItemClick(items[pos])
             }
         }
-        // 长按经典角色/小说角色可编辑
+        // 长按知识点可编辑
         holder.itemView.setOnLongClickListener {
             val pos = holder.layoutPosition
-            if (pos >= 0 && pos < currentItems.size) {
-                val item = currentItems[pos]
+            val items = getItems()
+            if (pos >= 0 && pos < items.size) {
+                val item = items[pos]
                 if (item is DisplayItem.Knowledge) {
                     onItemClick(item)
                     return@setOnLongClickListener true

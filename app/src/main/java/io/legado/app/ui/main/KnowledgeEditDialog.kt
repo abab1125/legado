@@ -53,6 +53,8 @@ class KnowledgeEditDialog : BaseDialogFragment(R.layout.dialog_knowledge_edit) {
                         else -> rbSubClassic.isChecked = true
                     }
                 }
+                // 已有记录显示删除按钮
+                btnDelete.visibility = View.VISIBLE
             }
         }
 
@@ -90,7 +92,12 @@ class KnowledgeEditDialog : BaseDialogFragment(R.layout.dialog_knowledge_edit) {
                 "novel-character"
             } else ""
             val novelName = if (subCategory == "novel-character") {
-                etNovelName.text.toString().trim()
+                val n = etNovelName.text.toString().trim()
+                if (n.isEmpty()) {
+                    toastOnUi("小说角色必须填写小说名")
+                    return@setOnClickListener
+                }
+                n
             } else ""
 
             val point = originalPoint?.copy(
@@ -117,6 +124,24 @@ class KnowledgeEditDialog : BaseDialogFragment(R.layout.dialog_knowledge_edit) {
                 }
                 dismiss()
             }
+        }
+
+        // 删除按钮
+        btnDelete.setOnClickListener {
+            val p = originalPoint ?: return@setOnClickListener
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle("确认删除")
+                .setMessage("确定要删除「${p.title}」吗？")
+                .setPositiveButton("删除") { _, _ ->
+                    lifecycleScope.launch {
+                        withContext(Dispatchers.IO) {
+                            appDb.knowledgePointDao.deleteById(p.id)
+                        }
+                        dismiss()
+                    }
+                }
+                .setNegativeButton("取消", null)
+                .show()
         }
     }
 

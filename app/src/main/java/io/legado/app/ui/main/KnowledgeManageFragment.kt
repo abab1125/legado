@@ -15,6 +15,7 @@ import io.legado.app.databinding.FragmentKnowledgeManageBinding
 import io.legado.app.ui.widget.recycler.VerticalDivider
 import io.legado.app.utils.applyNavigationBarPadding
 import io.legado.app.utils.setAddButton
+import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
@@ -75,12 +76,8 @@ class KnowledgeManageFragment() : BaseFragment(R.layout.fragment_knowledge_manag
             appDb.knowledgePointDao.all
         }
         allPoints = points
-        // 当前有展开态 level2 时保留，否则重建一级视图
-        if (displayItems.none { it is DisplayItem.Knowledge || it is DisplayItem.NovelGroup }) {
-            rebuildCategoryLevel()
-        } else {
-            rebuildDisplay()
-        }
+        // 保持当前展开层级，只刷新数量
+        rebuildCategoryLevel()
     }
 
     /** 构建一级视图：所有分类 */
@@ -102,7 +99,10 @@ class KnowledgeManageFragment() : BaseFragment(R.layout.fragment_knowledge_manag
 
     /** 展开某分类 —— 仅 character 支持二级展开 */
     private fun toggleCategory(category: String) {
-        if (category != "character") return
+        if (category != "character") {
+            toastOnUi("仅「人物」分类支持展开查看子类目")
+            return
+        }
         val catIndex = displayItems.indexOfFirst { it is DisplayItem.Category && it.category == category }
         if (catIndex < 0) return
 

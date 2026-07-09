@@ -83,6 +83,14 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
     private val msgIdCounter = AtomicLong(0L)
 
+    /**
+     * 获取所有章节标题，供提取角色多选使用
+     */
+    fun getChapterTitles(bookUrl: String): List<String> {
+        val chapters = appDb.bookChapterDao.getChapterList(bookUrl, 0, Int.MAX_VALUE)
+        return chapters.map { it.title.ifBlank { "第${it.index + 1}章" } }
+    }
+
     fun calculateWordCount(bookUrl: String, start: Int, end: Int) {
         val chapterSize = ReadBook.chapterSize
         val clampedStart = start.coerceIn(1, chapterSize.coerceAtLeast(1))
@@ -819,9 +827,8 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         bookUrl: String,
         bookName: String,
         chapterIndexes: List<Int>,
-        onProgress: (current: Int, total: Int, phase: String) -> Unit,
-        onResult: (List<CharacterExtractResult>) -> Unit
-    ) = withContext(Dispatchers.IO) {
+        onProgress: (current: Int, total: Int, phase: String) -> Unit
+    ): List<CharacterExtractResult> = withContext(Dispatchers.IO) {
         val book = ReadBook.book ?: throw Exception("未打开书籍")
         if (chapterIndexes.isEmpty()) throw Exception("请选择至少一个章节")
         val bookNameFinal = bookName.ifBlank { book.name.ifBlank { "未命名小说" } }
@@ -859,7 +866,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 )
                 rawSummaries.add(response)
             } catch (e: Exception) {
-                rawSummaries.add("（分析失败：${e.message}）")
+                // 跳过失败的批次，不污染合并输入
             }
         }
 
@@ -898,7 +905,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 )
             }
         }
-        onResult(roles)
+        return@withContext roles
     }
 
     /**

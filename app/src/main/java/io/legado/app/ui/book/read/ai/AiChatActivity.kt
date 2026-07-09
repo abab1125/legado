@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.viewModels
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -481,7 +482,7 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
     }
 
     /**
-     * 展示提取角色对话框：让用户选择要提取的章节范围，执行并保存结果
+     * 展示提取角色对话框：让用户选择要提取的章节（多选勾选），执行并保存结果
      */
     private fun showExtractCharacterDialog() {
         if (isStandalone) {
@@ -495,10 +496,22 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
         val bookUrl = book.bookUrl
         val bookName = book.name.ifBlank { "未命名" }
         val totalChapters = ReadBook.chapterSize
-
-        // 构造章节选择布局
         val dp = resources.displayMetrics.density
-        val container = ScrollView(this)
+
+        // 获取所有章节标题列表
+        val chapterList = viewModel.getChapterTitles(bookUrl)
+        if (chapterList.isEmpty()) {
+            toastOnUi("未能读取章节列表")
+            return
+        }
+
+        // 多选章节的 CheckBox 列表
+        val checkedChapters = BooleanArray(chapterList.size) { false }
+        // 默认选中前 20 章
+        val defaultSelect = minOf(20, chapterList.size)
+        for (i in 0 until defaultSelect) checkedChapters[i] = true
+
+        val scrollContainer = ScrollView(this)
         val contentLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding((16 * dp).toInt(), (12 * dp).toInt(), (16 * dp).toInt(), (4 * dp).toInt())
@@ -506,64 +519,85 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
 
         // 说明文字
         contentLayout.addView(TextView(this).apply {
-            text = "选择要提取的章节范围（提取的小说角色会保存到知识库「小说角色」子类目下）"
+            text = "勾选要提取角色的章节（建议选 10-30 章，提取结果自动保存到知识库）"
             textSize = 13f
             setTextColor(android.graphics.Color.parseColor("#888888"))
-            setPadding(0, 0, 0, (12 * dp).toInt())
-        })
-
-        // 当前章节提示
-        val currentChapter = ReadBook.durChapterIndex + 1
-
-        // 起始章节
-        val startInput = com.google.android.material.textfield.TextInputEditText(this).apply {
-            hint = "起始章节"
-            setText("1")
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-            textSize = 14f
-        }
-        contentLayout.addView(com.google.android.material.textfield.TextInputLayout(this).apply {
-            addView(startInput)
             setPadding(0, 0, 0, (8 * dp).toInt())
         })
 
-        // 结束章节
-        val endInput = com.google.android.material.textfield.TextInputEditText(this).apply {
-            hint = "结束章节"
-            setText(totalChapters.toString())
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-            textSize = 14f
-        }
-        contentLayout.addView(com.google.android.material.textfield.TextInputLayout(this).apply {
-            addView(endInput)
+        // 全选 / 取消全选 快捷操作
+        val quickRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
             setPadding(0, 0, 0, (8 * dp).toInt())
-        })
+        }
+        for ((label, action) in listOf(
+            "全选" to { for (i in checkedChapters.indices) checkedChapters[i] = true },
+            "取消" to { for (i in checkedChapters.indices) checkedChapters[i] = false },
+            "前20章" to {
+                for (i in checkedChapters.indices) checkedChapters[i] = i < 20
+            }
+        )) {
+            val btn = TextView(this).apply {
+                text = label
+                textSize = 12f
+                setPadding((12 * dp).toInt(), (4 * dp).toInt(), (12 * dp).toInt(), (4 * dp).toInt())
+                setTextColor(ContextCompat.getColor(context, R.color.accent))
+                setBackgroundResource(R.drawable.bg_filter_inactive)
+                isClickable = true
+                setOnClickListener {
+                    action()
+                    refreshCheckboxStates(contentLayout, checkedChapters, chapterList)
+                }
+            }
+            val lp = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            lp.marginEnd = (8 * dp).toInt()
+            quickRow.addView(btn, lp)
+        }
+        contentLayout.addView(quickRow)
 
-        // 提示
-        contentLayout.addView(TextView(this).apply {
-            text = "共 $totalChapters 章，建议每次选择 10-30 章效果最佳"
-            textSize = 12f
-            setTextColor(android.graphics.Color.parseColor("#aaaaaa"))
-            setPadding(0, (4 * dp).toInt(), 0, (12 * dp).toInt())
-        })
+        // 章节勾选列表
+        for (i in chapterList.indices) {
+            val cb = androidx.appcompat.widget.AppCompatCheckBox(this).apply {
+                text = chapterList[i]
+                textSize = 13f
+                isChecked = checkedChapters[i]
+                setPadding((8 * dp).toInt(), (4 * dp).toInt(), (8 * dp).toInt(), (4 * dp).toInt())
+                setOnCheckedChangeListener { _, isChecked ->
+                    checkedChapters[i] = isChecked
+                }
+            }
+            contentLayout.addView(cb)
+        }
 
-        container.addView(contentLayout)
+        scrollContainer.addView(contentLayout)
 
-        // 进度 / 结果显示区域
+        // 进度文字（直接放在 dialog 的 custom view 底部）
         val progressText = TextView(this).apply {
             textSize = 13f
             setTextColor(android.graphics.Color.parseColor("#888888"))
-            setPadding((16 * dp).toInt(), (12 * dp).toInt(), (16 * dp).toInt(), (4 * dp).toInt())
             gravity = android.view.Gravity.CENTER
+            setPadding(0, (8 * dp).toInt(), 0, (4 * dp).toInt())
         }
 
-        val dialog = alert("提取小说角色") {
-            setCustomView(container)
+        // 外层容器包含章节列表 + 进度文字
+        val outerLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        outerLayout.addView(scrollContainer, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
+        ))
+        outerLayout.addView(progressText)
+
+        val selectedCount: () -> Int = { checkedChapters.count { it } }
+        val dialog = alert("提取小说角色（已选 ${selectedCount()} 章）") {
+            setCustomView(outerLayout)
             yesButton {
-                val start = startInput.text.toString().toIntOrNull() ?: 1
-                val end = endInput.text.toString().toIntOrNull() ?: totalChapters
-                if (start < 1 || end > totalChapters || start > end) {
-                    toastOnUi("章节范围无效（1-$totalChapters）")
+                val selected = checkedChapters.indices.filter { checkedChapters[it] }
+                if (selected.isEmpty()) {
+                    toastOnUi("请至少选择一个章节")
                     return@yesButton
                 }
 
@@ -571,37 +605,34 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.isEnabled = false
                 dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.isEnabled = false
 
-                val chapterIndexes = (start - 1 until end).toList()
                 lifecycleScope.launch {
                     try {
-                        viewModel.extractCharacters(
+                        val roles = viewModel.extractCharacters(
                             bookUrl = bookUrl,
                             bookName = bookName,
-                            chapterIndexes = chapterIndexes,
+                            chapterIndexes = selected,
                             onProgress = { cur, tot, phase ->
                                 runOnUiThread {
                                     progressText.text = if (tot > 0) "$phase ($cur/$tot)" else phase
                                 }
-                            },
-                            onResult = { roles ->
-                                runOnUiThread {
-                                    if (roles.isEmpty()) {
-                                        toastOnUi("未提取到任何角色，请尝试扩大章节范围")
-                                        dialog.dismiss()
-                                    } else {
-                                        val names = roles.joinToString("、") { it.name }
-                                        toastOnUi("提取到 ${roles.size} 个角色：$names")
-                                        dialog.dismiss()
-                                        alert("提取结果") {
-                                            setMessage(
-                                                roles.joinToString("\n\n") { "• ${it.name}\n  ${it.description}" }
-                                            )
-                                            okButton()
-                                        }
-                                    }
-                                }
                             }
                         )
+                        runOnUiThread {
+                            if (roles.isEmpty()) {
+                                toastOnUi("未提取到任何角色，请尝试扩大章节范围")
+                                dialog.dismiss()
+                            } else {
+                                val names = roles.joinToString("、") { it.name }
+                                toastOnUi("提取到 ${roles.size} 个角色：$names")
+                                dialog.dismiss()
+                                alert("提取结果") {
+                                    setMessage(
+                                        roles.joinToString("\n\n") { "• ${it.name}\n  ${it.description}" }
+                                    )
+                                    okButton()
+                                }
+                            }
+                        }
                     } catch (e: Exception) {
                         runOnUiThread {
                             toastOnUi("提取失败：${e.message}")
@@ -611,9 +642,21 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
             }
             noButton()
         }
-        // 把 progressText 加到 dialog body 底部
-        dialog.findViewById<android.widget.LinearLayout>(android.R.id.custom)
-            ?.addView(progressText)
     }
 
-}
+    private fun refreshCheckboxStates(
+        layout: LinearLayout,
+        checked: BooleanArray,
+        names: List<String>
+    ) {
+        var cbIdx = 0
+        for (i in 0 until layout.childCount) {
+            val child = layout.getChildAt(i)
+            if (child is androidx.appcompat.widget.AppCompatCheckBox) {
+                if (cbIdx < checked.size) {
+                    child.isChecked = checked[cbIdx]
+                    cbIdx++
+                }
+            }
+        }
+    }

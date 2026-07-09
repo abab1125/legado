@@ -23,6 +23,7 @@ import io.legado.app.utils.replace
 import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.CancellationException
 import kotlinx.parcelize.IgnoredOnParcel
+import kotlin.jvm.Transient
 import kotlinx.parcelize.Parcelize
 import splitties.init.appCtx
 
@@ -89,6 +90,7 @@ data class BookChapter(
         appDb.bookChapterDao.update(this)
     }
 
+    @Transient
     @Ignore
     @IgnoredOnParcel
     var titleMD5: String? = null
@@ -136,7 +138,7 @@ data class BookChapter(
         }
         if (useReplace && replaceRules != null) kotlin.run {
             replaceRules.forEach { item ->
-                if (item.pattern.isNotEmpty()) {
+                if (item.pattern.isNotEmpty() && !item.isHighlight) {
                     try {
                         val mDisplayTitle = if (item.isRegex) {
                             displayTitle.replace(

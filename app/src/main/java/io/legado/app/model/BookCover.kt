@@ -73,7 +73,13 @@ object BookCover {
             path = appCtx.getPrefString(PreferKey.defaultCover)
         }
         defaultDrawable = runCatching {
-            BitmapUtils.decodeBitmap(path!!, 600, 900)!!.toDrawable(appCtx.resources)
+            val file = java.io.File(path!!)
+            val imagePath = if (file.isDirectory) {
+                file.listFiles()?.randomOrNull()?.absolutePath ?: path!!
+            } else {
+                path!!
+            }
+            BitmapUtils.decodeBitmap(imagePath, 600, 900)!!.toDrawable(appCtx.resources)
         }.getOrDefault(appCtx.resources.getDrawable(R.drawable.image_cover_default, null))
     }
 

@@ -10,8 +10,21 @@ import io.legado.app.utils.gone
 import splitties.views.onClick
 import splitties.views.onLongClick
 
+import io.legado.app.data.entities.BookThought
+
+data class MarkItem(
+    val bookName: String,
+    val bookAuthor: String,
+    val chapterName: String,
+    val text: String,
+    val content: String,
+    val time: Long,
+    val bookmark: Bookmark? = null,
+    val thought: BookThought? = null
+)
+
 class BookmarkAdapter(context: Context, val callback: Callback) :
-    RecyclerAdapter<Bookmark, ItemBookmarkBinding>(context) {
+    RecyclerAdapter<MarkItem, ItemBookmarkBinding>(context) {
 
     override fun getViewBinding(parent: ViewGroup): ItemBookmarkBinding {
         return ItemBookmarkBinding.inflate(inflater, parent, false)
@@ -20,12 +33,12 @@ class BookmarkAdapter(context: Context, val callback: Callback) :
     override fun convert(
         holder: ItemViewHolder,
         binding: ItemBookmarkBinding,
-        item: Bookmark,
+        item: MarkItem,
         payloads: MutableList<Any>
     ) {
         binding.tvChapterName.text = item.chapterName
-        binding.tvBookText.gone(item.bookText.isEmpty())
-        binding.tvBookText.text = item.bookText
+        binding.tvBookText.gone(item.text.isEmpty())
+        binding.tvBookText.text = item.text
         binding.tvContent.gone(item.content.isEmpty())
         binding.tvContent.text = item.content
     }
@@ -58,10 +71,8 @@ class BookmarkAdapter(context: Context, val callback: Callback) :
     }
 
     interface Callback {
-
-        fun onItemClick(bookmark: Bookmark, position: Int)
-        fun onItemLongClick(bookmark: Bookmark, position: Int): Boolean
-
+        fun onItemClick(item: MarkItem, position: Int)
+        fun onItemLongClick(item: MarkItem, position: Int): Boolean
     }
 
 }

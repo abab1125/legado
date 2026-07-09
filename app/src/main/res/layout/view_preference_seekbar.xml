@@ -46,11 +46,11 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <androidx.appcompat.widget.AppCompatImageView
+        <ImageView
             android:id="@+id/iv_seek_reduce"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/reduce"
             android:src="@drawable/ic_reduce"
             android:tint="@color/primaryText" />
@@ -63,11 +63,11 @@
             android:layout_weight="1"
             android:max="100" />
 
-        <androidx.appcompat.widget.AppCompatImageView
+        <ImageView
             android:id="@+id/iv_seek_plus"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/plus"
             android:src="@drawable/ic_add"
             android:tint="@color/primaryText" />

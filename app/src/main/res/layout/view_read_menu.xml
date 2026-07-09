@@ -45,7 +45,7 @@
                     android:id="@+id/iv_back"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:padding="8dp"
@@ -73,7 +73,7 @@
                     android:id="@+id/tv_custom_btn"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:padding="8dp"
@@ -99,7 +99,7 @@
                     android:id="@+id/iv_refresh"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:padding="8dp"
@@ -112,7 +112,7 @@
                     android:id="@+id/iv_download"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:padding="8dp"
@@ -125,7 +125,7 @@
                     android:id="@+id/iv_more"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:padding="8dp"
@@ -183,7 +183,7 @@
                     android:id="@+id/iv_bookmark"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:padding="4dp"
@@ -236,7 +236,7 @@
 
         </io.legado.app.ui.widget.seekbar.VerticalSeekBarWrapper>
 
-        <androidx.appcompat.widget.AppCompatImageView
+        <ImageView
             android:id="@+id/vw_brightness_pos_adjust"
             android:layout_width="24dp"
             android:layout_height="24dp"
@@ -282,14 +282,14 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
                     android:minHeight="52dp"
                     android:orientation="vertical"
                     android:padding="4dp">
-                    <androidx.appcompat.widget.AppCompatImageView
+                    <ImageView
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:contentDescription="@string/search_content"
@@ -308,14 +308,14 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
                     android:minHeight="52dp"
                     android:orientation="vertical"
                     android:padding="4dp">
-                    <androidx.appcompat.widget.AppCompatImageView
+                    <ImageView
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:contentDescription="@string/auto_next_page"
@@ -334,14 +334,14 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
                     android:minHeight="52dp"
                     android:orientation="vertical"
                     android:padding="4dp">
-                    <androidx.appcompat.widget.AppCompatImageView
+                    <ImageView
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:contentDescription="@string/replace_rule_title"
@@ -360,14 +360,14 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
                     android:minHeight="52dp"
                     android:orientation="vertical"
                     android:padding="4dp">
-                    <androidx.appcompat.widget.AppCompatImageView
+                    <ImageView
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:contentDescription="@string/ai_companion"
@@ -386,14 +386,14 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
                     android:minHeight="52dp"
                     android:orientation="vertical"
                     android:padding="4dp">
-                    <androidx.appcompat.widget.AppCompatImageView
+                    <ImageView
                         android:id="@+id/iv_night_icon"
                         android:layout_width="22dp"
                         android:layout_height="22dp"
@@ -431,7 +431,7 @@
                     android:id="@+id/tv_pre"
                     android:layout_width="wrap_content"
                     android:layout_height="44dp"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:enabled="false"
                     android:focusable="true"
@@ -451,7 +451,7 @@
                     android:id="@+id/tv_next"
                     android:layout_width="wrap_content"
                     android:layout_height="44dp"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:enabled="false"
                     android:focusable="true"
@@ -485,14 +485,14 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
                     android:minHeight="48dp"
                     android:orientation="vertical"
                     android:padding="4dp">
-                    <androidx.appcompat.widget.AppCompatImageView
+                    <ImageView
                         android:id="@+id/iv_catalog"
                         android:layout_width="22dp"
                         android:layout_height="22dp"
@@ -513,14 +513,14 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
                     android:minHeight="48dp"
                     android:orientation="vertical"
                     android:padding="4dp">
-                    <androidx.appcompat.widget.AppCompatImageView
+                    <ImageView
                         android:id="@+id/iv_read_aloud"
                         android:layout_width="22dp"
                         android:layout_height="22dp"
@@ -541,14 +541,14 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
                     android:minHeight="48dp"
                     android:orientation="vertical"
                     android:padding="4dp">
-                    <androidx.appcompat.widget.AppCompatImageView
+                    <ImageView
                         android:id="@+id/iv_font"
                         android:layout_width="22dp"
                         android:layout_height="22dp"
@@ -569,14 +569,14 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
                     android:minHeight="48dp"
                     android:orientation="vertical"
                     android:padding="4dp">
-                    <androidx.appcompat.widget.AppCompatImageView
+                    <ImageView
                         android:id="@+id/iv_setting"
                         android:layout_width="22dp"
                         android:layout_height="22dp"

@@ -77,7 +77,7 @@ export type SeachBook = BaseBook & {
   time: number
   originOrder: number
   chapterWordCountText?: string
-  chapterWordCount: number0
+  chapterWordCount: number
   respondTime: number
 }
 export type BookProgress = Pick<

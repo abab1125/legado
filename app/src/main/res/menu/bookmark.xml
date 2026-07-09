@@ -9,4 +9,8 @@
         android:id="@+id/menu_export_md"
         android:title="@string/export_md" />
 
+    <item
+        android:id="@+id/menu_export_obsidian"
+        android:title="@string/export_to_obsidian" />
+
 </menu>

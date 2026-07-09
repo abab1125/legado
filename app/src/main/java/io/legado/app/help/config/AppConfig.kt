@@ -68,6 +68,7 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
             PreferKey.themeMode -> {
                 themeMode = appCtx.getPrefString(PreferKey.themeMode, "0")
                 isEInkMode = themeMode == "3"
+                ReadBookConfig.updateHighlightRuleState()
             }
 
             PreferKey.clickActionTL -> clickActionTL =
@@ -872,5 +873,9 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
     var thoughtUnderlineColor: String
         get() = appCtx.getPrefString("thoughtUnderlineColor", "") ?: ""
         set(value) { appCtx.putPrefString("thoughtUnderlineColor", value) }
+
+    var obsidianAutoExport: Boolean
+        get() = appCtx.getPrefBoolean(PreferKey.obsidianAutoExport, false)
+        set(value) { appCtx.putPrefBoolean(PreferKey.obsidianAutoExport, value) }
 }
 

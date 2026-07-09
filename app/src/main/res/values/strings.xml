@@ -40,11 +40,11 @@
     <string name="delete_all">Delete all</string>
     <string name="custom_export_section">Custom export chapter of epub</string>
     <string name="replace">Replace</string>
-    <string name="replace_purify">Replacement</string>
-    <string name="replace_purify_desc">Configure replacement rules</string>
+    <string name="replace_purify">Purify &amp; Highlight</string>
+    <string name="replace_purify_desc">Configure purify, replacement and highlight rules</string>
     <string name="not_available">Not available now</string>
     <string name="enable">Enable</string>
-    <string name="replace_purify_search">Search Replacement</string>
+    <string name="replace_purify_search">Search Rules</string>
     <string name="bookshelf">Bookshelf</string>
     <string name="prompt">提示词</string>
     <string name="knowledge">知识点</string>
@@ -201,7 +201,7 @@
     <string name="import_book_source">Import book sources</string>
     <string name="import_local">Import local</string>
     <string name="import_on_line">Import online</string>
-    <string name="replace_rule_title">Replacement</string>
+    <string name="replace_rule_title">Purify &amp; Highlight</string>
     <string name="replace_rule_edit">Edit replacement rule</string>
     <string name="replace_rule">Pattern</string>
     <string name="replace_to">Replacement</string>
@@ -896,6 +896,11 @@
     <string name="is_enabled">Is enabled</string>
     <string name="background_image">Background image</string>
     <string name="background_image_blurring">Background image blurring</string>
+    <string name="bottom_icon_style">Bottom icon style</string>
+    <string name="bottom_icon_bookshelf">Bookshelf icon</string>
+    <string name="bottom_icon_explore">Explore icon</string>
+    <string name="bottom_icon_rss">RSS icon</string>
+    <string name="bottom_icon_my">Profile icon</string>
     <string name="background_image_blurring_radius">Blurring radius</string>
     <string name="background_image_hint">Disabled when 0, enable range from 1 to 25\nThe greater the radius, the stronger the effect of blurring</string>
     <string name="copy_book_url">Copy book URL</string>
@@ -1055,6 +1060,7 @@
     <string name="sys_tts_config_summary">Open the system tts settings interface</string>
     <string name="cannot_timed_non_playback">When the non-playback state is not legal</string>
     <string name="all_bookmark">All bookmarks</string>
+    <string name="all_bookmark_and_thought">All bookmarks and thoughts</string>
     <string name="change_source_batch">Batch source switching</string>
     <string name="book_type_different">Different types of books</string>
     <string name="soure_change_source">Whether to confirm the source change</string>
@@ -1231,6 +1237,10 @@
     <string name="obsidian_connection_failed">Connection failed</string>
     <string name="obsidian_connection_failed_detail">Connection failed: %1$s</string>
     <string name="obsidian_api_url_empty">Please enter the API URL</string>
+    <string name="obsidian_auto_export">自动导出至 Obsidian（静默）</string>
+    <string name="web_service_security_warning">安全提示</string>
+    <string name="web_service_security_warning_msg">开启 Web 服务将在本地网络暴露 API 接口，任何同网段的设备均可访问您的数据。\n\n请确保您处于可信网络环境中（如家庭或个人热点），切勿在公共网络下开启。</string>
+    <string name="do_not_show_again">以后不再提示</string>
     <string name="user_tutorial">User Tutorial</string>
     <string name="change_source_delay">Change source delay</string>
     <string name="change_source_progress">Result %1$d, Progress %2$d / %3$d: %4$s</string>
@@ -1440,7 +1450,7 @@
     <string name="ai_tool_enabled">启用工具调用（允许AI操作书架/书源等数据）</string>
     <string name="ai_confirm_title">AI 操作确认</string>
     <string name="reading_skill">Legado Skill</string>
-    <string name="reading_skill_desc">AI Agent 阅读助手，管理书架、笔记与统计</string>
+    <string name="reading_skill_desc">Let your Agent manage your Legado bookshelf, sources and other info</string>
     <string name="ai_assistant">AI 助手</string>
     <string name="ai_assistant_desc">直接与 AI 对话，管理书架和书源</string>
     <string name="ai_summarize">归纳记忆</string>
@@ -1454,7 +1464,6 @@
     <string name="import_from_clipboard">剪贴板导入</string>
     <string name="import_from_file">文件导入</string>
     <string name="action_import_theme">导入主题</string>
-
     <!-- @引用 picker 弹窗 -->
     <string name="ref_pick_chapter">选择引用章节</string>
     <string name="ref_pick_knowledge">选择引用知识点</string>
@@ -1475,4 +1484,17 @@
     <string name="ref_filter_world">世界观</string>
     <string name="ref_filter_style">风格</string>
     <string name="ref_filter_outline">大纲</string>
+
+    <!--高亮规则-->
+    <string name="highlight_mode">高亮模式</string>
+    <string name="dot_all">跨行匹配</string>
+    <string name="style_bold">加粗</string>
+    <string name="style_italic">斜体</string>
+    <string name="style_underline">下划线</string>
+    <string name="style_color">颜色</string>
+    <string name="style_font_size">字号</string>
+    <string name="style_font_family">字体</string>
+    <string name="style_center">居中</string>
+    <string name="style_custom_color">Custom Color</string>
+    <string name="highlight_mode_hint">在替换为中使用HTML标签设置样式，如 &lt;span style=\"color:red\"&gt;$1&lt;/span&gt;</string>
 </resources>

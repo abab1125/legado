@@ -222,10 +222,18 @@ object PreferKey {
     const val obsidianVaultSubPath = "obsidianVaultSubPath"
     const val obsidianLocalDirUri = "obsidianLocalDirUri"
     const val readIterationTagColor = "readIterationTagColor"
+    const val readIterationTagColorNight = "readIterationTagColorNight"
     const val readIterationPopup = "readIterationPopup"
     const val readIterationShowTag = "readIterationShowTag"
     const val showBookplate = "showBookplate"
     const val backupFont = "backupFont"
     const val backupThemeBg = "backupThemeBg"
     const val backupReadBg = "backupReadBg"
+
+    const val bottomIconBookshelf = "bottomIconBookshelf"
+    const val bottomIconExplore = "bottomIconExplore"
+    const val bottomIconRss = "bottomIconRss"
+    const val bottomIconMy = "bottomIconMy"
+    const val showWebServiceWarning = "showWebServiceWarning"
+    const val obsidianAutoExport = "obsidianAutoExport"
 }

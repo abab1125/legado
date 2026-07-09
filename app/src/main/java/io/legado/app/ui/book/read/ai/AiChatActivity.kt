@@ -56,7 +56,7 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
 
     override fun initTheme() {
         // 保持 Material 主题，不允许 BaseActivity 覆盖为 AppCompat 主题
-        setTheme(R.style.AppTheme_Material)
+        setTheme(R.style.Base_AppTheme)
         window.decorView.applyBackgroundTint(backgroundColor)
     }
 

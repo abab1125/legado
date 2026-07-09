@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/selectableItemBackground"
+    android:background="?attr/selectableItemBackground"
     android:padding="16dp">
 
     <io.legado.app.lib.theme.view.ThemeCheckBox
@@ -32,12 +32,12 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="RtlSymmetry,TouchTargetSizeCheck" />
 
-    <androidx.appcompat.widget.AppCompatImageView
+    <ImageView
         android:id="@+id/iv_edit"
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:layout_gravity="center"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/edit"
         android:padding="6dp"
         android:src="@drawable/ic_edit"
@@ -46,7 +46,7 @@
         app:layout_constraintRight_toLeftOf="@id/iv_menu_more"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.appcompat.widget.AppCompatImageView
+    <ImageView
         android:id="@+id/iv_menu_more"
         android:layout_width="36dp"
         android:layout_height="36dp"

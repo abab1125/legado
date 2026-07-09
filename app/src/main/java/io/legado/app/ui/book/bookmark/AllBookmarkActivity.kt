@@ -11,6 +11,7 @@ import io.legado.app.constant.AppLog
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Bookmark
 import io.legado.app.databinding.ActivityAllBookmarkBinding
+import io.legado.app.ui.book.thought.ObsidianExportDialog
 import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.utils.applyNavigationBarPadding
 import io.legado.app.utils.showDialogFragment
@@ -25,6 +26,9 @@ import kotlinx.coroutines.withContext
 /**
  * 所有书签
  */
+import kotlinx.coroutines.flow.combine
+import io.legado.app.ui.book.thought.BookThoughtDialog
+
 class AllBookmarkActivity : VMBaseActivity<ActivityAllBookmarkBinding, AllBookmarkViewModel>(),
     BookmarkAdapter.Callback {
 
@@ -45,7 +49,17 @@ class AllBookmarkActivity : VMBaseActivity<ActivityAllBookmarkBinding, AllBookma
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         initView()
         lifecycleScope.launch {
-            appDb.bookmarkDao.flowAll().catch {
+            appDb.bookmarkDao.flowAll().combine(appDb.bookThoughtDao.flowAll()) { bookmarks, thoughts ->
+                val list = mutableListOf<MarkItem>()
+                bookmarks.forEach {
+                    list.add(MarkItem(it.bookName, it.bookAuthor, it.chapterName, it.bookText, it.content, it.time, bookmark = it))
+                }
+                thoughts.forEach {
+                    list.add(MarkItem(it.bookName, it.bookAuthor, it.chapterName, it.selectedText, it.thought, it.createTime, thought = it))
+                }
+                list.sortByDescending { it.time }
+                list
+            }.catch {
                 AppLog.put("所有书签界面获取数据失败\n${it.localizedMessage}", it)
             }.flowOn(IO).collect {
                 adapter.setItems(it)
@@ -73,29 +87,42 @@ class AllBookmarkActivity : VMBaseActivity<ActivityAllBookmarkBinding, AllBookma
             R.id.menu_export_md -> exportDir.launch {
                 requestCode = 2
             }
+
+            R.id.menu_export_obsidian -> {
+                showDialogFragment(ObsidianExportDialog.newInstance())
+            }
         }
         return super.onCompatOptionsItemSelected(item)
     }
 
-    override fun onItemClick(bookmark: Bookmark, position: Int) {
+    override fun onItemClick(item: MarkItem, position: Int) {
         lifecycleScope.launch {
             val book = withContext(IO) {
-                appDb.bookDao.getBook(bookmark.bookName, bookmark.bookAuthor)
+                appDb.bookDao.getBook(item.bookName, item.bookAuthor)
             }
             if (book == null) {
-                showDialogFragment(BookmarkDialog(bookmark, position))
+                if (item.bookmark != null) {
+                    showDialogFragment(BookmarkDialog(item.bookmark, position))
+                } else if (item.thought != null) {
+                    showDialogFragment(BookThoughtDialog(item.thought, position))
+                }
             } else {
                 startActivityForBook(book) {
-                    putExtra("index", bookmark.chapterIndex)
-                    putExtra("chapterPos", bookmark.chapterPos)
+                    val chapterIndex = item.bookmark?.chapterIndex ?: item.thought?.chapterIndex ?: 0
+                    val chapterPos = item.bookmark?.chapterPos ?: item.thought?.chapterPos ?: 0
+                    putExtra("index", chapterIndex)
+                    putExtra("chapterPos", chapterPos)
                 }
             }
         }
     }
 
-    override fun onItemLongClick(bookmark: Bookmark, position: Int): Boolean {
-        showDialogFragment(BookmarkDialog(bookmark, position))
+    override fun onItemLongClick(item: MarkItem, position: Int): Boolean {
+        if (item.bookmark != null) {
+            showDialogFragment(BookmarkDialog(item.bookmark, position))
+        } else if (item.thought != null) {
+            showDialogFragment(BookThoughtDialog(item.thought, position))
+        }
         return true
     }
-
 }

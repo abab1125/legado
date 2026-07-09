@@ -1854,7 +1854,7 @@ class ReadBookActivity : BaseReadBookActivity(),
             val bookmark = book.createBookMark().apply {
                 chapterIndex = ReadBook.durChapterIndex
                 chapterPos = ReadBook.durChapterPos
-                chapterName = page.title
+                chapterName = page.title.replace(Regex("<[^>]+>"), "")
                 bookText = page.text.trim()
             }
             showDialogFragment(BookmarkDialog(bookmark))
@@ -1966,9 +1966,11 @@ class ReadBookActivity : BaseReadBookActivity(),
 
     override fun changeReplaceRuleState() {
         ReadBook.book?.let {
-            it.setUseReplaceRule(!it.getUseReplaceRule())
+            // checkable=true 时 Android 已自动切换了勾选，直接读取同步到 book
+            val newState = menu?.findItem(R.id.menu_enable_replace)?.isChecked
+                ?: !it.getUseReplaceRule()
+            it.setUseReplaceRule(newState)
             ReadBook.saveRead()
-            menu?.findItem(R.id.menu_enable_replace)?.isChecked = it.getUseReplaceRule()
             viewModel.replaceRuleChanged()
         }
     }

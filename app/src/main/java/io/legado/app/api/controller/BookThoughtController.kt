@@ -3,6 +3,7 @@ package io.legado.app.api.controller
 import io.legado.app.api.ReturnData
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.BookThought
+import io.legado.app.ui.book.thought.ThoughtObsidianExporter
 import io.legado.app.utils.GSON
 import io.legado.app.utils.fromJsonObject
 
@@ -47,6 +48,7 @@ object BookThoughtController {
             } else {
                 appDb.bookThoughtDao.update(thought)
             }
+            ThoughtObsidianExporter.exportBookAsync(thought.bookName, thought.bookAuthor)
             return returnData.setData("")
         }
         return returnData.setErrorMsg("格式不对")
@@ -59,6 +61,7 @@ object BookThoughtController {
         val returnData = ReturnData()
         GSON.fromJsonObject<BookThought>(postData).getOrNull()?.let { thought ->
             appDb.bookThoughtDao.delete(thought)
+            ThoughtObsidianExporter.exportBookAsync(thought.bookName, thought.bookAuthor)
             return returnData.setData("")
         }
         return returnData.setErrorMsg("格式不对")

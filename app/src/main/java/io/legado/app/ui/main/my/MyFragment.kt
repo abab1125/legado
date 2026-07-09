@@ -25,7 +25,6 @@ import io.legado.app.lib.theme.primaryColor
 import io.legado.app.service.WebService
 import io.legado.app.ui.about.AboutActivity
 import io.legado.app.ui.about.ReadRecordActivity
-import io.legado.app.ui.book.thought.ObsidianExportDialog
 import io.legado.app.ui.book.bookmark.AllBookmarkActivity
 import io.legado.app.ui.book.read.ai.AiChatActivity
 import io.legado.app.ui.main.my.ReadingSkillActivity
@@ -48,6 +47,7 @@ import io.legado.app.utils.ColorUtils
 import io.legado.app.utils.defaultSharedPreferences
 import io.legado.app.utils.observeEventSticky
 import io.legado.app.utils.openUrl
+import io.legado.app.utils.putPrefBoolean
 import io.legado.app.utils.putPrefString
 import io.legado.app.utils.sendToClip
 import io.legado.app.utils.setEdgeEffectColor
@@ -102,10 +102,17 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
         binding.btnWebService.setOnClickListener {
             if (WebService.isRun) {
                 WebService.stop(requireContext())
+                updateWebServiceState()
             } else {
-                WebService.start(requireContext())
+                val showWarning = requireContext().defaultSharedPreferences
+                    .getBoolean(PreferKey.showWebServiceWarning, true)
+                if (showWarning) {
+                    showWebServiceWarningDialog()
+                } else {
+                    WebService.start(requireContext())
+                    updateWebServiceState()
+                }
             }
-            updateWebServiceState()
         }
         binding.btnWebService.setOnLongClickListener {
             if (!WebService.isRun) {
@@ -358,14 +365,9 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
             }
         }
 
-        // 书签
+        // 书签与想法
         binding.itemBookmark.setOnClickListener {
             startActivity<AllBookmarkActivity>()
-        }
-
-        // 导出到Obsidian
-        binding.itemObsidianExport.setOnClickListener {
-            showDialogFragment(ObsidianExportDialog.newInstance())
         }
 
         // 文件管理
@@ -394,6 +396,42 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
         binding.itemExit.setOnClickListener {
             activity?.finish()
         }
+    }
+
+    private fun showWebServiceWarningDialog() {
+        val ctx = requireContext()
+        val density = ctx.resources.displayMetrics.density
+        val hPadding = (20 * density).toInt()
+        val vPadding = (8 * density).toInt()
+        val layout = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(hPadding, vPadding, hPadding, 0)
+        }
+        val tvMsg = android.widget.TextView(ctx).apply {
+            text = getString(R.string.web_service_security_warning_msg)
+            setTextColor(ctx.getColor(R.color.primaryText))
+            textSize = 14f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = (12 * density).toInt() }
+        }
+        val checkBox = android.widget.CheckBox(ctx).apply {
+            text = getString(R.string.do_not_show_again)
+        }
+        layout.addView(tvMsg)
+        layout.addView(checkBox)
+        alert(R.string.web_service_security_warning) {
+            customView { layout }
+            okButton {
+                if (checkBox.isChecked) {
+                    ctx.putPrefBoolean(PreferKey.showWebServiceWarning, false)
+                }
+                WebService.start(ctx)
+                updateWebServiceState()
+            }
+            cancelButton()
+        }.show()
     }
 
     private fun showThemeModeDialog() {

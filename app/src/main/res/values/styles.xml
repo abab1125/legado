@@ -23,18 +23,6 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <!-- AI助手 Material Components 主题 -->
-    <style name="AppTheme.Material" parent="Theme.MaterialComponents.DayNight.NoActionBar.Bridge">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primaryDark</item>
-        <item name="colorAccent">@color/accent</item>
-        <item name="actionOverflowMenuStyle">@style/Style.PopupMenu</item>
-        <item name="android:itemTextAppearance">@style/Style.MenuItemText</item>
-        <item name="android:popupMenuStyle">@style/Style.PopupMenu</item>
-        <item name="android:statusBarColor">@color/transparent</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="dividerHorizontal">@color/divider</item>
-    </style>
 
     <!-- Base application theme. -->
     <style name="Base.AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar.Bridge">
@@ -49,6 +37,7 @@
         <item name="colorOnSurface">@color/primaryText</item>
         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Legado.SmallComponent</item>
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Legado.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Legado.LargeComponent</item>
         <item name="dialogCornerRadius">16dp</item>
         <item name="actionOverflowMenuStyle">@style/Style.PopupMenu</item>
         <item name="android:itemTextAppearance">@style/Style.MenuItemText</item>
@@ -107,6 +96,11 @@
         <item name="cornerSize">16dp</item>
     </style>
 
+    <style name="ShapeAppearance.Legado.LargeComponent" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+
     <style name="ReadMenuBottomSheetShape" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">20dp</item>
@@ -115,7 +109,7 @@
     </style>
 
 
-    <style name="Activity.Permission" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <style name="Activity.Permission" parent="Theme.MaterialComponents.DayNight.NoActionBar.Bridge">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowDisablePreview">true</item>
         <item name="android:windowIsTranslucent">true</item>
@@ -175,6 +169,31 @@
     <style name="dialog_style" parent="@style/ThemeOverlay.MaterialComponents.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>
+    </style>
+
+    <!-- ===== MaterialButton Styles ===== -->
+
+    <!-- 主操作按钮：filled，圆角 12dp，主题色填充 -->
+    <style name="Widget.Legado.Button" parent="Widget.MaterialComponents.Button">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Legado.SmallComponent</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- 次要/文字按钮：TextButton 风格，主题色文字 -->
+    <style name="Widget.Legado.Button.Text" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Legado.SmallComponent</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Outlined 按钮：带描边，适合并排展示 -->
+    <style name="Widget.Legado.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:layout_height">48dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Legado.SmallComponent</item>
+        <item name="android:letterSpacing">0</item>
     </style>
 
 </resources>

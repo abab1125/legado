@@ -1,14 +1,19 @@
 package io.legado.app.ui.book.read.page.provider
 
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.text.Layout
 import android.text.Spanned
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.style.ForegroundColorSpan
 import android.text.style.ImageSpan
+import android.text.style.AbsoluteSizeSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.ReplacementSpan
+import android.text.style.StyleSpan
+import android.text.style.TypefaceSpan
+import android.text.style.UnderlineSpan
 import android.text.style.URLSpan
 import io.legado.app.constant.AppLog
 import io.legado.app.constant.AppPattern
@@ -18,6 +23,7 @@ import io.legado.app.data.entities.BookChapter
 import io.legado.app.data.entities.BookThought
 import io.legado.app.help.book.BookContent
 import io.legado.app.help.book.BookHelp
+import io.legado.app.help.book.FontManager
 import io.legado.app.help.book.getBookSource
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.ReadBookConfig
@@ -298,19 +304,29 @@ class TextChapterLayout(
                         }
                     }
                 }
-                setTypeText(
-                    book,
-                    if (imgText != null) text + imgText else text,
-                    titlePaint,
-                    titlePaintTextHeight,
-                    titlePaintFontMetrics,
-                    imageStyle,
-                    srcList = srcList,
-                    clickList = clickList,
-                    isTitle = true,
-                    emptyContent = contents.isEmpty(),
-                    isVolumeTitle = bookChapter.isVolume
-                )
+                if (adaptSpecialStyle && text.startsWith("<usehtml>")) {
+                    val endInt = text.lastIndexOf("<")
+                    if (endInt >= 9) {
+                        val htmlContent = text.substring(9, endInt)
+                        if (htmlContent.isNotEmpty()) {
+                            setTypeHtml(imageStyle, book, htmlContent, hasIndent = false)
+                        }
+                    }
+                } else {
+                    setTypeText(
+                        book,
+                        if (imgText != null) text + imgText else text,
+                        titlePaint,
+                        titlePaintTextHeight,
+                        titlePaintFontMetrics,
+                        imageStyle,
+                        srcList = srcList,
+                        clickList = clickList,
+                        isTitle = true,
+                        emptyContent = contents.isEmpty(),
+                        isVolumeTitle = bookChapter.isVolume
+                    )
+                }
                 pendingTextPage.lines.last().isParagraphEnd = true
                 stringBuilder.append("\n")
             }
@@ -336,8 +352,12 @@ class TextChapterLayout(
                     return@forEach
                 } else if (text.startsWith("<usehtml>")) {
                     val endInt = text.lastIndexOf("<")
-                    if (endInt > 9) {
-                        setTypeHtml(imageStyle, book, text.substring(9, endInt))
+                    if (endInt >= 9) {
+                        val htmlContent = text.substring(9, endInt)
+                        if (htmlContent.isNotEmpty()) {
+                            val hasIndent = content.startsWith(paragraphIndent)
+                            setTypeHtml(imageStyle, book, htmlContent, hasIndent)
+                        }
                         return@forEach
                     }
                 }
@@ -705,6 +725,7 @@ class TextChapterLayout(
         imageStyle: String?,
         book: Book,
         htmlContent: String,
+        hasIndent: Boolean = false,
     ) {
         val textViewTagHandler = TextViewTagHandler()
         val spanned = htmlContent.parseAsHtml(HtmlCompat.FROM_HTML_MODE_COMPACT, tagHandler = textViewTagHandler)
@@ -714,18 +735,48 @@ class TextChapterLayout(
         if (textPaint.color != textColor) {
             textPaint.color = textColor
         }
+        // 去除 Html.fromHtml 中 <div>/<p> 块级元素添加的首尾换行，避免多余空白行
+        val spannable = (if (spanned is android.text.Spannable) spanned else android.text.SpannableString(spanned)).let {
+            var start = 0
+            var end = it.length
+            while (end > start && it[end - 1] == '\n') end--
+            while (start < end && it[start] == '\n') start++
+            if (start > 0 || end < it.length) {
+                android.text.SpannableString(it.subSequence(start, end))
+            } else {
+                it
+            }
+        }
+        if (hasIndent) {
+            var marginX = 0f
+            repeat(paragraphIndent.length) {
+                marginX += indentCharWidth
+            }
+            spannable.setSpan(
+                android.text.style.LeadingMarginSpan.Standard(marginX.toInt(), 0),
+                0, spannable.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+        // 检测居中样式
+        val hasCenter = Regex("""text-align\s*:\s*center""", RegexOption.IGNORE_CASE).containsMatchIn(htmlContent)
+        val alignment = if (hasCenter) {
+            Layout.Alignment.ALIGN_CENTER
+        } else {
+            Layout.Alignment.ALIGN_NORMAL
+        }
         val staticLayout = if (atLeastApi28) {
-            StaticLayout.Builder.obtain(spanned, 0, spanned.length, textPaint, width)
+            StaticLayout.Builder.obtain(spannable, 0, spannable.length, textPaint, width)
+                .setAlignment(alignment)
                 .setIncludePad(true)
                 .setUseLineSpacingFromFallbacks(true)
                 .build()
         } else {
             @Suppress("DEPRECATION")
             StaticLayout(
-                spanned,
+                spannable,
                 textPaint,
                 width,
-                Layout.Alignment.ALIGN_NORMAL,
+                alignment,
                 1f,
                 0f,
                 true
@@ -741,7 +792,14 @@ class TextChapterLayout(
             val textLine = TextLine(isHtml = true)
             val lineText = StringBuilder()
             val lineLeft = staticLayout.getLineLeft(lineIndex)
-            textLine.startX = absStartX + lineLeft //x坐标
+            // 手动居中：用 lineWidth 重新计算 startX，确保跨版本生效
+            val lineWidth = staticLayout.getLineRight(lineIndex) - lineLeft
+            val lineStartX = if (alignment == Layout.Alignment.ALIGN_CENTER && !hasIndent) {
+                absStartX + (visibleWidth - lineWidth) / 2f
+            } else {
+                absStartX + lineLeft
+            }
+            textLine.startX = lineStartX //x坐标
             val mLineTop = staticLayout.getLineTop(lineIndex).toFloat()
             val mLineBottom = staticLayout.getLineBottom(lineIndex).toFloat()
             val lineHeight = mLineBottom - mLineTop
@@ -749,6 +807,24 @@ class TextChapterLayout(
             textLine.upTopBottom(durY, lineHeight, textPaint.fontMetrics) //y坐标
 
             val columns = mutableListOf<BaseColumn>()
+            // 首行添加段落缩进
+            if (lineIndex == 0 && hasIndent) {
+                var indentX = 0f
+                repeat(paragraphIndent.length) {
+                    val x1 = indentX + indentCharWidth
+                    columns.add(
+                        TextColumn(
+                            charData = ChapterProvider.indentChar,
+                            start = absStartX + indentX,
+                            end = absStartX + x1
+                        )
+                    )
+                    lineText.append(ChapterProvider.indentChar)
+                    indentX = x1
+                }
+                textLine.indentWidth = indentX
+                textLine.indentSize = paragraphIndent.length
+            }
             var charIndex = lineStart
             while (charIndex < lineEnd) {
                 val char = spanned[charIndex].toString()
@@ -763,6 +839,10 @@ class TextChapterLayout(
                 val textSize = extractTextSize(spanned, charIndex, textPaint.textSize)
                 val textColor = extractTextColor(spanned, charIndex)
                 val linkUrl = extractLinkUrl(spanned, charIndex)
+                val isBold = extractIsBold(spanned, charIndex)
+                val isItalic = extractIsItalic(spanned, charIndex)
+                val isUnderline = extractIsUnderline(spanned, charIndex)
+                val typeface = extractTypeface(spanned, charIndex)
                 val charRight = if (charIndex + 1 < lineEnd) {
                     staticLayout.getPrimaryHorizontal(charIndex + 1)
                 } else {
@@ -861,7 +941,11 @@ class TextChapterLayout(
                             char,
                             textSize,
                             textColor,
-                            linkUrl
+                            linkUrl,
+                            typeface,
+                            isBold,
+                            isItalic,
+                            isUnderline
                         )
                     )
                 }
@@ -970,15 +1054,14 @@ class TextChapterLayout(
     }
 
     private fun extractTextSize(spanned: Spanned, index: Int, defaultSize: Float): Float {
+        val sizeSpans = spanned.getSpans(index, index + 1, AbsoluteSizeSpan::class.java)
+        sizeSpans.firstOrNull()?.let { span ->
+            return span.size.toFloat()
+        }
         val relativeSpans = spanned.getSpans(index, index + 1, RelativeSizeSpan::class.java)
-        // 如果有 RelativeSizeSpan，基于基准大小计算
         relativeSpans.firstOrNull()?.let { span ->
             return defaultSize * span.sizeChange
         }
-//        val sizeSpans = spanned.getSpans(index, index + 1, AbsoluteSizeSpan::class.java)
-//        sizeSpans.firstOrNull()?.let { span ->
-//            return span.size.toFloat()
-//        }
         return defaultSize
     }
 
@@ -992,6 +1075,30 @@ class TextChapterLayout(
         val urlSpans = spanned.getSpans(index, index + 1, URLSpan::class.java)
         urlSpans.firstOrNull()?.let { span ->
             return span.url
+        }
+        return null
+    }
+
+    private fun extractIsBold(spanned: Spanned, index: Int): Boolean {
+        val styleSpans = spanned.getSpans(index, index + 1, StyleSpan::class.java)
+        return styleSpans.any { it.style == Typeface.BOLD || it.style == Typeface.BOLD_ITALIC }
+    }
+
+    private fun extractIsItalic(spanned: Spanned, index: Int): Boolean {
+        val styleSpans = spanned.getSpans(index, index + 1, StyleSpan::class.java)
+        return styleSpans.any { it.style == Typeface.ITALIC || it.style == Typeface.BOLD_ITALIC }
+    }
+
+    private fun extractIsUnderline(spanned: Spanned, index: Int): Boolean {
+        val underlineSpans = spanned.getSpans(index, index + 1, UnderlineSpan::class.java)
+        return underlineSpans.isNotEmpty()
+    }
+
+    private fun extractTypeface(spanned: Spanned, index: Int): Typeface? {
+        val typefaceSpans = spanned.getSpans(index, index + 1, TypefaceSpan::class.java)
+        typefaceSpans.firstOrNull()?.let { span ->
+            val family = span.family ?: return@let
+            return FontManager.getTypeface(family)
         }
         return null
     }

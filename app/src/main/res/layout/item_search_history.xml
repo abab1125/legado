@@ -28,7 +28,7 @@
         android:layout_marginStart="6dp"
         android:src="@android:drawable/ic_menu_close_clear_cancel"
         android:contentDescription="@string/cancel"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:padding="2dp" />
 
 </LinearLayout>

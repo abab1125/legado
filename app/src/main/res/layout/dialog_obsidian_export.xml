@@ -7,7 +7,7 @@
     android:background="@color/background"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.Toolbar
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/tool_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -148,6 +148,14 @@
                     android:singleLine="true" />
 
             </io.legado.app.ui.widget.text.TextInputLayout>
+
+            <io.legado.app.lib.theme.view.ThemeCheckBox
+                android:id="@+id/cb_auto_export"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/obsidian_auto_export" />
 
         </LinearLayout>
 

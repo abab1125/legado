@@ -12,6 +12,10 @@
 
 本项目基于 [Luoyacheng/legado](https://github.com/luoyacheng/legado)（阅读 Sigma）二次开发，继承自 [gedoor/legado](https://github.com/gedoor/legado)。没有前辈们的肩膀，我连站的地方都没有。
 
+> 以上为原作者（Jingshiro/legado）的原话，特此保留以示尊重与出处。
+>
+> 本仓库为 **abab1125** 在 Jingshiro/legado 基础上 fork 的**互动写小说增强版**：在保留原作者全部声明与免责的前提下，针对"互动写小说"场景做了定向改造（写作台、AI 助手、知识点库等，详见核心特性）。改造内容仅扩展功能、不改原声明效力；原作者的免责与版权声明对本 fork 同样适用。
+
 ---
 
 ## 核心特性

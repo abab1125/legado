@@ -43,6 +43,8 @@ object DatabaseMigrations {
             db.execSQL("INSERT INTO `knowledge_points_new` (`id`, `title`, `content`, `tags`, `category`, `sortOrder`, `createTime`, `updateTime`) SELECT `id`, `title`, `content`, `tags`, `category`, `sortOrder`, `createTime`, `updateTime` FROM `knowledge_points`")
             db.execSQL("DROP TABLE `knowledge_points`")
             db.execSQL("ALTER TABLE `knowledge_points_new` RENAME TO `knowledge_points`")
+            // replace_rules 新增 bindToThemes 列（与 99.json schema 对齐）
+            db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `bindToThemes` TEXT NOT NULL DEFAULT ''")
         }
     }
 
@@ -63,11 +65,15 @@ object DatabaseMigrations {
             db.execSQL("INSERT INTO `writing_prompts_new` (`id`, `title`, `content`, `type`, `sortOrder`, `createTime`, `updateTime`) SELECT `id`, `title`, `content`, `type`, `sortOrder`, `createTime`, `updateTime` FROM `writing_prompts`")
             db.execSQL("DROP TABLE `writing_prompts`")
             db.execSQL("ALTER TABLE `writing_prompts_new` RENAME TO `writing_prompts`")
+            // replace_rules 新增 isDotAll 列（与 98.json schema 对齐）
+            db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `isDotAll` INTEGER NOT NULL DEFAULT 0")
         }
     }
 
     private val migration_96_97 = object : Migration(96, 97) {
         override fun migrate(db: SupportSQLiteDatabase) {
+            // replace_rules 新增 isHighlight 列（与 97.json schema 对齐）
+            db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `isHighlight` INTEGER NOT NULL DEFAULT 0")
             db.execSQL(
                 """
                 CREATE TABLE IF NOT EXISTS `knowledge_points` (
@@ -510,6 +516,22 @@ object DatabaseMigrations {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE `knowledge_points` ADD COLUMN `subCategory` TEXT NOT NULL DEFAULT ''")
             db.execSQL("ALTER TABLE `knowledge_points` ADD COLUMN `novelName` TEXT NOT NULL DEFAULT ''")
+            // 修复旧 migration_96_97/97_98/98_99 漏加的 replace_rules 列
+            val cursor = db.query("PRAGMA table_info('replace_rules')")
+            val existingColumns = mutableListOf<String>()
+            while (cursor.moveToNext()) {
+                existingColumns.add(cursor.getString(cursor.getColumnIndexOrThrow("name")))
+            }
+            cursor.close()
+            if (!existingColumns.contains("isHighlight")) {
+                db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `isHighlight` INTEGER NOT NULL DEFAULT 0")
+            }
+            if (!existingColumns.contains("isDotAll")) {
+                db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `isDotAll` INTEGER NOT NULL DEFAULT 0")
+            }
+            if (!existingColumns.contains("bindToThemes")) {
+                db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `bindToThemes` TEXT NOT NULL DEFAULT ''")
+            }
         }
     }
 }

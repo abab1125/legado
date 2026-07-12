@@ -519,10 +519,15 @@ object DatabaseMigrations {
             // 修复旧 migration_96_97/97_98/98_99 漏加的 replace_rules 列
             val cursor = db.query("PRAGMA table_info('replace_rules')")
             val existingColumns = mutableListOf<String>()
+            val notNullColumns = mutableMapOf<String, Boolean>()
             while (cursor.moveToNext()) {
-                existingColumns.add(cursor.getString(cursor.getColumnIndexOrThrow("name")))
+                val name = cursor.getString(cursor.getColumnIndexOrThrow("name"))
+                existingColumns.add(name)
+                notNullColumns[name] = cursor.getInt(cursor.getColumnIndexOrThrow("notnull")) == 1
             }
             cursor.close()
+
+            // 优先用 ALTER 补齐缺失列（保留数据，代价最小）
             if (!existingColumns.contains("isHighlight")) {
                 db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `isHighlight` INTEGER NOT NULL DEFAULT 0")
             }
@@ -531,6 +536,38 @@ object DatabaseMigrations {
             }
             if (!existingColumns.contains("bindToThemes")) {
                 db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `bindToThemes` TEXT DEFAULT ''")
+            }
+
+            // 早期 bug 版本曾把 bindToThemes 加成 NOT NULL，与实体(String?)不符，
+            // SQLite 无法改列约束，需重建整表（数据通过 INSERT..SELECT 保留）
+            if (notNullColumns["bindToThemes"] == true) {
+                db.execSQL(
+                    """CREATE TABLE IF NOT EXISTS `replace_rules_new` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `name` TEXT NOT NULL DEFAULT '',
+                        `group` TEXT,
+                        `pattern` TEXT NOT NULL DEFAULT '',
+                        `replacement` TEXT NOT NULL DEFAULT '',
+                        `scope` TEXT,
+                        `scopeTitle` INTEGER NOT NULL DEFAULT 0,
+                        `scopeContent` INTEGER NOT NULL DEFAULT 1,
+                        `excludeScope` TEXT,
+                        `isEnabled` INTEGER NOT NULL DEFAULT 1,
+                        `isRegex` INTEGER NOT NULL DEFAULT 1,
+                        `isHighlight` INTEGER NOT NULL DEFAULT 0,
+                        `isDotAll` INTEGER NOT NULL DEFAULT 0,
+                        `timeoutMillisecond` INTEGER NOT NULL DEFAULT 3000,
+                        `sortOrder` INTEGER NOT NULL DEFAULT 0,
+                        `bindToThemes` TEXT DEFAULT ''
+                    )"""
+                )
+                db.execSQL(
+                    "INSERT INTO `replace_rules_new` (`id`, `name`, `group`, `pattern`, `replacement`, `scope`, `scopeTitle`, `scopeContent`, `excludeScope`, `isEnabled`, `isRegex`, `isHighlight`, `isDotAll`, `timeoutMillisecond`, `sortOrder`, `bindToThemes`) " +
+                    "SELECT `id`, `name`, `group`, `pattern`, `replacement`, `scope`, `scopeTitle`, `scopeContent`, `excludeScope`, `isEnabled`, `isRegex`, `isHighlight`, `isDotAll`, `timeoutMillisecond`, `sortOrder`, `bindToThemes` FROM `replace_rules`"
+                )
+                db.execSQL("DROP TABLE `replace_rules`")
+                db.execSQL("ALTER TABLE `replace_rules_new` RENAME TO `replace_rules`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_replace_rules_id` ON `replace_rules` (`id`)")
             }
         }
     }

@@ -34,6 +34,11 @@
 - 高亮规则、主题自定义、Obsidian 想法导出（上游特性）
 - 所有原生阅读器功能保留
 
+### 🗄️ 数据库与升级兼容
+- 本地数据库当前版本 **v100**（Room 管理）
+- 升级遵循增量迁移原则，**不丢数据**：旧版本安装后首次启动，Room 自动执行逐版本迁移（含 `replace_rules` 表的 `isHighlight`/`isDotAll`/`bindToThemes` 列补建）并校验表结构一致
+- 若升级后遇到数据库异常，可清除应用数据重装（会清空本地书架/替换规则，谨慎操作）
+
 ---
 
 ## 构建
@@ -45,6 +50,10 @@
 ```
 
 CI 触发机制：`push` 到 `main` 分支自动构建并发布 Release。
+
+- 构建产物为 **releaseS** 变体（applicationId 带 `.releaseS` 后缀，可与官方 release 包共存）
+- 成功后在 GitHub Releases 自动创建带版本号（形如 `3.YYMMDDHH`）的发布，附 APK 下载
+- 密钥库与签名信息由仓库 CI Secrets/工作流内置，贡献者无需自备
 
 ---
 

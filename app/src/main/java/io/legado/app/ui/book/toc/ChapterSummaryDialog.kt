@@ -75,7 +75,7 @@ class ChapterSummaryDialog : BaseDialogFragment(R.layout.dialog_chapter_summary)
     private fun generateSummary() {
         val book = book ?: return
         val chapter = chapter ?: return
-        val apiUrl = AiConfig.apiUrl
+        val apiUrl = AiConfig.normalizedChatUrl
         val apiKey = AiConfig.apiKey
         val model = AiConfig.model
 

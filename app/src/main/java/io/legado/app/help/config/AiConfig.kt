@@ -46,6 +46,25 @@ object AiConfig {
             appCtx.putPrefString(KEY_AI_API_KEY, value)
         }
 
+    /**
+     * 规范化后的 chat/completions 完整地址（只读）。
+     * apiUrl 由用户填写，可能是 base URL（如 https://xxx/v1）或完整路径。
+     * 提取角色、章节概要等实际请求必须打到 /chat/completions，否则上游返回 404。
+     * 这里统一补齐，避免各调用点重复拼接导致行为不一致。
+     */
+    val normalizedChatUrl: String
+        get() {
+            val raw = apiUrl.trim().trimEnd('/')
+            return when {
+                raw.endsWith("/chat/completions", ignoreCase = true) -> raw
+                raw.endsWith("/models", ignoreCase = true) ->
+                    raw.removeSuffix("/models") + "/chat/completions"
+                raw.endsWith("/completions", ignoreCase = true) ->
+                    raw.substringBeforeLast('/') + "/chat/completions"
+                else -> "$raw/chat/completions"
+            }
+        }
+
     var model: String
         get() = appCtx.getPrefString(KEY_AI_MODEL, "gpt-3.5-turbo") ?: ""
         set(value) {

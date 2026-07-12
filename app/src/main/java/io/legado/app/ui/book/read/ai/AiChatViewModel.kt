@@ -578,9 +578,9 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         chatMessages: List<ChatMessage>,
         tools: List<Map<String, Any>>? = null
     ): ChatMessage = withContext(Dispatchers.IO) {
-        val url = AiConfig.apiUrl
         val apiKey = AiConfig.apiKey
         val model = AiConfig.model
+        val url = AiConfig.normalizedChatUrl
 
         val messagesJsonList = chatMessages.map { msg ->
             val map = mutableMapOf<String, Any>("role" to msg.role)
@@ -691,9 +691,9 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         onDelta: (String) -> Unit,
         onReasoningDelta: (String) -> Unit
     ): ChatMessage = withContext(Dispatchers.IO) {
-        val url = AiConfig.apiUrl
         val apiKey = AiConfig.apiKey
         val model = AiConfig.model
+        val url = AiConfig.normalizedChatUrl
 
         val messagesJsonList = chatMessages.map { msg ->
             val map = mutableMapOf<String, Any>("role" to msg.role)

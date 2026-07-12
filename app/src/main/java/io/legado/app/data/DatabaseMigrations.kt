@@ -44,7 +44,7 @@ object DatabaseMigrations {
             db.execSQL("DROP TABLE `knowledge_points`")
             db.execSQL("ALTER TABLE `knowledge_points_new` RENAME TO `knowledge_points`")
             // replace_rules 新增 bindToThemes 列（与 99.json schema 对齐）
-            db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `bindToThemes` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `bindToThemes` TEXT DEFAULT ''")
         }
     }
 
@@ -530,7 +530,7 @@ object DatabaseMigrations {
                 db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `isDotAll` INTEGER NOT NULL DEFAULT 0")
             }
             if (!existingColumns.contains("bindToThemes")) {
-                db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `bindToThemes` TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `bindToThemes` TEXT DEFAULT ''")
             }
         }
     }

@@ -46,7 +46,7 @@ class CharacterExtractActivity : BaseActivity<ActivityCharacterExtractBinding>()
             finish(); return
         }
         val bookName = intent.getStringExtra(EXTRA_BOOK_NAME) ?: "未命名"
-        val chapters = intent.getIntegerArrayListExtra(EXTRA_CHAPTERS) ?: run {
+        val chapters = intent.getIntArrayExtra(EXTRA_CHAPTERS)?.toList() ?: run {
             toastOnUi("缺少章节选择")
             finish(); return
         }

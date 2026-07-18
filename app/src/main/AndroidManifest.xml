@@ -162,6 +162,12 @@
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- 角色提取界面 -->
+        <activity
+            android:name=".ui.book.read.ai.CharacterExtractActivity"
+            android:configChanges="locale|keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- 阅读漫画界面 -->
         <activity
             android:name=".ui.book.manga.ReadMangaActivity"

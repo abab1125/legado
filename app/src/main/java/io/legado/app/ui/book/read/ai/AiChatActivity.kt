@@ -27,6 +27,7 @@ import io.legado.app.databinding.ActivityAiChatBinding
 import io.legado.app.model.ReadBook
 import io.legado.app.ui.book.read.config.AiConfigDialog
 import io.legado.app.ui.book.read.ai.liyuan.LiyuanChatActivity
+import io.legado.app.ui.book.read.ai.CharacterExtractActivity
 import io.legado.app.utils.showDialogFragment
 import android.content.Intent
 import io.legado.app.utils.toastOnUi
@@ -638,48 +639,17 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 dialog?.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.isEnabled = false
                 dialog?.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.isEnabled = false
 
-                lifecycleScope.launch {
-                    try {
-                        val roles = viewModel.extractCharacters(
-                            bookUrl = bookUrl,
-                            bookName = bookName,
-                            chapterIndexes = selected,
-                            onProgress = { cur, tot, phase ->
-                                runOnUiThread {
-                                    val phaseEmoji = when {
-                                        phase.startsWith("读取") -> "📖"
-                                        phase.startsWith("分析") || phase.startsWith("AI") -> "🤖"
-                                        phase.startsWith("合并") -> "🔄"
-                                        phase.startsWith("保存") -> "💾"
-                                        else -> ""
-                                    }
-                                    progressText.text = if (tot > 0) "$phaseEmoji $phase ($cur/$tot)"
-                                        else "$phaseEmoji $phase"
-                                }
-                            }
-                        )
-                        runOnUiThread {
-                            if (roles.isEmpty()) {
-                                toastOnUi("未提取到任何角色，请尝试扩大章节范围")
-                                dialog?.dismiss()
-                            } else {
-                                val names = roles.joinToString("、") { it.name }
-                                toastOnUi("提取到 ${roles.size} 个角色：$names")
-                                dialog?.dismiss()
-                                alert("提取结果") {
-                                    setMessage(
-                                        roles.joinToString("\n\n") { "• ${it.name}\n  ${it.description}" }
-                                    )
-                                    okButton()
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        runOnUiThread {
-                            toastOnUi("提取失败：${e.message}")
-                        }
-                    }
+                // 跳转到角色提取页面（流式输出 + 用户确认后保存）
+                val intent = Intent(this, CharacterExtractActivity::class.java).apply {
+                    putExtra(CharacterExtractActivity.EXTRA_BOOK_URL, bookUrl)
+                    putExtra(CharacterExtractActivity.EXTRA_BOOK_NAME, bookName)
+                    putIntegerArrayListExtra(
+                        CharacterExtractActivity.EXTRA_CHAPTERS,
+                        ArrayList(selected.map { it })
+                    )
                 }
+                dialog?.dismiss()
+                startActivity(intent)
             }
             noButton()
         }

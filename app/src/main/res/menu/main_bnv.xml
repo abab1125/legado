@@ -20,9 +20,9 @@
         android:icon="@drawable/ic_bottom_explore"
         android:title="@string/discovery" />
     <item
-        android:id="@+id/menu_rss"
-        android:icon="@drawable/ic_bottom_rss_feed"
-        android:title="@string/rss" />
+        android:id="@+id/menu_write_desk"
+        android:icon="@drawable/ic_cfg_replace"
+        android:title="@string/write_desk" />
     <item
         android:id="@+id/menu_my_config"
         android:icon="@drawable/ic_bottom_person"

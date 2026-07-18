@@ -43,7 +43,7 @@ import io.legado.app.ui.main.bookshelf.style1.BookshelfFragment1
 import io.legado.app.ui.main.bookshelf.style2.BookshelfFragment2
 import io.legado.app.ui.main.explore.ExploreFragment
 import io.legado.app.ui.main.my.MyFragment
-import io.legado.app.ui.main.rss.RssFragment
+import io.legado.app.ui.write.WriteDeskActivity
 import io.legado.app.ui.widget.dialog.TextDialog
 import io.legado.app.ui.widget.text.BadgeView
 import io.legado.app.utils.BitmapUtils
@@ -83,16 +83,15 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
     private val idPrompt = 1
     private val idKnowledge = 2
     private val idExplore = 3
-    private val idRss = 4
     private val idMy = 5
     private var exitTime: Long = 0
     private var bookshelfReselected: Long = 0
     private var exploreReselected: Long = 0
     private var pagePosition = 0
     private val fragmentMap = hashMapOf<Int, Fragment>()
-    private var bottomMenuCount = 6
+    private var bottomMenuCount = 5
     private val EXIT_INTERVAL = 2000L
-    private val realPositions = intArrayOf(idBookshelf, idPrompt, idKnowledge, idExplore, idRss, idMy)
+    private val realPositions = intArrayOf(idBookshelf, idPrompt, idKnowledge, idExplore, idMy)
     private val adapter by lazy {
         TabFragmentPageAdapter(supportFragmentManager)
     }
@@ -170,8 +169,10 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             R.id.menu_discovery ->
                 viewPagerMain.setCurrentItem(realPositions.indexOf(idExplore), false)
 
-            R.id.menu_rss ->
-                viewPagerMain.setCurrentItem(realPositions.indexOf(idRss), false)
+            R.id.menu_write_desk -> {
+                // 写作台：跳转入口，不占 ViewPager 分页
+                startActivity<WriteDeskActivity>()
+            }
 
             R.id.menu_my_config ->
                 viewPagerMain.setCurrentItem(realPositions.indexOf(idMy), false)
@@ -388,20 +389,16 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
 
     private fun upBottomMenu() {
         val showDiscovery = AppConfig.showDiscovery
-        val showRss = AppConfig.showRSS
         binding.bottomNavigationView.menu.let { menu ->
             menu.findItem(R.id.menu_discovery).isVisible = showDiscovery
-            menu.findItem(R.id.menu_rss).isVisible = showRss
+            menu.findItem(R.id.menu_write_desk).isVisible = true
         }
-        // 固定 Tab: bookshelf(0), prompt(1), knowledge(2), 后面 discovery/rss/my 按配置变动
+        // 固定 Tab: bookshelf(0), prompt(1), knowledge(2), 后面 discovery/my 按配置变动
+        // 写作台(menu_write_desk) 为跳转入口，不占 ViewPager 分页
         var index = 2 // bookshelf, prompt, knowledge 的固定位置是 0,1,2
         if (showDiscovery) {
             index++
             realPositions[index] = idExplore
-        }
-        if (showRss) {
-            index++
-            realPositions[index] = idRss
         }
         index++
         realPositions[index] = idMy
@@ -415,7 +412,7 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
         val iconMap = mapOf(
             R.id.menu_bookshelf to PreferKey.bottomIconBookshelf,
             R.id.menu_discovery to PreferKey.bottomIconExplore,
-            R.id.menu_rss to PreferKey.bottomIconRss,
+            R.id.menu_write_desk to PreferKey.bottomIconWriteDesk,
             R.id.menu_my_config to PreferKey.bottomIconMy
         )
         binding.bottomNavigationView.menu.let { menu ->
@@ -436,10 +433,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
             "bookshelf" -> {}
             "explore" -> if (AppConfig.showDiscovery) {
                 binding.viewPagerMain.setCurrentItem(realPositions.indexOf(idExplore), false)
-            }
-
-            "rss" -> if (AppConfig.showRSS) {
-                binding.viewPagerMain.setCurrentItem(realPositions.indexOf(idRss), false)
             }
 
             "my" -> binding.viewPagerMain.setCurrentItem(realPositions.indexOf(idMy), false)
@@ -479,7 +472,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
                 || (fragmentId == 20 && any is PromptManageFragment)
                 || (fragmentId == 21 && any is KnowledgeManageFragment)
                 || (fragmentId == idExplore && any is ExploreFragment)
-                || (fragmentId == idRss && any is RssFragment)
                 || (fragmentId == idMy && any is MyFragment)
             ) {
                 return POSITION_UNCHANGED
@@ -494,7 +486,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
                 20 -> PromptManageFragment(position)
                 21 -> KnowledgeManageFragment(position)
                 idExplore -> ExploreFragment(position)
-                idRss -> RssFragment(position)
                 else -> MyFragment(position)
             }
         }

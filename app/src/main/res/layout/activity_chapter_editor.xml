@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 主内容区 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -47,40 +46,6 @@
             </ScrollView>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 收起态拖动条：点击展开 AI 面板 -->
-        <LinearLayout
-            android:id="@+id/ai_panel_handle"
-            android:layout_width="match_parent"
-            android:layout_height="28dp"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:background="?android:attr/colorPrimary"
-            android:alpha="0.9">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="AI 助手"
-                android:textSize="12sp"
-                android:textColor="@android:color/white" />
-        </LinearLayout>
     </LinearLayout>
-
-    <!-- 遮罩（面板展开时显示，点击收起） -->
-    <View
-        android:id="@+id/ai_panel_scrim"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#66000000"
-        android:visibility="gone" />
-
-    <!-- AI 面板容器（底部抽屉） -->
-    <FrameLayout
-        android:id="@+id/ai_panel_container"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_gravity="bottom"
-        android:background="?android:attr/colorBackground"
-        android:elevation="8dp" />
 
 </FrameLayout>

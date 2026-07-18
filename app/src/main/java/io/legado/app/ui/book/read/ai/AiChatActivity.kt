@@ -22,6 +22,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.legado.app.R
 import io.legado.app.base.BaseActivity
+import io.legado.app.data.appDb
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.databinding.ActivityAiChatBinding
 import io.legado.app.model.ReadBook
@@ -51,11 +52,15 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
         )
     }
 
-    /** 当前引用的参考信息列表 */
-    private val currentReferences = mutableListOf<ReferenceItem>()
-
     /** 是否为独立模式（从"我的"页面进入，无书籍上下文） */
-    private val isStandalone: Boolean get() = intent.getBooleanExtra("isStandalone", false) || ReadBook.book == null
+    private val isStandalone: Boolean
+        get() = intent.getBooleanExtra("isStandalone", false) || ReadBook.book == null
+
+    /** 写作页传入的书籍上下文（非阅读器场景） */
+    private val injectedBookUrl: String? get() = intent.getStringExtra("bookUrl")
+    private val injectedChapterUrl: String? get() = intent.getStringExtra("chapterUrl")
+
+    private val hasInjectedBook: Boolean get() = !injectedBookUrl.isNullOrBlank()
 
     override fun initTheme() {
         // 保持 Material 主题，不允许 BaseActivity 覆盖为 AppCompat 主题
@@ -67,32 +72,48 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
         initView()
         bindEvent()
         observeData()
+        observeToolStatus()   // 灵犀式状态卡
         setupKeyboardAdjustment()
+
+        // 注入写作页书籍上下文（不依赖 ReadBook）
+        if (hasInjectedBook) {
+            val bookUrl = injectedBookUrl!!
+            val chapterIndex = if (!injectedChapterUrl.isNullOrBlank()) {
+                appDb.bookChapterDao.getChapterByUrl(bookUrl, injectedChapterUrl!!)?.index ?: -1
+            } else -1
+            val chapterSize = appDb.bookChapterDao.getChapterList(bookUrl).size
+            viewModel.setBookContext(bookUrl, chapterIndex, chapterSize)
+        }
 
         // 从阅读器传过来的选中文本，预填到输入框
         val incomingText = intent.getStringExtra("selectedText")
 
-        if (isStandalone) {
+        if (isStandalone && !hasInjectedBook) {
             // 独立模式：隐藏章节选择区域和预置提示词栏，直接初始化
             binding.layoutChapterRange.visibility = View.GONE
             binding.layoutPromptPresets.visibility = View.GONE
             binding.titleBar.title = getString(R.string.ai_assistant)
             viewModel.initMessages(0, 0)
         } else {
-            val currentChapter = (ReadBook.durChapterIndex + 1).toString()
-            binding.etChapterStart.setText(currentChapter)
-            binding.etChapterEnd.setText(currentChapter)
+            val currentChapter = if (hasInjectedBook && injectedChapterUrl != null) {
+                (appDb.bookChapterDao.getChapterByUrl(injectedBookUrl!!, injectedChapterUrl!!)?.index ?: 0) + 1
+            } else {
+                ReadBook.durChapterIndex + 1
+            }
+            binding.etChapterStart.setText(currentChapter.toString())
+            binding.etChapterEnd.setText(currentChapter.toString())
             // 标题显示书名，让用户明确当前AI关联的书籍
-            val bookName = ReadBook.book?.name
+            val bookName = if (hasInjectedBook) {
+                appDb.bookDao.getBook(injectedBookUrl!!)?.name
+            } else {
+                ReadBook.book?.name
+            }
             if (!bookName.isNullOrBlank()) {
                 binding.titleBar.title = bookName
             } else {
                 binding.titleBar.title = getString(R.string.ai_assistant)
             }
-            viewModel.initMessages(
-                ReadBook.durChapterIndex + 1,
-                ReadBook.durChapterIndex + 1
-            )
+            viewModel.initMessages(currentChapter, currentChapter)
             updateWordCount()
         }
 
@@ -276,11 +297,13 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
     }
 
     private fun updateWordCount() {
-        if (isStandalone) return
+        if (isStandalone && !hasInjectedBook) return
         val start = binding.etChapterStart.text.toString().toIntOrNull()
         val end = binding.etChapterEnd.text.toString().toIntOrNull()
-        val bookUrl = ReadBook.book?.bookUrl
-        val chapterSize = ReadBook.chapterSize
+        val bookUrl = if (hasInjectedBook) injectedBookUrl else ReadBook.book?.bookUrl
+        val chapterSize = if (hasInjectedBook) {
+            appDb.bookChapterDao.getChapterList(injectedBookUrl!!).size
+        } else ReadBook.chapterSize
         if (start != null && end != null && start > 0 && end > 0 && bookUrl != null && chapterSize > 0) {
             viewModel.calculateWordCount(bookUrl, start, end)
         }
@@ -373,6 +396,33 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
             if (request == null) return@observe
             showBatchConfirmationDialog(request.descriptions) { confirmed ->
                 viewModel.confirmBatchAction(confirmed)
+            }
+        }
+    }
+
+    /**
+     * 灵犀式状态卡：观察 AiToolStatusBus，在状态指示条显示工具执行进度
+     * （读取章节 N 字 / 写入章节 等）
+     */
+    private fun observeToolStatus() {
+        AiToolStatusBus.toolActivityLiveData.observe(this) { activity ->
+            val indicator = binding.llStatusIndicator
+            val text = binding.tvStatusText
+            val spinner = binding.statusSpinner
+            indicator.visibility = View.VISIBLE
+            spinner.visibility = View.GONE
+            text.text = when (activity.kind) {
+                "tool_start" -> "⏳ ${activity.detail}"
+                "tool_end" -> "✓ ${activity.detail}"
+                else -> activity.detail
+            }
+            // 短暂显示后自动隐藏（非执行中态）
+            if (activity.kind == "tool_end") {
+                binding.root.postDelayed({
+                    if (viewModel.statusLiveData.value == AiChatViewModel.STATUS_IDLE) {
+                        indicator.visibility = View.GONE
+                    }
+                }, 2500)
             }
         }
     }

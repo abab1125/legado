@@ -28,7 +28,8 @@
             android:textSize="13sp"
             android:lineSpacingExtra="4dp"
             android:padding="12dp"
-            android:typeface="monospace" />
+            android:typeface="monospace"
+            android:textColor="?android:attr/textColorPrimary" />
     </ScrollView>
 
     <!-- 编辑区域（提取完成后显示） -->

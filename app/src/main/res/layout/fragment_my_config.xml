@@ -242,6 +242,38 @@
 
                     </LinearLayout>
 
+                    <!-- 订阅（从底部导航栏移入） -->
+                    <LinearLayout
+                        android:id="@+id/btn_rss"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/bg_quick_action"
+                        android:padding="8dp"
+                        android:layout_marginStart="4dp">
+
+                        <ImageView
+                            android:id="@+id/iv_rss"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:src="@drawable/ic_bottom_rss_feed"
+                            android:contentDescription="@string/rss"
+                            app:tint="?android:textColorPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_rss"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/rss"
+                            android:textSize="12sp"
+                            android:textColor="?android:textColorSecondary"
+                            android:layout_marginTop="4dp"
+                            android:singleLine="true" />
+
+                    </LinearLayout>
+
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>

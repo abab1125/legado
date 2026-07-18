@@ -6,11 +6,11 @@ import androidx.lifecycle.MutableLiveData
  * AI 工具状态广播总线。
  *
  * ToolRouter（全局 object）在工具执行时把状态投递到这里，
- * 写作页面板 / 编辑器观察对应 LiveData 即可，避免 ToolRouter 直接依赖 ViewModel。
+ * AiChatActivity 观察对应 LiveData 即可渲染灵犀式状态卡（读取章节 N 字 / 写入章节）。
  *
  * 用途：
- * - toolActivityLiveData：灵犀式状态卡（读取章节 N 字 / 写入章节 等）
- * - chapterUpdatedLiveData：章节正文被 Agent 改写后通知编辑器自动刷新（免保存标记）
+ * - toolActivityLiveData：工具活动状态（读取章节 N 字 / 写入章节 等）
+ * - chapterUpdatedLiveData：章节正文被 Agent 工具改写后发出的通知（值为 bookUrl）
  */
 object AiToolStatusBus {
 

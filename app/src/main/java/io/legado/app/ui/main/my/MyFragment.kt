@@ -29,6 +29,7 @@ import io.legado.app.ui.book.bookmark.AllBookmarkActivity
 import io.legado.app.ui.book.read.ai.AiChatActivity
 import io.legado.app.ui.main.my.ReadingSkillActivity
 import io.legado.app.ui.write.WriteDeskActivity
+import io.legado.app.ui.rss.source.manage.RssSourceActivity
 import io.legado.app.ui.book.source.manage.BookSourceActivity
 import io.legado.app.ui.book.toc.rule.TxtTocRuleActivity
 import io.legado.app.ui.browser.WebViewActivity
@@ -130,6 +131,11 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
         // 写作台
         binding.btnWriteDesk.setOnClickListener {
             startActivity<WriteDeskActivity>()
+        }
+
+        // 订阅（从底部导航栏移入"我的"页）
+        binding.btnRss.setOnClickListener {
+            startActivity<RssSourceActivity>()
         }
 
         // 阅读记录 - 打开内置浏览器

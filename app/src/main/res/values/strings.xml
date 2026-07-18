@@ -618,6 +618,7 @@
     <string name="change_icon_summary">Switch the software icon displayed on the desktop</string>
     <string name="help">Help</string>
     <string name="my">Me</string>
+    <string name="write_desk">写作台</string>
     <string name="reading">Read</string>
     <string name="battery_show">%d%%</string>
     <string name="timer_m">%d min</string>

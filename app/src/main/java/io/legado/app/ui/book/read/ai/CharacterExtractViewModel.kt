@@ -141,8 +141,13 @@ class CharacterExtractViewModel(application: android.app.Application) : BaseView
             val batchPrompt = buildChunkBatchPrompt(batch, rawSummaries.size + 1, chunks.size)
             appendLog("🤖 AI 分析第 ${batchStart + 1}-${batchStart + batch.size} 段")
             try {
-                val response = chatCompletion(batchPrompt)
-                rawSummaries.add(response)
+                val sb = StringBuilder()
+                val response = chatCompletionStreaming(batchPrompt) { delta ->
+                    sb.append(delta)
+                    // 边收边更新日志（显示实时生成内容）
+                    appendStreamingLog("📝 生成中：${sb.toString()}")
+                }
+                rawSummaries.add(sb.toString().ifBlank { response })
             } catch (e: Exception) {
                 rawSummaries.add("【批次 ${batchStart / batchSize + 1} 提取失败：${e.message}】")
             }
@@ -151,8 +156,13 @@ class CharacterExtractViewModel(application: android.app.Application) : BaseView
         // 3. 合并 + 提取角色
         appendLog("🔄 正在合并提取角色")
         val mergePrompt = buildMergePrompt(rawSummaries)
+        val mergedSb = StringBuilder()
         val mergedResponse = try {
-            chatCompletion(mergePrompt)
+            chatCompletionStreaming(mergePrompt) { delta ->
+                mergedSb.append(delta)
+                appendStreamingLog("📝 合并生成中：${mergedSb.toString()}")
+            }
+            mergedSb.toString()
         } catch (e: Exception) {
             throw Exception("合并提取失败：${e.message}")
         }
@@ -191,9 +201,79 @@ class CharacterExtractViewModel(application: android.app.Application) : BaseView
         } ?: throw Exception("JSON 解析失败")
     }
 
+    /**
+     * 流式版 chatCompletion：边收边 append 到日志，避免"等全部才显示"
+     */
+    private suspend fun chatCompletionStreaming(
+        userContent: String,
+        onDelta: (String) -> Unit
+    ): String = withContext(Dispatchers.IO) {
+        val apiKey = AiConfig.apiKey
+        val model = AiConfig.model
+        val url = AiConfig.normalizedChatUrl
+        val jsonBody = GSON.toJson(mapOf(
+            "model" to model,
+            "messages" to listOf(mapOf("role" to "user", "content" to userContent)),
+            "max_tokens" to 8192,
+            "temperature" to 0.7,
+            "stream" to true
+        ))
+        val request = Request.Builder()
+            .url(url)
+            .post(jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType()))
+            .addHeader("Authorization", "Bearer ${apiKey}")
+            .addHeader("Content-Type", "application/json")
+            .addHeader("Accept", "text/event-stream")
+            .build()
+        val response = okHttpClient.newCall(request).execute()
+        if (!response.isSuccessful) {
+            throw Exception("HTTP ${response.code}: ${response.body?.string() ?: ""}")
+        }
+        val source = response.body?.source() ?: throw Exception("响应为空")
+        val buffer = StringBuilder()
+        // 逐行读取 SSE：data: {json}
+        while (!source.exhausted()) {
+            val line = source.readUtf8Line() ?: continue
+            if (!line.startsWith("data:")) continue
+            val data = line.removePrefix("data:").trim()
+            if (data == "[DONE]") break
+            try {
+                val obj = GSON.fromJson(data, Map::class.java) ?: continue
+                @Suppress("UNCHECKED_CAST")
+                val choices = obj["choices"] as? List<Map<String, Any?>> ?: continue
+                val delta = (choices.firstOrNull()?.get("delta") as? Map<String, Any?>) ?: continue
+                val piece = delta["content"] as? String
+                if (!piece.isNullOrEmpty()) {
+                    buffer.append(piece)
+                    onDelta(piece)
+                }
+            } catch (_: Exception) {
+                // 跳过无法解析的行
+            }
+        }
+        buffer.toString().ifBlank { throw Exception("API 返回为空") }
+    }
+
     private fun appendLog(text: String) {
         val current = logLiveData.value ?: ""
         logLiveData.postValue(if (current.isEmpty()) text else "$current\n$text")
+    }
+
+    /**
+     * 流式日志：用同一行覆盖"生成中"状态，避免日志被刷屏
+     * 只要内容变化就更新最后一行（以 📝 开头视为流式行）
+     */
+    private fun appendStreamingLog(text: String) {
+        val current = logLiveData.value ?: ""
+        val lines = current.lines().toMutableList()
+        // 找到最后一个流式行（📝 开头）并替换，否则追加
+        val lastIdx = lines.indexOfLast { it.startsWith("📝") }
+        if (lastIdx >= 0) {
+            lines[lastIdx] = text
+        } else {
+            lines.add(text)
+        }
+        logLiveData.postValue(lines.joinToString("\n"))
     }
 
     // ===== 以下方法从 AiChatViewModel 复制 =====

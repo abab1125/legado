@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorBackground">
+    android:background="?attr/colorSurface">
 
     <!-- 顶栏：角色名 + 连接状态 -->
     <LinearLayout

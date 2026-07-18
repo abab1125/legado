@@ -138,7 +138,7 @@ object AiConfig {
     private const val KEY_LIYUAN_WS_URL = "liyuan_ws_url"
 
     var liyuanWsUrl: String
-        get() = appCtx.getPrefString(KEY_LIYUAN_WS_URL, "ws://101.37.119.146/liyuan/ws") ?: ""
+        get() = appCtx.getPrefString(KEY_LIYUAN_WS_URL, "ws://127.0.0.1:7620/ws") ?: ""
         set(value) {
             appCtx.putPrefString(KEY_LIYUAN_WS_URL, value)
         }

@@ -9,6 +9,7 @@ import io.legado.app.help.config.AiConfig
 import io.legado.app.ui.book.read.ai.liyuan.LiyuanWsClient.ConnectionState
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
+import io.legado.app.lib.dialogs.alert
 
 /**
  * 梨园对话主界面
@@ -97,6 +98,29 @@ class LiyuanChatActivity : BaseActivity<ActivityLiyuanChatBinding>() {
 
         // 连接
         viewModel.connect(wsUrl)
+
+        // 设置按钮 → 弹出 WS 地址修改
+        binding.btnSettings.setOnClickListener {
+            val currentUrl = AiConfig.liyuanWsUrl
+            val input = android.widget.EditText(this).apply {
+                setText(currentUrl)
+                selectAll()
+                setSingleLine()
+            }
+            alert("梨园服务器地址") {
+                customView { input }
+                okButton {
+                    val newUrl = input.text.toString().trim()
+                    if (newUrl.isNotBlank() && newUrl != currentUrl) {
+                        AiConfig.liyuanWsUrl = newUrl
+                        viewModel.disconnect()
+                        viewModel.connect(newUrl)
+                        toastOnUi("已更新服务器地址")
+                    }
+                }
+                cancelButton { }
+            }
+        }
     }
 
     override fun onDestroy() {

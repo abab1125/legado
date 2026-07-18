@@ -75,7 +75,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         private fun chapterContentKey(bookUrl: String, chapterIndex: Int, version: Any?): String =
             "$bookUrl#$chapterIndex#${version ?: ""}"
 
-        /** system 前缀缓存 key：稳定前缀只包含书籍元数据，随章节数/记忆/工具开关变化 */
+        /** system 前缀缓存 key：稳定前缀只包含书籍元数据，随章节数变化 */
         private fun systemPrefixKey(bookUrl: String?, chapterSize: Int): String =
             "$bookUrl#$chapterSize"
 
@@ -408,20 +408,26 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         }
 
         synchronized(_messages) {
-            // 易变上下文（章节正文/想法/引用）注入 user 消息尾部，不进 system 前缀
-            val contextBlock = buildContextBlock(start, end, references)
-            val fullUserText = if (contextBlock != null) {
-                "$userText\n$contextBlock"
-            } else {
-                userText
-            }
-            _messages.add(ChatMessage(role = "user", content = fullUserText, references = references))
+            _messages.add(ChatMessage(role = "user", content = userText, references = references))
         }
         syncCache()
         messagesLiveData.postValue(_messages.toList())
 
         execute {
             try {
+                // 易变上下文（章节正文/想法/引用）注入 user 消息尾部，不进 system 前缀。
+                // 必须在协程内调用（buildContextBlock 是 suspend，且读 DB/文件）。
+                val contextBlock = buildContextBlock(start, end, references)
+                if (contextBlock != null) {
+                    synchronized(_messages) {
+                        val idx = _messages.indexOfLast { it.role == "user" }
+                        if (idx >= 0) {
+                            val m = _messages[idx]
+                            _messages[idx] = m.copy(content = "${m.content}\n$contextBlock")
+                        }
+                    }
+                }
+
                 val stablePrefix = buildStablePrefix()
                 synchronized(_messages) {
                     if (_messages.isNotEmpty() && _messages.first().role == "system") {

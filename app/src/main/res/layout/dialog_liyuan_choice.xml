@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="20dp"
-    android:background="@android:color/white">
+    android:background="?attr/colorSurface">
 
     <TextView
         android:id="@+id/tvQuestion"

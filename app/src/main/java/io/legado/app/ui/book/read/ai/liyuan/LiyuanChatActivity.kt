@@ -2,6 +2,7 @@ package io.legado.app.ui.book.read.ai.liyuan
 
 import android.os.Bundle
 import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.LinearLayoutManager
 import io.legado.app.base.BaseActivity
 import io.legado.app.databinding.ActivityLiyuanChatBinding
 import io.legado.app.help.config.AiConfig
@@ -33,6 +34,7 @@ class LiyuanChatActivity : BaseActivity<ActivityLiyuanChatBinding>() {
 
         // 初始化适配器
         adapter = LiyuanChatAdapter()
+        binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
 
         // === 绑定 LiveData ===
@@ -120,15 +122,15 @@ class LiyuanChatActivity : BaseActivity<ActivityLiyuanChatBinding>() {
     }
 
     private fun showChoiceDialog(choice: LiyuanWsClient.ChoiceFrame) {
-        val dialog = LiyuanChoiceDialog(
-            choiceId = choice.id,
+        val dialog = LiyuanChoiceDialog.newInstance(
+            id = choice.id,
             question = choice.question,
             options = choice.options,
-            placeholder = choice.placeholder,
-            onReply = { value, stop ->
-                viewModel.wsClient.choiceReply(choice.id, value, stop)
-            }
+            placeholder = choice.placeholder
         )
+        dialog.onReply = { value, stop ->
+            viewModel.wsClient.choiceReply(choice.id, value, stop)
+        }
         dialog.show(supportFragmentManager, "liyuan_choice")
     }
 }

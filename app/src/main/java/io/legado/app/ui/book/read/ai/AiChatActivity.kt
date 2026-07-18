@@ -28,6 +28,7 @@ import io.legado.app.model.ReadBook
 import io.legado.app.ui.book.read.config.AiConfigDialog
 import io.legado.app.ui.book.read.ai.liyuan.LiyuanChatActivity
 import io.legado.app.utils.showDialogFragment
+import android.content.Intent
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import io.legado.app.lib.theme.backgroundColor

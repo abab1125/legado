@@ -51,6 +51,11 @@ class CharacterExtractViewModel(application: android.app.Application) : BaseView
 
     private var extractedRoles: List<CharacterExtractResult> = emptyList()
 
+    /** 由 UI 层传入编辑后的结果，覆盖提取的原始结果 */
+    fun setEditedResults(results: List<CharacterExtractResult>) {
+        extractedRoles = results
+    }
+
     /**
      * 开始提取角色
      */

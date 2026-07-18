@@ -1,15 +1,18 @@
 package io.legado.app.ui.book.read.ai
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.lifecycle.Observer
-import com.google.android.material.appbar.MaterialToolbar
-import io.legado.app.R
 import io.legado.app.base.BaseActivity
 import io.legado.app.databinding.ActivityCharacterExtractBinding
+import io.legado.app.lib.theme.primaryTextColor
+import io.legado.app.lib.theme.bottomBackground
 import io.legado.app.ui.book.read.ai.CharacterExtractViewModel.CharacterExtractResult
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
@@ -17,13 +20,14 @@ import io.legado.app.utils.viewbindingdelegate.viewBinding
 /**
  * 角色提取页面
  *
- * 流程：勾选章节后跳转至此页 → 流式显示提取日志 → 提取完成展示结果
- * → 用户看完全部角色后点击「保存角色」才写入知识库
+ * 流程：勾选章节后跳转至此页 → 流式显示提取日志 → 提取完成展示可编辑的角色卡
+ * → 用户编辑满意后点击「保存角色」才写入知识库
  */
 class CharacterExtractActivity : BaseActivity<ActivityCharacterExtractBinding>() {
 
     override val binding by viewBinding(ActivityCharacterExtractBinding::inflate)
     private val viewModel by viewModels<CharacterExtractViewModel>()
+    private val editableRoles = mutableListOf<CharacterExtractResult>()
 
     companion object {
         const val EXTRA_BOOK_URL = "bookUrl"
@@ -50,121 +54,139 @@ class CharacterExtractActivity : BaseActivity<ActivityCharacterExtractBinding>()
         // 绑定 LiveData
         viewModel.logLiveData.observe(this, Observer { log ->
             binding.tvLog.text = log
-            // 自动滚到底
-            binding.tvLog.post { binding.tvLog.scrollTo(0, binding.tvLog.lineHeight * (binding.tvLog.lineCount - 1)) }
-        })
-
-        viewModel.resultsLiveData.observe(this, Observer { results ->
-            if (results.isNotEmpty()) {
-                showResults(results)
-            }
-        })
-
-        viewModel.isLoadingLiveData.observe(this, Observer { loading ->
-            if (!loading && viewModel.isDoneLiveData.value != true) {
-                // 提取完成但没结果的 case 已在 errorLiveData 处理
-            }
+            binding.svLog.post { binding.svLog.fullScroll(View.FOCUS_DOWN) }
         })
 
         viewModel.errorLiveData.observe(this, Observer { error ->
             if (error != null) {
-                appendLog("❌ $error")
+                val current = binding.tvLog.text?.toString() ?: ""
+                binding.tvLog.text = if (current.isEmpty()) "❌ $error" else "$current\n❌ $error"
                 toastOnUi(error)
             }
         })
 
         viewModel.isDoneLiveData.observe(this, Observer { done ->
-            binding.btnSave.isEnabled = done && (viewModel.resultsLiveData.value?.isNotEmpty() == true)
+            if (done) {
+                val results = viewModel.resultsLiveData.value
+                if (results.isNullOrEmpty()) {
+                    toastOnUi("未提取到角色，请扩大章节范围")
+                    finish()
+                    return@Observer
+                }
+                showEditor(results)
+            }
         })
 
         // 保存按钮
         binding.btnSave.setOnClickListener {
+            collectEdits()
             viewModel.saveResults(bookName)
-            toastOnUi("已保存 ${viewModel.resultsLiveData.value?.size ?: 0} 个角色到知识库")
+            toastOnUi("已保存 ${editableRoles.size} 个角色到知识库")
             finish()
         }
 
         // 开始提取
-        appendLog("📖 开始提取角色...")
         viewModel.startExtract(bookUrl, bookName, chapters)
     }
 
-    private fun showResults(results: List<CharacterExtractResult>) {
-        binding.tvLog.visibility = View.GONE
-        binding.rvResults.visibility = View.VISIBLE
+    private fun showEditor(results: List<CharacterExtractResult>) {
+        // 切到编辑视图
+        binding.svLog.visibility = View.GONE
+        binding.svEdit.visibility = View.VISIBLE
+        binding.btnSave.isEnabled = true
 
         val dp = resources.displayMetrics.density
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding((8 * dp).toInt(), 0, (8 * dp).toInt(), 0)
-        }
+        editableRoles.clear()
+        editableRoles.addAll(results)
+
+        binding.layoutEditor.removeAllViews()
 
         for ((i, role) in results.withIndex()) {
-            val card = LinearLayout(this).apply {
+            val section = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding((12 * dp).toInt(), (12 * dp).toInt(), (12 * dp).toInt(), (12 * dp).toInt())
-                setBackgroundResource(io.legado.app.R.drawable.bg_card_white)
+                setBackgroundColor(bottomBackground)
                 val lp = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
-                lp.setMargins(0, 0, 0, (8 * dp).toInt())
+                lp.setMargins(0, 0, 0, (12 * dp).toInt())
                 layoutParams = lp
             }
 
-            card.addView(TextView(this).apply {
-                text = "${i + 1}. ${role.name}"
+            // 角色标题 + 删除按钮
+            val header = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+            }
+            header.addView(TextView(this).apply {
+                text = "角色 ${i + 1}"
                 textSize = 16f
-                setTextColor(io.legado.app.lib.theme.primaryTextColor)
+                setTextColor(primaryTextColor)
                 setPadding(0, 0, 0, (4 * dp).toInt())
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             })
 
-            if (role.description.isNotBlank()) {
-                card.addView(makeField("简介", role.description, dp))
-            }
-            if (role.personality.isNotBlank()) {
-                card.addView(makeField("性格", role.personality, dp))
-            }
-            if (role.background.isNotBlank()) {
-                card.addView(makeField("背景", role.background, dp))
-            }
-            if (role.speakingStyle.isNotBlank()) {
-                card.addView(makeField("说话风格", role.speakingStyle, dp))
-            }
+            section.addView(header)
 
-            container.addView(card)
-        }
+            // 每个字段
+            section.addView(makeEditField("角色名", role.name, dp) { name ->
+                editableRoles[i] = editableRoles[i].copy(name = name)
+            })
+            section.addView(makeEditField("简介", role.description, dp) { desc ->
+                editableRoles[i] = editableRoles[i].copy(description = desc)
+            })
+            section.addView(makeEditField("性格", role.personality, dp) { v ->
+                editableRoles[i] = editableRoles[i].copy(personality = v)
+            })
+            section.addView(makeEditField("背景", role.background, dp) { v ->
+                editableRoles[i] = editableRoles[i].copy(background = v)
+            })
+            section.addView(makeEditField("说话风格", role.speakingStyle, dp) { v ->
+                editableRoles[i] = editableRoles[i].copy(speakingStyle = v)
+            })
 
-        binding.rvResults.adapter = object : androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
-            override fun getItemCount() = 1
-            override fun onCreateViewHolder(p: ViewGroup, t: Int) =
-                object : androidx.recyclerview.widget.RecyclerView.ViewHolder(container) {}
-            override fun onBindViewHolder(h: androidx.recyclerview.widget.RecyclerView.ViewHolder, p: Int) {}
+            binding.layoutEditor.addView(section)
         }
     }
 
-    private fun makeField(label: String, value: String, dp: Float): View {
-        return LinearLayout(this).apply {
+    private fun makeEditField(label: String, value: String, dp: Float, onEdit: (String) -> Unit): View {
+        val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(0, (4 * dp).toInt(), 0, 0)
+            setPadding(0, (6 * dp).toInt(), 0, 0)
+        }
 
-            addView(TextView(context).apply {
-                text = "$label："
-                textSize = 13f
-                setTextColor(io.legado.app.lib.theme.secondaryText)
-            })
+        container.addView(TextView(this).apply {
+            text = label
+            textSize = 13f
+            setTextColor(io.legado.app.lib.theme.secondaryText)
+        })
 
-            addView(TextView(context).apply {
-                text = value
-                textSize = 14f
-                setTextColor(io.legado.app.lib.theme.primaryTextColor)
-                setPadding(0, (2 * dp).toInt(), 0, 0)
+        val editText = EditText(this).apply {
+            setText(value)
+            textSize = 14f
+            setTextColor(primaryTextColor)
+            setPadding(0, (2 * dp).toInt(), 0, 0)
+            @Suppress("DEPRECATION")
+            setBackgroundResource(io.legado.app.R.drawable.bg_edit)
+            setPadding((6 * dp).toInt(), (4 * dp).toInt(), (6 * dp).toInt(), (4 * dp).toInt())
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also { it.setMargins(0, (2 * dp).toInt(), 0, 0) }
+
+            addTextChangedListener(object : TextWatcher {
+                override fun afterTextChanged(s: Editable?) { onEdit(s?.toString() ?: "") }
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             })
         }
+
+        container.addView(editText)
+        return container
     }
 
-    private fun appendLog(text: String) {
-        val current = viewModel.logLiveData.value ?: ""
-        viewModel.logLiveData.postValue(if (current.isEmpty()) text else "$current\n$text")
+    private fun collectEdits() {
+        // 编辑已经通过 TextWatcher 实时同步到 editableRoles
+        viewModel.setEditedResults(editableRoles)
     }
 }

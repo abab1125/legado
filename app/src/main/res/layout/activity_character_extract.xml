@@ -15,26 +15,37 @@
         app:title="提取角色"
         app:titleTextColor="?android:attr/textColorPrimary" />
 
-    <!-- 日志/进度文本 -->
-    <TextView
-        android:id="@+id/tvLog"
+    <!-- 日志/进度文本（提取过程中显示） -->
+    <ScrollView
+        android:id="@+id/svLog"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:textSize="13sp"
-        android:lineSpacingExtra="4dp"
-        android:padding="12dp"
-        android:scrollbars="vertical"
-        android:typeface="monospace" />
+        android:layout_height="match_parent"
+        android:visibility="visible">
+        <TextView
+            android:id="@+id/tvLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:lineSpacingExtra="4dp"
+            android:padding="12dp"
+            android:typeface="monospace" />
+    </ScrollView>
 
-    <!-- 提取结果区域 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvResults"
+    <!-- 编辑区域（提取完成后显示） -->
+    <ScrollView
+        android:id="@+id/svEdit"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:visibility="gone"
-        android:padding="8dp" />
+        android:padding="8dp">
+
+        <LinearLayout
+            android:id="@+id/layoutEditor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
 
     <!-- 底部按钮 -->
     <LinearLayout

@@ -640,14 +640,13 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 dialog?.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.isEnabled = false
 
                 // 跳转到角色提取页面（流式输出 + 用户确认后保存）
-                val ctx = this@AiChatActivity
-                val intent = Intent(ctx, CharacterExtractActivity::class.java)
-                intent.putExtra(CharacterExtractActivity.EXTRA_BOOK_URL, bookUrl)
-                intent.putExtra(CharacterExtractActivity.EXTRA_BOOK_NAME, bookName)
+                val i = android.content.Intent(this@AiChatActivity, CharacterExtractActivity::class.java)
+                i.putExtra(CharacterExtractActivity.EXTRA_BOOK_URL, bookUrl)
+                i.putExtra(CharacterExtractActivity.EXTRA_BOOK_NAME, bookName)
                 val chapterArr = IntArray(selected.size) { selected[it] }
-                intent.putExtra(CharacterExtractActivity.EXTRA_CHAPTERS, chapterArr)
+                i.putExtra(CharacterExtractActivity.EXTRA_CHAPTERS, chapterArr)
                 dialog?.dismiss()
-                startActivity(intent)
+                this@AiChatActivity.startActivity(i)
             }
             noButton()
         }

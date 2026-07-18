@@ -12,6 +12,7 @@ import androidx.lifecycle.Observer
 import io.legado.app.base.BaseActivity
 import io.legado.app.databinding.ActivityCharacterExtractBinding
 import io.legado.app.lib.theme.primaryTextColor
+import io.legado.app.lib.theme.secondaryTextColor
 import io.legado.app.lib.theme.bottomBackground
 import io.legado.app.ui.book.read.ai.CharacterExtractViewModel.CharacterExtractResult
 import io.legado.app.utils.toastOnUi
@@ -158,7 +159,7 @@ class CharacterExtractActivity : BaseActivity<ActivityCharacterExtractBinding>()
         container.addView(TextView(this).apply {
             text = label
             textSize = 13f
-            setTextColor(io.legado.app.lib.theme.secondaryTextColor)
+            setTextColor(secondaryTextColor)
         })
 
         val editText = EditText(this).apply {

@@ -26,6 +26,7 @@ import io.legado.app.lib.dialogs.alert
 import io.legado.app.databinding.ActivityAiChatBinding
 import io.legado.app.model.ReadBook
 import io.legado.app.ui.book.read.config.AiConfigDialog
+import io.legado.app.ui.book.read.ai.liyuan.LiyuanChatActivity
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
@@ -503,7 +504,7 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 return true
             }
             R.id.menu_liyuan_rp -> {
-                val intent = android.content.Intent(this, LiyuanChatActivity::class.java)
+                val intent = Intent(this, LiyuanChatActivity::class.java)
                 startActivity(intent)
                 return true
             }

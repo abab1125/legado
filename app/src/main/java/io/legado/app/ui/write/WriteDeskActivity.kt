@@ -25,6 +25,7 @@ import io.legado.app.utils.applyTint
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import io.legado.app.ui.write.PromptManageDialog
+import io.legado.app.ui.book.read.ai.liyuan.LiyuanChatActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,7 +71,7 @@ class WriteDeskActivity :
                     true
                 }
                 "梨园 RP" -> {
-                    val intent = android.content.Intent(this, LiyuanChatActivity::class.java)
+                    val intent = Intent(this, LiyuanChatActivity::class.java)
                     startActivity(intent)
                     true
                 }

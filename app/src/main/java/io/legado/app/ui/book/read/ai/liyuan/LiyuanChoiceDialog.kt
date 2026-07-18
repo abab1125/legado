@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import io.legado.app.base.BaseDialogFragment
 import io.legado.app.databinding.DialogLiyuanChoiceBinding
+import io.legado.app.R
 import io.legado.app.utils.GSON
 
 /**

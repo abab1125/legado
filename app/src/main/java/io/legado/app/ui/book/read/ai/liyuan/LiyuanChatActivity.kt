@@ -8,6 +8,7 @@ import io.legado.app.databinding.ActivityLiyuanChatBinding
 import io.legado.app.help.config.AiConfig
 import io.legado.app.ui.book.read.ai.liyuan.LiyuanWsClient.ConnectionState
 import io.legado.app.utils.toastOnUi
+import io.legado.app.utils.viewbindingdelegate.viewBinding
 
 /**
  * 梨园对话主界面
@@ -20,12 +21,9 @@ import io.legado.app.utils.toastOnUi
  */
 class LiyuanChatActivity : BaseActivity<ActivityLiyuanChatBinding>() {
 
+    override val binding by viewBinding(ActivityLiyuanChatBinding::inflate)
     private lateinit var viewModel: LiyuanChatViewModel
     private lateinit var adapter: LiyuanChatAdapter
-
-    override fun getViewBinding(): ActivityLiyuanChatBinding {
-        return ActivityLiyuanChatBinding.inflate(layoutInflater)
-    }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         viewModel = LiyuanChatViewModel(application)

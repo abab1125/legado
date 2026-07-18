@@ -45,4 +45,8 @@
     <dimen name="md3_padding_small">8dp</dimen>
     <dimen name="md3_padding_medium">16dp</dimen>
     <dimen name="md3_padding_large">24dp</dimen>
+
+    <!-- 梨园 Liyuan 聊天 -->
+    <dimen name="msg_margin_user">60dp</dimen>
+    <dimen name="msg_margin_char">60dp</dimen>
 </resources>

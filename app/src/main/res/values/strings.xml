@@ -1497,4 +1497,8 @@
     <string name="style_center">居中</string>
     <string name="style_custom_color">Custom Color</string>
     <string name="highlight_mode_hint">在替换为中使用HTML标签设置样式，如 &lt;span style=\"color:red\"&gt;$1&lt;/span&gt;</string>
+
+    <!-- 梨园 Liyuan RP -->
+    <string name="liyuan_send">发送</string>
+    <string name="liyuan_skip">跳过</string>
 </resources>

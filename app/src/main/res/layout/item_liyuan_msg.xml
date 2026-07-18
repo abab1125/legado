@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingVertical="4dp"
+    android:paddingHorizontal="8dp">
+
+    <!-- 角色名 -->
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:paddingHorizontal="4dp"
+        android:paddingBottom="2dp" />
+
+    <!-- 消息气泡 -->
+    <TextView
+        android:id="@+id/tvContent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="80%"
+        android:padding="12dp"
+        android:textSize="15sp"
+        android:lineSpacingExtra="4dp"
+        android:background="@drawable/bg_msg_user" />
+</LinearLayout>

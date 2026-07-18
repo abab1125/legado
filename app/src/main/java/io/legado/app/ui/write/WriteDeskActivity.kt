@@ -60,10 +60,18 @@ class WriteDeskActivity :
         binding.titleBar.menu.add("提示词库").apply {
             setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS)
         }
+        binding.titleBar.menu.add("梨园 RP").apply {
+            setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS)
+        }
         binding.titleBar.toolbar.setOnMenuItemClickListener { item ->
             when (item.title.toString()) {
                 "提示词库" -> {
                     PromptManageDialog.newInstance().show(supportFragmentManager, "prompt")
+                    true
+                }
+                "梨园 RP" -> {
+                    val intent = android.content.Intent(this, LiyuanChatActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 else -> false

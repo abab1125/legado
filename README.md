@@ -32,6 +32,13 @@
 - **阅读器互动按钮**：阅读页一键唤起 AI 操作
 - **提示词选择器**：AI 配置页双 Tab 设计，快速切换写作/通用模式
 
+### 🎭 梨园 RP 集成（新增）
+- **梨园 AI 角色扮演引擎**：通过 WebSocket 接入 Liyuan（梨园）后端，实现双 agent 驱动的角色扮演
+- **wire 协议对话**：流式文本、思维链展示、Agent 状态面板
+- **决策卡系统**：AI 驱动剧情到关键节点时，停笔让用户选择剧情走向
+- **后台能力**：双 agent 分治、四层记忆架构、世界线存档/回档/分支
+- 详见 [LiyuanNative 方案文档](/LiyuanNative-方案.md)
+
 ### 📖 完整阅读功能（继承自 Legado）
 - 自定义书源、TTS 朗读、WebDAV 备份
 - 多格式支持（txt/epub/pdf/漫画）
@@ -59,6 +66,8 @@ CI 触发机制：`push` 到 `main` 分支自动构建并发布 Release。
 简单说：你可以随便用、改、分发，但改完也得开源，而且必须保留原版权声明。别想着闭源卖钱，法律不允许，良心也不允许（如果你有的话）。
 
 基于 [gedoor/legado](https://github.com/gedoor/legado) → [Luoyacheng/legado](https://github.com/luoyacheng/legado) → [Jingshiro/legado](https://github.com/Jingshiro/legado) 继承而来。
+
+**梨园 RP 引擎**：本项目在改版中集成了 [weidu12123/Liyuan](https://github.com/weidu12123/Liyuan)（梨园）的 AI 角色扮演后端引擎，通过 Wire 协议通信实现双 Agent 驱动的 RP 对话。特此声明致谢。Liyuan 项目基于 [PolyForm-Noncommercial-1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/) 许可。
 
 ---
 

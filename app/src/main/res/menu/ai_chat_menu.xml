@@ -21,4 +21,9 @@
         android:icon="@drawable/ic_settings"
         android:title="设置"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_liyuan_rp"
+        android:icon="@drawable/ic_author"
+        android:title="梨园 RP"
+        app:showAsAction="ifRoom" />
 </menu>

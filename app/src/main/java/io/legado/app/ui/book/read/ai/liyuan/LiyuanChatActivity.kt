@@ -1,0 +1,134 @@
+package io.legado.app.ui.book.read.ai.liyuan
+
+import android.os.Bundle
+import androidx.lifecycle.Observer
+import io.legado.app.base.BaseActivity
+import io.legado.app.databinding.ActivityLiyuanChatBinding
+import io.legado.app.help.config.AiConfig
+import io.legado.app.ui.book.read.ai.liyuan.LiyuanWsClient.ConnectionState
+import io.legado.app.utils.toastOnUi
+
+/**
+ * 梨园对话主界面
+ *
+ * 与梨园后端通过 WebSocket wire 协议通信，实现 AI 角色扮演对话。
+ *
+ * 生命周期：
+ *   1. onActivityCreated → 初始化 wsClient、绑定 LiveData、连接
+ *   2. onDestroy → 断开连接
+ */
+class LiyuanChatActivity : BaseActivity<ActivityLiyuanChatBinding>() {
+
+    private lateinit var viewModel: LiyuanChatViewModel
+    private lateinit var adapter: LiyuanChatAdapter
+
+    override fun getViewBinding(): ActivityLiyuanChatBinding {
+        return ActivityLiyuanChatBinding.inflate(layoutInflater)
+    }
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        viewModel = LiyuanChatViewModel(application)
+        val wsClient = viewModel.wsClient
+        val wsUrl = AiConfig.liyuanWsUrl
+
+        // 初始化适配器
+        adapter = LiyuanChatAdapter()
+        binding.recyclerView.adapter = adapter
+
+        // === 绑定 LiveData ===
+
+        // 消息列表变化 → 刷新 RecyclerView
+        wsClient.messagesLiveData.observe(this, Observer { messages ->
+            adapter.submitList(messages)
+            if (messages.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(messages.size - 1)
+            }
+            // 如果有完整消息到达，清空 delta
+            viewModel.onMessageReceived()
+        })
+
+        // 连接状态变化
+        wsClient.connectionStateLiveData.observe(this, Observer { state ->
+            updateConnectionIndicator(state)
+        })
+
+        // 流式增量文本 → 追加到当前气泡
+        wsClient.streamingDeltaLiveData.observe(this, Observer { delta ->
+            viewModel.onDelta(delta)
+            adapter.appendDelta(viewModel.displayDeltaLiveData.value ?: "")
+            val count = adapter.itemCount
+            if (count > 0) binding.recyclerView.smoothScrollToPosition(count - 1)
+        })
+
+        // 决策卡弹窗
+        wsClient.pendingChoiceLiveData.observe(this, Observer { choice ->
+            if (choice != null) {
+                showChoiceDialog(choice)
+            } else {
+                supportFragmentManager.fragments
+                    .filterIsInstance<LiyuanChoiceDialog>()
+                    .forEach { it.dismiss() }
+            }
+        })
+
+        // 流式状态 → 切换按钮
+        wsClient.isStreamingLiveData.observe(this, Observer { streaming ->
+            binding.btnSend.isEnabled = !streaming
+            binding.btnStop.isEnabled = streaming
+        })
+
+        // 错误/通知消息
+        wsClient.errorLiveData.observe(this, Observer { error ->
+            if (error != null) toastOnUi(error)
+        })
+
+        // === 按钮事件 ===
+
+        binding.btnSend.setOnClickListener {
+            val text = binding.etInput.text?.toString()?.trim() ?: return@setOnClickListener
+            if (text.isBlank()) return@setOnClickListener
+            wsClient.sendPrompt(text)
+            binding.etInput.text?.clear()
+        }
+
+        binding.btnStop.setOnClickListener {
+            wsClient.abort()
+        }
+
+        // 连接
+        viewModel.connect(wsUrl)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.disconnect()
+    }
+
+    private fun updateConnectionIndicator(state: ConnectionState) {
+        val text = when (state) {
+            ConnectionState.CONNECTED -> "已连接"
+            ConnectionState.CONNECTING -> "连接中…"
+            ConnectionState.DISCONNECTED -> "未连接"
+        }
+        binding.tvConnectionStatus.text = text
+        val color = when (state) {
+            ConnectionState.CONNECTED -> 0xFF4CAF50.toInt()
+            ConnectionState.CONNECTING -> 0xFFFF9800.toInt()
+            ConnectionState.DISCONNECTED -> 0xFF888888.toInt()
+        }
+        binding.tvConnectionStatus.setTextColor(color)
+    }
+
+    private fun showChoiceDialog(choice: LiyuanWsClient.ChoiceFrame) {
+        val dialog = LiyuanChoiceDialog(
+            choiceId = choice.id,
+            question = choice.question,
+            options = choice.options,
+            placeholder = choice.placeholder,
+            onReply = { value, stop ->
+                viewModel.wsClient.choiceReply(choice.id, value, stop)
+            }
+        )
+        dialog.show(supportFragmentManager, "liyuan_choice")
+    }
+}

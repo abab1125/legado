@@ -502,6 +502,11 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 showExtractCharacterDialog()
                 return true
             }
+            R.id.menu_liyuan_rp -> {
+                val intent = android.content.Intent(this, LiyuanChatActivity::class.java)
+                startActivity(intent)
+                return true
+            }
         }
         return super.onCompatOptionsItemSelected(item)
     }

@@ -5,44 +5,13 @@
     android:orientation="vertical"
     android:background="?attr/colorSurface">
 
-    <!-- 顶栏：角色名 + 连接状态 -->
-    <LinearLayout
+    <!-- 顶栏：角色名 + 连接状态（复用 legado 标准 TitleBar，自动避让状态栏） -->
+    <io.legado.app.ui.widget.TitleBar
+        android:id="@+id/title_bar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:gravity="center_vertical"
-        android:background="?attr/colorSurface">
-
-        <TextView
-            android:id="@+id/tvCharName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="梨园"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvConnectionStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="未连接"
-            android:textSize="12sp"
-            android:textColor="#888888"
-            android:layout_marginEnd="8dp" />
-
-        <TextView
-            android:id="@+id/btnSettings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="⚙"
-            android:textSize="18sp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="4dp" />
-    </LinearLayout>
+        android:layout_height="wrap_content"
+        app:title="梨园"
+        app:subtitle="未连接" />
 
     <View
         android:layout_width="match_parent"

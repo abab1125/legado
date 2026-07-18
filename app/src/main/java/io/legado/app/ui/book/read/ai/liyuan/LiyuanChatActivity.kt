@@ -1,6 +1,8 @@
 package io.legado.app.ui.book.read.ai.liyuan
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.legado.app.base.BaseActivity
@@ -98,29 +100,39 @@ class LiyuanChatActivity : BaseActivity<ActivityLiyuanChatBinding>() {
 
         // 连接
         viewModel.connect(wsUrl)
+    }
 
-        // 设置按钮 → 弹出 WS 地址修改
-        binding.btnSettings.setOnClickListener {
-            val currentUrl = AiConfig.liyuanWsUrl
-            val input = android.widget.EditText(this).apply {
-                setText(currentUrl)
-                selectAll()
-                setSingleLine()
-            }
-            alert("梨园服务器地址") {
-                customView { input }
-                okButton {
-                    val newUrl = input.text.toString().trim()
-                    if (newUrl.isNotBlank() && newUrl != currentUrl) {
-                        AiConfig.liyuanWsUrl = newUrl
-                        viewModel.disconnect()
-                        viewModel.connect(newUrl)
-                        toastOnUi("已更新服务器地址")
-                    }
+    override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_liyuan_chat, menu)
+        return super.onCompatCreateOptionsMenu(menu)
+    }
+
+    override fun onCompatOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.menu_liyuan_settings -> {
+                val currentUrl = AiConfig.liyuanWsUrl
+                val input = android.widget.EditText(this).apply {
+                    setText(currentUrl)
+                    selectAll()
+                    setSingleLine()
                 }
-                cancelButton { }
+                alert("梨园服务器地址") {
+                    customView { input }
+                    okButton {
+                        val newUrl = input.text.toString().trim()
+                        if (newUrl.isNotBlank() && newUrl != currentUrl) {
+                            AiConfig.liyuanWsUrl = newUrl
+                            viewModel.disconnect()
+                            viewModel.connect(newUrl)
+                            toastOnUi("已更新服务器地址")
+                        }
+                    }
+                    cancelButton { }
+                }
             }
+            else -> return super.onCompatOptionsItemSelected(item)
         }
+        return true
     }
 
     override fun onDestroy() {
@@ -134,13 +146,7 @@ class LiyuanChatActivity : BaseActivity<ActivityLiyuanChatBinding>() {
             ConnectionState.CONNECTING -> "连接中…"
             ConnectionState.DISCONNECTED -> "未连接"
         }
-        binding.tvConnectionStatus.text = text
-        val color = when (state) {
-            ConnectionState.CONNECTED -> 0xFF4CAF50.toInt()
-            ConnectionState.CONNECTING -> 0xFFFF9800.toInt()
-            ConnectionState.DISCONNECTED -> 0xFF888888.toInt()
-        }
-        binding.tvConnectionStatus.setTextColor(color)
+        binding.titleBar.subtitle = text
     }
 
     private fun showChoiceDialog(choice: LiyuanWsClient.ChoiceFrame) {

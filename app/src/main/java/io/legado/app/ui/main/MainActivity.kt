@@ -4,6 +4,7 @@ package io.legado.app.ui.main
 
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
+import android.content.Intent
 import android.text.format.DateUtils
 import android.view.MenuItem
 import android.view.ViewGroup
@@ -171,7 +172,7 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
 
             R.id.menu_write_desk -> {
                 // 写作台：跳转入口，不占 ViewPager 分页
-                this@MainActivity.startActivity<WriteDeskActivity>()
+                startActivity(Intent(this@MainActivity, WriteDeskActivity::class.java))
             }
 
             R.id.menu_my_config ->

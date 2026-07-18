@@ -158,7 +158,7 @@ class CharacterExtractActivity : BaseActivity<ActivityCharacterExtractBinding>()
         container.addView(TextView(this).apply {
             text = label
             textSize = 13f
-            setTextColor(io.legado.app.lib.theme.secondaryText)
+            setTextColor(io.legado.app.lib.theme.secondaryTextColor)
         })
 
         val editText = EditText(this).apply {

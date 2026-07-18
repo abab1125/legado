@@ -904,6 +904,21 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             .readTimeout(120, TimeUnit.SECONDS)
             .build()
 
+        // 流式 tool_calls 字段去重拼接：部分 API 会在多个 delta 重复发送完整的
+        // name/id（如 "get_book_content" 发两遍），无脑 append 会拼成
+        // "get_book_contentget_book_content"，导致工具名匹配失败。
+        // 检测与已累积内容的最长后缀重叠，仅 append 新增部分。
+        fun appendDedup(builder: StringBuilder, chunk: String) {
+            val cur = builder.toString()
+            if (cur.endsWith(chunk)) return
+            val maxOverlap = if (cur.length < chunk.length) cur.length else chunk.length
+            var overlap = 0
+            for (k in 1..maxOverlap) {
+                if (cur.takeLast(k) == chunk.take(k)) overlap = k
+            }
+            builder.append(chunk.substring(overlap))
+        }
+
         val accumulated = StringBuilder()
         val accumulatedReasoning = StringBuilder()
 
@@ -962,8 +977,8 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                                     val func = tc["function"] as? Map<*, *>
                                     val fname = func?.get("name") as? String
                                     val fargs = func?.get("arguments") as? String
-                                    if (tid != null) current.id.append(tid)
-                                    if (fname != null) current.functionName.append(fname)
+                                    if (tid != null) appendDedup(current.id, tid)
+                                    if (fname != null) appendDedup(current.functionName, fname)
                                     if (fargs != null) current.arguments.append(fargs)
                                 }
                             }

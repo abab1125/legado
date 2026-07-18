@@ -275,6 +275,6 @@
             </LinearLayout>
 
         </LinearLayout>
-    </com.google.material.card.MaterialCardView>
+    </com.google.android.material.card.MaterialCardView>
 
 </LinearLayout>

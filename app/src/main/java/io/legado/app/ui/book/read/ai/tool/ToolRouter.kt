@@ -950,6 +950,8 @@ object ToolRouter {
                     BookHelp.saveText(book, chapter, newContent)
                 }
             }
+            // 正文已变更 → 失效 legado 客户端章节正文缓存，下次读最新
+            io.legado.app.ui.book.read.ai.AiChatViewModel.invalidateCacheForBook(bookUrl)
             // 通知编辑器：章节正文已被 Agent 改写，自动刷新（免保存标记）
             io.legado.app.ui.book.read.ai.AiToolStatusBus.postChapterUpdated(bookUrl)
             io.legado.app.ui.book.read.ai.AiToolStatusBus.postToolActivity(

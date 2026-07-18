@@ -26,6 +26,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import android.util.LruCache
 
 class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
@@ -48,6 +49,50 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     val messagesLiveData = MutableLiveData<List<ChatMessage>>()
     val wordCountLiveData = MutableLiveData<Int>()
     val isGeneratingLiveData = MutableLiveData<Boolean>()
+
+    /**
+     * 缓存命中指标（供后续优化评估）。
+     * cacheRead = 本轮 Manifest 透传的 cache_read_tokens（命中 KV 缓存的 token 数）；
+     * inputTokens = 本轮总输入 token；ratio 由 UI 计算。
+     */
+    data class CacheHitInfo(
+        val cacheReadTokens: Long = 0,
+        val inputTokens: Long = 0,
+        val cacheCreationTokens: Long = 0
+    )
+    val cacheHitLiveData = MutableLiveData<CacheHitInfo>()
+
+    companion object {
+        /**
+         * 客户端缓存（进程级单例）：章节正文与 system 稳定前缀。
+         * 放 companion 而非实例，跨 ViewModel/Activity 生命周期保留，利于跨会话命中。
+         * key 含 bookUrl，不跨书泄漏。
+         */
+        private val chapterContentCache = LruCache<String, String>(200)
+        private val systemPrefixCache = LruCache<String, String>(16)
+
+        /** 章节正文缓存 key：bookUrl + 章节索引 + 内容版本（tag 存更新时间，正文变更后失效） */
+        private fun chapterContentKey(bookUrl: String, chapterIndex: Int, version: Any?): String =
+            "$bookUrl#$chapterIndex#${version ?: ""}"
+
+        /** system 前缀缓存 key：稳定前缀只包含书籍元数据，随章节数/记忆/工具开关变化 */
+        private fun systemPrefixKey(bookUrl: String?, chapterSize: Int): String =
+            "$bookUrl#$chapterSize"
+
+        /** AI 改写章节或正文变更后调用：失效该章正文缓存 + 该书前缀缓存 */
+        @JvmStatic
+        fun invalidateCacheForBook(bookUrl: String) {
+            chapterContentCache.evictAll()
+            systemPrefixCache.remove(systemPrefixKey(bookUrl, -1))
+        }
+
+        /** 供 ViewModel 内部按当前书籍取前缀缓存 key */
+        private fun systemPrefixKeyForCurrent(vm: AiChatViewModel): String {
+            val book = vm.currentBookUrl()?.let { appDb.bookDao.getBook(it) }
+            val chapterSize = if (book != null) ReadBook.chapterSize else 0
+            return systemPrefixKey(book?.bookUrl, chapterSize)
+        }
+    }
 
     /**
      * 工具活动状态（用于灵犀式状态卡：读取章节 N 字 / 写入章节 等）
@@ -203,128 +248,154 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         }
     }
 
-    private suspend fun buildSystemPrompt(
+    /**
+     * 构建【稳定前缀】——逐字节不变，跨多轮对话命中 Manifest 的 KV 缓存。
+     *
+     * 缓存纪律（参考 reasonIX / AgentPatterns 的 immutable-prefix 原则）：
+     * 只有【不可变】内容才放这里。章节正文、用户想法、引用参考属于【可变状态】，
+     * 必须放进动态尾部的 user 消息（见 buildContextBlock），绝不能进前缀，
+     * 否则正文一变，其后的整段上下文全部无法命中缓存。
+     */
+    private suspend fun buildStablePrefix(): String {
+        val key = systemPrefixKeyForCurrent(this)
+        systemPrefixCache.get(key)?.let { return it }
+        val prefix = withContext(Dispatchers.IO) {
+            buildString {
+            append("【人设与要求】\n")
+            if (AiConfig.toolEnabled) {
+                append("\n\n【工具使用指南】\n")
+                append("你可以调用工具来查询和管理用户的书架、书源、阅读记录等数据。\n")
+                append("【确认机制】：所有写操作（含删除）均采用批量确认——同一轮AI调用的多个写操作合并为一次弹窗，用户统一确认或拒绝。请一次性调用所有需要的工具，不要一个一个来。\n")
+                append("【静默写操作（无需确认）】：save_book_progress、rate_book、set_book_note 直接执行。\n")
+                append("【bookUrl说明】：get_book_content、rate_book、save_book_progress、mark_book_status、set_book_note 的 bookUrl 参数需从 get_bookshelf 返回结果的 bookUrl 字段获取，请先查询书架再操作。例外：若系统提示词【当前阅读书籍信息】中已提供 bookUrl，则直接使用，无需再调 get_bookshelf。\n")
+                append("【书源数量限制】：get_book_sources 每次最多返回100条，用户书源可能超过500个。")
+                append("操作书源前请先用 get_source_groups 了解分组结构，再按分组分批查询。")
+                append("如果要处理所有书源，请分批操作，并主动告知用户。")
+            }
+            if (AiConfig.memory.isNotBlank()) {
+                append("\n\n【之前的对话记忆】\n")
+                append(AiConfig.memory)
+            }
+            // start/end 为 0 表示独立模式，不加载书籍信息
+            val book = currentBookUrl()?.let { appDb.bookDao.getBook(it) }
+            if (book != null) {
+                append("\n\n【当前阅读书籍信息】\n")
+                append("书名：${book.name}\n")
+                if (book.author.isNotBlank()) append("作者：${book.author}\n")
+                val intro = book.getDisplayIntro()
+                if (!intro.isNullOrBlank()) append("简介：$intro\n")
+                if (book.originName.isNotBlank()) append("所属书源：${book.originName}\n")
+                append("bookUrl：${book.bookUrl}\n")
+                val chapterSize = ReadBook.chapterSize
+                if (chapterSize > 0) append("总章节数：$chapterSize\n")
+                val durChapterTitle = book.durChapterTitle
+                if (!durChapterTitle.isNullOrBlank()) append("当前阅读章节：$durChapterTitle（第${book.durChapterIndex + 1}章）\n")
+            }
+        } }
+        systemPrefixCache.put(key, prefix)
+        return prefix
+    }
+
+    /**
+     * 构建【易变上下文块】——章节正文、用户想法、引用参考。
+     * 这部分随章节范围/正文变化，必须放在 user 消息（动态尾部），不进 system 前缀。
+     * 返回 null 表示没有额外上下文（如独立模式）。
+     */
+    private suspend fun buildContextBlock(
         start: Int, end: Int,
         references: List<ReferenceItem>? = null
-    ): String {
+    ): String? = withContext(Dispatchers.IO) {
         val unavailable = "（内容不可用）"
-        return withContext(Dispatchers.IO) {
-            buildString {
-                append("【人设与要求】\n")
-                if (AiConfig.toolEnabled) {
-                    append("\n\n【工具使用指南】\n")
-                    append("你可以调用工具来查询和管理用户的书架、书源、阅读记录等数据。\n")
-                    append("【确认机制】：所有写操作（含删除）均采用批量确认——同一轮AI调用的多个写操作合并为一次弹窗，用户统一确认或拒绝。请一次性调用所有需要的工具，不要一个一个来。\n")
-                    append("【静默写操作（无需确认）】：save_book_progress、rate_book、set_book_note 直接执行。\n")
-                    append("【bookUrl说明】：get_book_content、rate_book、save_book_progress、mark_book_status、set_book_note 的 bookUrl 参数需从 get_bookshelf 返回结果的 bookUrl 字段获取，请先查询书架再操作。例外：若系统提示词【当前阅读书籍信息】中已提供 bookUrl，则直接使用，无需再调 get_bookshelf。\n")
-                    append("【书源数量限制】：get_book_sources 每次最多返回100条，用户书源可能超过500个。")
-                    append("操作书源前请先用 get_source_groups 了解分组结构，再按分组分批查询。")
-                    append("如果要处理所有书源，请分批操作，并主动告知用户。")
+        val book = currentBookUrl()?.let { appDb.bookDao.getBook(it) } ?: return@withContext null
+        if (start <= 0 || end <= 0) return@withContext null
+        buildString {
+            val chapterSize = ReadBook.chapterSize
+            if (chapterSize <= 0) return@withContext null
+            val st = minOf(start, end).coerceIn(1, chapterSize)
+            val ed = maxOf(start, end).coerceIn(1, chapterSize)
+            val rangeDesc = if (st == ed) "第${st}章" else "第${st}章 ~ 第${ed}章"
+            append("\n\n【参考章节内容（$rangeDesc）】\n")
+            val chapterList = appDb.bookChapterDao.getChapterList(book.bookUrl, st - 1, ed - 1)
+            for (chapter in chapterList) {
+                val ckey = chapterContentKey(book.bookUrl, chapter.index, chapter.tag)
+                val content = chapterContentCache.get(ckey) ?: run {
+                    val c = BookHelp.getContent(book, chapter)
+                    c?.also { chapterContentCache.put(ckey, it) }
+                } ?: continue
+                append("=== ${chapter.title} ===\n")
+                append(content)
+                append("\n\n")
+                val thoughts = appDb.bookThoughtDao.getByChapter(book.name, book.author, chapter.index)
+                if (thoughts.isNotEmpty()) {
+                    append("【用户在本章的想法（共${thoughts.size}条）】\n")
+                    thoughts.forEachIndexed { i, t ->
+                        append("${i + 1}. ")
+                        if (t.selectedText.isNotBlank()) {
+                            append("「${t.selectedText.take(300)}」")
+                        }
+                        if (t.thought.isNotBlank()) {
+                            if (t.selectedText.isNotBlank()) append(" → ")
+                            append(t.thought)
+                        }
+                        append("\n")
+                    }
+                    append("\n")
                 }
-                if (AiConfig.memory.isNotBlank()) {
-                    append("\n\n【之前的对话记忆】\n")
-                    append(AiConfig.memory)
-                }
-                // start/end 为 0 表示独立模式，不加载书籍信息和章节内容
-                if (start > 0 && end > 0) {
-                    val book = currentBookUrl()?.let { appDb.bookDao.getBook(it) }
-                    if (book != null) {
-                        // 注入书籍基本信息
-                        append("\n\n【当前阅读书籍信息】\n")
-                        append("书名：${book.name}\n")
-                        if (book.author.isNotBlank()) append("作者：${book.author}\n")
-                        val intro = book.getDisplayIntro()
-                        if (!intro.isNullOrBlank()) append("简介：$intro\n")
-                        // 书源信息：originName 是书源名称，origin 是书源URL
-                        if (book.originName.isNotBlank()) append("所属书源：${book.originName}\n")
-                        append("bookUrl：${book.bookUrl}\n")
-                        val chapterSize = ReadBook.chapterSize
-                        if (chapterSize > 0) append("总章节数：$chapterSize\n")
-                        val durChapterTitle = book.durChapterTitle
-                        if (!durChapterTitle.isNullOrBlank()) append("当前阅读章节：$durChapterTitle（第${book.durChapterIndex + 1}章）\n")
-
-                        // 注入用户所选章节内容（全量）
-                        val clampedStart = start.coerceIn(1, chapterSize.coerceAtLeast(1))
-                        val clampedEnd = end.coerceIn(1, chapterSize.coerceAtLeast(1))
-                        val st = minOf(clampedStart, clampedEnd)
-                        val ed = maxOf(clampedStart, clampedEnd)
-                        val rangeDesc = if (st == ed) "第${st}章" else "第${st}章 ~ 第${ed}章"
-                        append("\n\n【参考章节内容（$rangeDesc）】\n")
-                        val chapterList = appDb.bookChapterDao.getChapterList(book.bookUrl, st - 1, ed - 1)
-                        for (chapter in chapterList) {
-                            val content = BookHelp.getContent(book, chapter) ?: continue
-                            append("=== ${chapter.title} ===\n")
-                            append(content)
-                            append("\n\n")
-                            // 注入用户在本章的想法（划线+评注）
-                            val thoughts = appDb.bookThoughtDao.getByChapter(book.name, book.author, chapter.index)
-                            if (thoughts.isNotEmpty()) {
-                                append("【用户在本章的想法（共${thoughts.size}条）】\n")
-                                thoughts.forEachIndexed { i, t ->
-                                    append("${i + 1}. ")
-                                    if (t.selectedText.isNotBlank()) {
-                                        append("「${t.selectedText.take(300)}」")
-                                    }
-                                    if (t.thought.isNotBlank()) {
-                                        if (t.selectedText.isNotBlank()) append(" → ")
-                                        append(t.thought)
-                                    }
-                                    append("\n")
-                                }
+            }
+            if (!references.isNullOrEmpty()) {
+                append("\n\n【用户引用的参考信息】\n")
+                for (ref in references) {
+                    when (ref.type) {
+                        "chapter" -> {
+                            val refBook = if (ref.bookUrl != null) appDb.bookDao.getBook(ref.bookUrl) else book
+                            val refChapter = if (ref.bookUrl != null && ref.chapterIndex != null)
+                                appDb.bookChapterDao.getChapter(ref.bookUrl, ref.chapterIndex) else null
+                            if (refBook != null && refChapter != null) {
+                                val refContent = BookHelp.getContent(refBook, refChapter)
+                                append("--- ${refChapter.title} ---\n")
+                                append(refContent ?: unavailable)
                                 append("\n")
+                            } else {
+                                append("【章节】${ref.title}$unavailable\n")
                             }
                         }
-
-                        // 注入用户引用的参考信息（@章节/@知识点/@提示词）
-                        if (!references.isNullOrEmpty()) {
-                            append("\n\n【用户引用的参考信息】\n")
-                            for (ref in references) {
-                                when (ref.type) {
-                                    "chapter" -> {
-                                        val refBook = if (ref.bookUrl != null) appDb.bookDao.getBook(ref.bookUrl) else book
-                                        val refChapter = if (ref.bookUrl != null && ref.chapterIndex != null)
-                                            appDb.bookChapterDao.getChapter(ref.bookUrl, ref.chapterIndex) else null
-                                        if (refBook != null && refChapter != null) {
-                                            val refContent = BookHelp.getContent(refBook, refChapter)
-                                            append("--- ${refChapter.title} ---\n")
-                                            append(refContent ?: unavailable)
-                                            append("\n")
-                                        } else {
-                                            append("【章节】${ref.title}${unavailable}\n")
-                                        }
-                                    }
-                                    "knowledge" -> {
-                                        if (ref.id != null) {
-                                            val kp = appDb.knowledgePointDao.getById(ref.id)
-                                            if (kp != null) {
-                                                append("【知识点：${kp.title}】\n${kp.content}\n")
-                                            } else {
-                                                append("【知识点】${ref.title}${unavailable}\n")
-                                            }
-                                        } else {
-                                            append("【知识点】${ref.title}${unavailable}\n")
-                                        }
-                                    }
-                                    "prompt" -> {
-                                        if (ref.id != null) {
-                                            val wp = appDb.writingPromptDao.getById(ref.id)
-                                            if (wp != null) {
-                                                append("【提示词：${wp.title}】\n${wp.content}\n")
-                                            } else {
-                                                append("【提示词】${ref.title}${unavailable}\n")
-                                            }
-                                        } else {
-                                            append("【提示词】${ref.title}${unavailable}\n")
-                                        }
-                                    }
+                        "knowledge" -> {
+                            if (ref.id != null) {
+                                val kp = appDb.knowledgePointDao.getById(ref.id)
+                                if (kp != null) {
+                                    append("【知识点：${kp.title}】\n${kp.content}\n")
+                                } else {
+                                    append("【知识点】${ref.title}$unavailable\n")
                                 }
+                            } else {
+                                append("【知识点】${ref.title}$unavailable\n")
+                            }
+                        }
+                        "prompt" -> {
+                            if (ref.id != null) {
+                                val wp = appDb.writingPromptDao.getById(ref.id)
+                                if (wp != null) {
+                                    append("【提示词：${wp.title}】\n${wp.content}\n")
+                                } else {
+                                    append("【提示词】${ref.title}$unavailable\n")
+                                }
+                            } else {
+                                append("【提示词】${ref.title}$unavailable\n")
                             }
                         }
                     }
                 }
             }
-        }
+        }.takeIf { it.isNotBlank() }
     }
+
+    /**
+     * 兼容旧调用（无易变上下文注入时），仅返回稳定前缀。
+     */
+    private suspend fun buildSystemPrompt(
+        start: Int, end: Int,
+        references: List<ReferenceItem>? = null
+    ): String = buildStablePrefix()
 
     fun sendMessage(userText: String, start: Int, end: Int, references: List<ReferenceItem>? = null) {
         if (!isGenerating.compareAndSet(false, true)) return
@@ -337,19 +408,26 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         }
 
         synchronized(_messages) {
-            _messages.add(ChatMessage(role = "user", content = userText, references = references))
+            // 易变上下文（章节正文/想法/引用）注入 user 消息尾部，不进 system 前缀
+            val contextBlock = buildContextBlock(start, end, references)
+            val fullUserText = if (contextBlock != null) {
+                "$userText\n$contextBlock"
+            } else {
+                userText
+            }
+            _messages.add(ChatMessage(role = "user", content = fullUserText, references = references))
         }
         syncCache()
         messagesLiveData.postValue(_messages.toList())
 
         execute {
             try {
-                val newSystemPrompt = buildSystemPrompt(start, end, references)
+                val stablePrefix = buildStablePrefix()
                 synchronized(_messages) {
                     if (_messages.isNotEmpty() && _messages.first().role == "system") {
-                        _messages[0] = ChatMessage(role = "system", content = newSystemPrompt)
+                        _messages[0] = ChatMessage(role = "system", content = stablePrefix)
                     } else {
-                        _messages.add(0, ChatMessage(role = "system", content = newSystemPrompt))
+                        _messages.add(0, ChatMessage(role = "system", content = stablePrefix))
                     }
                 }
 
@@ -742,7 +820,6 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 msg.toolCallId?.let { map["tool_call_id"] = it }
             } else if (!msg.toolCalls.isNullOrEmpty()) {
                 map["content"] = msg.content.ifBlank { "" }
-                // 工具调用的 assistant 消息也可能携带 reasoning_content，需一并回传
                 if (!msg.reasoningContent.isNullOrBlank()) {
                     map["reasoning_content"] = msg.reasoningContent!!
                 }
@@ -757,9 +834,18 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                     )
                 }
             } else if (msg.role == "assistant" && !msg.reasoningContent.isNullOrBlank()) {
-                // 思维链模式：必须将 reasoning_content 回传给 API
                 map["content"] = msg.content
                 map["reasoning_content"] = msg.reasoningContent
+            } else if (msg.role == "system") {
+                // 稳定前缀拆成 content-block 数组，最后一个 block 打 cache_control，
+                // 让 Manifest（转发 Claude）命中 KV 缓存。
+                map["content"] = listOf(
+                    mapOf(
+                        "type" to "text",
+                        "text" to msg.content,
+                        "cache_control" to mapOf("type" to "ephemeral")
+                    )
+                )
             } else {
                 map["content"] = msg.content
             }
@@ -808,6 +894,24 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         // 解析思维链内容（DeepSeek R1 等思维模式模型返回）
         val reasoningContent = messageMap["reasoning_content"] as? String
         val toolCallsRaw = messageMap["tool_calls"] as? List<Map<*, *>>
+
+        // 解析 usage（Manifest 透传上游 cache_read_tokens，供缓存命中评估）
+        (jsonObject["usage"] as? Map<*, *>)?.let { usage ->
+            val cached = (usage["prompt_tokens_details"] as? Map<*, *>)?.get("cached_tokens") as? Number
+                ?: usage["cache_read_tokens"] as? Number
+            val input = (usage["prompt_tokens"] as? Number) ?: (usage["input_tokens"] as? Number)
+            val creation = (usage["prompt_tokens_details"] as? Map<*, *>)?.get("cache_creation_tokens") as? Number
+                ?: usage["cache_creation_tokens"] as? Number
+            if (cached != null || input != null) {
+                cacheHitLiveData.postValue(
+                    CacheHitInfo(
+                        cacheReadTokens = cached?.toLong() ?: 0,
+                        inputTokens = input?.toLong() ?: 0,
+                        cacheCreationTokens = creation?.toLong() ?: 0
+                    )
+                )
+            }
+        }
 
         if (!toolCallsRaw.isNullOrEmpty()) {
             val toolCalls = toolCallsRaw.map { tc ->
@@ -873,6 +977,14 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             } else if (msg.role == "assistant" && !msg.reasoningContent.isNullOrBlank()) {
                 map["content"] = msg.content
                 map["reasoning_content"] = msg.reasoningContent
+            } else if (msg.role == "system") {
+                map["content"] = listOf(
+                    mapOf(
+                        "type" to "text",
+                        "text" to msg.content,
+                        "cache_control" to mapOf("type" to "ephemeral")
+                    )
+                )
             } else {
                 map["content"] = msg.content
             }
@@ -964,6 +1076,24 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                             // 记录 finish_reason（最后一个 chunk 才有）
                             val fr = firstChoice["finish_reason"] as? String
                             if (fr != null) finishReason = fr
+
+                            // 流式 usage（Manifest 透传上游 cache_read_tokens，最后一个 chunk 携带）
+                            (json["usage"] as? Map<*, *>)?.let { usage ->
+                                val cached = (usage["prompt_tokens_details"] as? Map<*, *>)?.get("cached_tokens") as? Number
+                                    ?: usage["cache_read_tokens"] as? Number
+                                val input = (usage["prompt_tokens"] as? Number) ?: (usage["input_tokens"] as? Number)
+                                val creation = (usage["prompt_tokens_details"] as? Map<*, *>)?.get("cache_creation_tokens") as? Number
+                                    ?: usage["cache_creation_tokens"] as? Number
+                                if (cached != null || input != null) {
+                                    cacheHitLiveData.postValue(
+                                        CacheHitInfo(
+                                            cacheReadTokens = cached?.toLong() ?: 0,
+                                            inputTokens = input?.toLong() ?: 0,
+                                            cacheCreationTokens = creation?.toLong() ?: 0
+                                        )
+                                    )
+                                }
+                            }
 
                             // 检测流式 tool_calls
                             val toolCallsDelta = delta["tool_calls"] as? List<Map<*, *>>

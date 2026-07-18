@@ -216,6 +216,11 @@ object ToolRouter {
         val rawContent = BookHelp.getContent(book, chapter) ?: return """{"error":"章节内容未缓存，请在阅读界面打开该章节后再试"}"""
         val truncated = rawContent.length > maxChars
         val content = if (truncated) rawContent.take(maxChars) else rawContent
+        // 灵犀式状态卡：读取章节 N 字
+        io.legado.app.ui.book.read.ai.AiToolStatusBus.postToolActivity(
+            "tool_end", "read_chapter",
+            "读取「${chapter.title}」（${rawContent.length} 字）"
+        )
         return GSON.toJson(mapOf("success" to true, "data" to mapOf(
             "bookName" to book.name, "chapterTitle" to chapter.title,
             "chapterIndex" to chapterIndex, "contentLength" to rawContent.length,
@@ -945,6 +950,12 @@ object ToolRouter {
                     BookHelp.saveText(book, chapter, newContent)
                 }
             }
+            // 通知编辑器：章节正文已被 Agent 改写，自动刷新（免保存标记）
+            io.legado.app.ui.book.read.ai.AiToolStatusBus.postChapterUpdated(bookUrl)
+            io.legado.app.ui.book.read.ai.AiToolStatusBus.postToolActivity(
+                "tool_end", "update_chapter",
+                "已更新「${chapter.title}」（${newContent?.length ?: 0} 字）"
+            )
             GSON.toJson(mapOf("success" to true, "data" to mapOf(
                 "bookUrl" to bookUrl, "chapterIndex" to chapterIndex,
                 "titleUpdated" to !newTitle.isNullOrBlank(),

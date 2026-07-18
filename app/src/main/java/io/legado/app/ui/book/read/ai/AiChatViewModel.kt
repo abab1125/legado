@@ -48,6 +48,46 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     val messagesLiveData = MutableLiveData<List<ChatMessage>>()
     val wordCountLiveData = MutableLiveData<Int>()
     val isGeneratingLiveData = MutableLiveData<Boolean>()
+
+    /**
+     * 工具活动状态（用于灵犀式状态卡：读取章节 N 字 / 写入章节 等）
+     * kind: tool_start | tool_end | note
+     */
+    data class ToolActivity(
+        val kind: String,
+        val name: String,
+        val detail: String = ""
+    )
+    val toolActivityLiveData = MutableLiveData<ToolActivity>()
+
+    /**
+     * 章节正文被 Agent 工具改写后发出的通知（供编辑器自动刷新，免保存标记）
+     * 值为 bookUrl，编辑器据此重载当前章节
+     */
+    val chapterUpdatedLiveData = MutableLiveData<String>()
+
+    /**
+     * 可注入的书籍上下文。写作页没有 ReadBook 全局态，需显式设置。
+     * 不设置时回退到 ReadBook.book（阅读器场景）。
+     */
+    private var injectedBookUrl: String? = null
+    private var injectedChapterIndex: Int = -1
+    private var injectedChapterSize: Int = -1
+
+    fun setBookContext(bookUrl: String?, chapterIndex: Int = -1, chapterSize: Int = -1) {
+        injectedBookUrl = bookUrl
+        injectedChapterIndex = chapterIndex
+        injectedChapterSize = chapterSize
+    }
+
+    /** 当前书籍 URL：优先注入值，回退 ReadBook */
+    private fun currentBookUrl(): String? = injectedBookUrl ?: ReadBook.book?.bookUrl
+
+    /** 当前章节数：优先注入值，回退 ReadBook */
+    private fun currentChapterSize(): Int {
+        if (injectedChapterSize >= 0) return injectedChapterSize
+        return ReadBook.chapterSize
+    }
     val statusLiveData = MutableLiveData<Int>()  // STATUS_IDLE / SENDING / THINKING / TOOL_RUNNING
     val confirmationLiveData = MutableLiveData<ConfirmationRequest?>()
     val batchConfirmationLiveData = MutableLiveData<BatchConfirmationRequest?>()
@@ -104,7 +144,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     }
 
     fun calculateWordCount(bookUrl: String, start: Int, end: Int) {
-        val chapterSize = ReadBook.chapterSize
+        val chapterSize = currentChapterSize()
         val clampedStart = start.coerceIn(1, chapterSize.coerceAtLeast(1))
         val clampedEnd = end.coerceIn(1, chapterSize.coerceAtLeast(1))
         val st = minOf(clampedStart, clampedEnd)
@@ -113,7 +153,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         val myVersion = wordCountJobVersion.incrementAndGet()
         execute {
             var totalCount = 0
-            val book = ReadBook.book ?: return@execute
+            val book = appDb.bookDao.getBook(bookUrl) ?: return@execute
             val chapterList = appDb.bookChapterDao.getChapterList(bookUrl, st - 1, ed - 1)
             for (chapter in chapterList) {
                 if (wordCountJobVersion.get() != myVersion) return@execute
@@ -134,7 +174,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     }
 
     fun initMessages(start: Int, end: Int) {
-        val currentBookUrl = ReadBook.book?.bookUrl ?: ""
+        val currentBookUrl = currentBookUrl() ?: ""
         val cached = AiChatCache.state
         if (cached.bookUrl == currentBookUrl &&
             cached.chapterIndex == start &&
@@ -187,7 +227,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 }
                 // start/end 为 0 表示独立模式，不加载书籍信息和章节内容
                 if (start > 0 && end > 0) {
-                    val book = ReadBook.book
+                    val book = currentBookUrl()?.let { appDb.bookDao.getBook(it) }
                     if (book != null) {
                         // 注入书籍基本信息
                         append("\n\n【当前阅读书籍信息】\n")
@@ -995,7 +1035,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         chapterIndexes: List<Int>,
         onProgress: (current: Int, total: Int, phase: String) -> Unit
     ): List<CharacterExtractResult> = withContext(Dispatchers.IO) {
-        val book = ReadBook.book ?: throw Exception("未打开书籍")
+        val book = appDb.bookDao.getBook(bookUrl) ?: throw Exception("未找到书籍：$bookUrl")
         if (chapterIndexes.isEmpty()) throw Exception("请选择至少一个章节")
         val bookNameFinal = bookName.ifBlank { book.name.ifBlank { "未命名小说" } }
 

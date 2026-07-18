@@ -3,6 +3,7 @@ package io.legado.app.ui.write
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.FrameLayout
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -12,6 +13,8 @@ import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
 import io.legado.app.databinding.ActivityChapterEditorBinding
 import io.legado.app.help.book.BookHelp
+import io.legado.app.ui.book.read.ai.AiChatPanelFragment
+import io.legado.app.ui.book.read.ai.AiToolStatusBus
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import androidx.activity.viewModels
@@ -29,6 +32,12 @@ class ChapterEditorActivity :
     private var chapter: BookChapter? = null
     private var isModified = false
     private var contentLoaded = ""
+    private var currentBookUrl: String = ""
+    private var currentChapterUrl: String = ""
+
+    /** 内嵌 AI 面板（底部抽屉） */
+    private var aiPanel: AiChatPanelFragment? = null
+    private var aiPanelExpanded = false
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         val bookUrl = intent.getStringExtra("bookUrl") ?: run {
@@ -41,8 +50,59 @@ class ChapterEditorActivity :
             finish()
             return
         }
+        currentBookUrl = bookUrl
+        currentChapterUrl = chapterUrl
 
+        setupAiPanel()
         loadData(bookUrl, chapterUrl)
+    }
+
+    /** 初始化底部 AI 面板（默认收起为输入条） */
+    private fun setupAiPanel() {
+        aiPanel = AiChatPanelFragment.newInstance(currentBookUrl, -1, -1)
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.ai_panel_container, aiPanel!!)
+            .commitNow()
+        // 默认收起为输入条
+        collapseAiPanel()
+        // 点击 handle 展开，点击 scrim 收起
+        binding.aiPanelHandle.setOnClickListener { toggleAiPanel() }
+        binding.aiPanelScrim.setOnClickListener { if (aiPanelExpanded) toggleAiPanel() }
+    }
+
+    /** 收起 AI 面板为输入条高度 */
+    private fun collapseAiPanel() {
+        aiPanelExpanded = false
+        binding.aiPanelContainer.layoutParams.height = (resources.displayMetrics.density * 56).toInt()
+        binding.aiPanelScrim.visibility = android.view.View.GONE
+        binding.aiPanelContainer.requestLayout()
+    }
+
+    /** 展开 / 收起 AI 面板 */
+    private fun toggleAiPanel() {
+        aiPanelExpanded = !aiPanelExpanded
+        val dp = resources.displayMetrics.density
+        val collapsed = (dp * 56).toInt()
+        val expanded = (resources.displayMetrics.heightPixels * 0.6).toInt()
+        binding.aiPanelContainer.layoutParams.height = if (aiPanelExpanded) expanded else collapsed
+        binding.aiPanelScrim.visibility = if (aiPanelExpanded) android.view.View.VISIBLE else android.view.View.GONE
+        binding.aiPanelContainer.requestLayout()
+    }
+
+    /** 选中文字直问：把编辑器选区填入 AI 面板输入框 */
+    private fun askAiWithSelection() {
+        val selStart = binding.editor.selectionStart
+        val selEnd = binding.editor.selectionEnd
+        val text = binding.editor.text?.toString() ?: ""
+        val selected = if (selStart >= 0 && selEnd > selStart) {
+            text.substring(selStart, selEnd)
+        } else ""
+        if (selected.isBlank()) {
+            toastOnUi("请先选中一段文字")
+            return
+        }
+        if (!aiPanelExpanded) toggleAiPanel()
+        aiPanel?.prefillInput("请基于以下选中内容进行修改/续写：\n「$selected」")
     }
 
     private fun loadData(bookUrl: String, chapterUrl: String) {
@@ -68,6 +128,28 @@ class ChapterEditorActivity :
                 binding.editor.setText(content)
                 binding.titleBar.title = c.title
                 setupEditor()
+                // 把当前章节索引注入 AI 面板（写作页无 ReadBook 全局态）
+                aiPanel?.setChapterContext(c.index)
+                observeAiChapterUpdates(bookUrl)
+            }
+        }
+    }
+
+    /** 观察 Agent 改写章节事件，自动刷新编辑器（免保存标记） */
+    private fun observeAiChapterUpdates(bookUrl: String) {
+        AiToolStatusBus.chapterUpdatedLiveData.observe(this) { updatedBookUrl ->
+            if (updatedBookUrl != bookUrl) return@observe
+            lifecycleScope.launch(Dispatchers.IO) {
+                val b = book ?: return@launch
+                val c = appDb.bookChapterDao.getChapterByUrl(bookUrl, currentChapterUrl) ?: return@launch
+                val fresh = BookHelp.getContent(b, c) ?: return@launch
+                withContext(Dispatchers.Main) {
+                    contentLoaded = fresh
+                    isModified = false
+                    binding.editor.setText(fresh)
+                    invalidateOptionsMenu()
+                    toastOnUi("AI 已更新正文")
+                }
             }
         }
     }
@@ -86,7 +168,10 @@ class ChapterEditorActivity :
             add(0, 1, 0, "保存").apply {
                 setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
             }
-            add(0, 2, 1, "撤销修改").apply {
+            add(0, 3, 1, "问 AI").apply {
+                setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+            }
+            add(0, 2, 2, "撤销修改").apply {
                 setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
             }
         }
@@ -101,6 +186,7 @@ class ChapterEditorActivity :
     override fun onCompatOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             1 -> saveContent()
+            3 -> askAiWithSelection()
             2 -> discardChanges()
             else -> return super.onCompatOptionsItemSelected(item)
         }

@@ -1,45 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <io.legado.app.ui.widget.TitleBar
-        android:id="@+id/title_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:title="正文编辑" />
-
-    <com.google.android.material.card.MaterialCardView
+    <!-- 主内容区 -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="12dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="0dp"
-        app:strokeWidth="0dp"
-        app:cardBackgroundColor="@color/background_card">
+        android:orientation="vertical">
 
-        <ScrollView
+        <io.legado.app.ui.widget.TitleBar
+            android:id="@+id/title_bar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="12dp">
+            android:layout_height="wrap_content"
+            app:title="正文编辑" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editor"
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_margin="12dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="@color/background_card">
+
+            <ScrollView
                 android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="12dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="400dp"
+                    android:gravity="top|start"
+                    android:textSize="16sp"
+                    android:textColor="?android:textColorPrimary"
+                    android:background="@null"
+                    android:lineSpacingExtra="6dp"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:importantForAutofill="no" />
+
+            </ScrollView>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 收起态拖动条：点击展开 AI 面板 -->
+        <LinearLayout
+            android:id="@+id/ai_panel_handle"
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="?android:attr/colorPrimary"
+            android:alpha="0.9">
+
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:minHeight="400dp"
-                android:gravity="top|start"
-                android:textSize="16sp"
-                android:textColor="?android:textColorPrimary"
-                android:background="@null"
-                android:lineSpacingExtra="6dp"
-                android:inputType="textMultiLine|textCapSentences"
-                android:importantForAutofill="no" />
+                android:text="AI 助手"
+                android:textSize="12sp"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+    </LinearLayout>
 
-        </ScrollView>
+    <!-- 遮罩（面板展开时显示，点击收起） -->
+    <View
+        android:id="@+id/ai_panel_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#66000000"
+        android:visibility="gone" />
 
-    </com.google.android.material.card.MaterialCardView>
+    <!-- AI 面板容器（底部抽屉） -->
+    <FrameLayout
+        android:id="@+id/ai_panel_container"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom"
+        android:background="?android:attr/colorBackground"
+        android:elevation="8dp" />
 
-</LinearLayout>
+</FrameLayout>

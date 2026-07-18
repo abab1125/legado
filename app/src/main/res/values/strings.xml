@@ -1458,6 +1458,8 @@
     <string name="ai_voice_design_trigger">请为本章所有角色设计声线</string>
     <string name="ai_copy">复制</string>
     <string name="ai_copied">已复制到剪贴板</string>
+    <string name="ai_chat_panel_title">AI 助手</string>
+    <string name="ai_ask_selection">问 AI</string>
     <string name="theme_export_type_title">导出主题</string>
     <string name="theme_export_full">全量导出</string>
     <string name="theme_export_color_only">仅导出配色</string>

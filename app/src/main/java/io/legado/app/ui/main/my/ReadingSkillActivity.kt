@@ -15,7 +15,7 @@ class ReadingSkillActivity : BaseActivity<ActivityReadingSkillBinding>() {
 
     companion object {
         private const val SKILL_REPO_URL =
-            "https://github.com/Jingshiro/reading-skill"
+            "https://github.com/abab1125/legado"
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {

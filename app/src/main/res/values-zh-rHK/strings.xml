@@ -93,7 +93,7 @@
         \u3000\u3000這是一款使用 Kotlin 全新開發的開源的閲讀應用程式，歡迎你的加入。
     </string>
     <string name="app_share_description">
-        閲讀3.0下載地址：\nhttps://github.com/Jingshiro/legado/releases
+        閲讀3.0下載地址：\nhttps://github.com/abab1125/legado/releases
     </string>
     <string name="version_name">Version %s</string>
     <string name="pt_background_verification">後臺校驗書源</string>
@@ -740,7 +740,7 @@
     <string name="alipay_red_envelope_qr_code">支付寶紅包二維碼</string>
     <string name="alipay_payment_qr_code">支付寶收款二維碼</string>
     <string name="qq_collection_qr_code">QQ收款二維碼</string>
-    <string name="contributors_summary">gedoor,Invinciblelee,Xwite等,詳情請在github中查看</string>
+    <string name="contributors_summary">abab1125,Invinciblelee,Xwite等,詳情請在github中查看</string>
     <string name="clear_cache_summary">清除已下載書籍和字體緩存</string>
     <string name="default_cover">默認封面</string>
     <string name="restore_ignore">恢復忽略列表</string>

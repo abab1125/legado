@@ -332,6 +332,27 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
             }
         }
 
+        viewModel.statusLiveData.observe(this) { status ->
+            val indicator = binding.llStatusIndicator
+            val text = binding.tvStatusText
+            val spinner = binding.statusSpinner
+            when (status) {
+                AiChatViewModel.STATUS_IDLE -> {
+                    indicator.visibility = View.GONE
+                }
+                else -> {
+                    indicator.visibility = View.VISIBLE
+                    spinner.visibility = View.VISIBLE
+                    text.text = when (status) {
+                        AiChatViewModel.STATUS_SENDING -> "发送请求中…"
+                        AiChatViewModel.STATUS_THINKING -> "AI 思考中…"
+                        AiChatViewModel.STATUS_TOOL_RUNNING -> "正在执行操作…"
+                        else -> ""
+                    }
+                }
+            }
+        }
+
         viewModel.confirmationLiveData.observe(this) { request ->
             if (request == null) return@observe
             alert(R.string.ai_confirm_title) {
@@ -618,7 +639,15 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                             chapterIndexes = selected,
                             onProgress = { cur, tot, phase ->
                                 runOnUiThread {
-                                    progressText.text = if (tot > 0) "$phase ($cur/$tot)" else phase
+                                    val phaseEmoji = when {
+                                        phase.startsWith("读取") -> "📖"
+                                        phase.startsWith("分析") || phase.startsWith("AI") -> "🤖"
+                                        phase.startsWith("合并") -> "🔄"
+                                        phase.startsWith("保存") -> "💾"
+                                        else -> ""
+                                    }
+                                    progressText.text = if (tot > 0) "$phaseEmoji $phase ($cur/$tot)"
+                                        else "$phaseEmoji $phase"
                                 }
                             }
                         )

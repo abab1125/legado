@@ -98,7 +98,7 @@
     <string name="offline_cache_s">precarga el o los capítulos(s) seleccionado(s) en Almacenamiento en caché</string>
     <string name="change_origin">Cambiar origen</string>
     <string name="about_description">\u3000\u3000 Este es una aplicación de lectura bajo software libre, desarrollado en Kotlin, en que podrás participar. </string>
-    <string name="app_share_description">Legado (YueDu 3.0) disponible para descargar en：\n https://github.com/Jingshiro/legado/releases</string>
+    <string name="app_share_description">Legado (YueDu 3.0) disponible para descargar en：\n https://github.com/abab1125/legado/releases</string>
     <string name="version_name">Versión %s</string>
     <string name="pt_background_verification">Verificación en segundo plano</string>
     <string name="ps_background_verification">podrá utilizar con libertad cuando se verifique la fuente del libro</string>
@@ -750,7 +750,7 @@
     <string name="alipay_red_envelope_qr_code">Código QR del sobre rojo de AliPay</string>
     <string name="alipay_payment_qr_code">Código QR de AliPay</string>
     <string name="qq_collection_qr_code">Código QR de la Colección QQ</string>
-    <string name="contributors_summary">gedoor, Invinciblelee, Xwite, etc. Para obtener más detalles, vaya a Github</string>
+    <string name="contributors_summary">abab1125, Invinciblelee, Xwite, etc. Para obtener más detalles, vaya a Github</string>
     <string name="clear_cache_summary">Limpiar la caché de libros y fuentes descargados</string>
     <string name="default_cover">Portada predeterminada</string>
     <string name="restore_ignore">Lista de descartados</string>

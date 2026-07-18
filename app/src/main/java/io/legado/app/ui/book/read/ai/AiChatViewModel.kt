@@ -32,6 +32,12 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     companion object {
         private const val MAX_TOOL_ROUNDS = 90
 
+        /** 状态枚举：UI 根据此值显示不同提示 */
+        const val STATUS_IDLE = 0
+        const val STATUS_SENDING = 1
+        const val STATUS_THINKING = 2
+        const val STATUS_TOOL_RUNNING = 3
+
         const val VOICE_DESIGN_PROMPT = "请为本章所有角色设计声线，要求：\n" +
             "1. 从章节对话中识别所有说话角色（旁白不算）\n" +
             "2. 为每个角色生成一段中文音色描述（1-4句），覆盖性别与年龄、音色/质感、情绪/语气基调、语速/节奏、人设/腔调中的至少3个维度\n" +
@@ -42,8 +48,13 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     val messagesLiveData = MutableLiveData<List<ChatMessage>>()
     val wordCountLiveData = MutableLiveData<Int>()
     val isGeneratingLiveData = MutableLiveData<Boolean>()
+    val statusLiveData = MutableLiveData<Int>()  // STATUS_IDLE / SENDING / THINKING / TOOL_RUNNING
     val confirmationLiveData = MutableLiveData<ConfirmationRequest?>()
     val batchConfirmationLiveData = MutableLiveData<BatchConfirmationRequest?>()
+
+    private fun setStatus(status: Int) {
+        statusLiveData.postValue(status)
+    }
 
     fun confirmAction(confirmed: Boolean) {
         confirmationLiveData.value?.deferred?.complete(confirmed)
@@ -278,8 +289,10 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     fun sendMessage(userText: String, start: Int, end: Int, references: List<ReferenceItem>? = null) {
         if (!isGenerating.compareAndSet(false, true)) return
         isGeneratingLiveData.postValue(true)
+        setStatus(STATUS_SENDING)
         if (userText.isBlank()) {
             setGenerating(false)
+            setStatus(STATUS_IDLE)
             return
         }
 
@@ -300,64 +313,16 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                     }
                 }
 
-                val toolsEnabled = AiConfig.toolEnabled
-                if (toolsEnabled) {
-                    val tools = AiToolDef.allTools
-                    val responseMsgs = requestWithTools(_messages.toList(), tools)
-                    synchronized(_messages) {
-                        _messages.addAll(responseMsgs)
-                    }
-                } else {
-                    // 流式输出：先放占位消息，SSE 逐块更新内容
-                    val msgId = msgIdCounter.incrementAndGet()
-                    synchronized(_messages) {
-                        _messages.add(ChatMessage(id = msgId, role = "assistant", content = "", isStreaming = true))
-                    }
-                    messagesLiveData.postValue(_messages.toList())
-
-                    val finalMsg = requestOpenAiMessageStreaming(_messages.toList(), msgId,
-                        onDelta = { delta ->
-                            synchronized(_messages) {
-                                val idx = _messages.indexOfLast { it.id == msgId }
-                                if (idx >= 0) {
-                                    _messages[idx] = _messages[idx].copy(
-                                        content = _messages[idx].content + delta
-                                    )
-                                }
-                            }
-                            messagesLiveData.postValue(_messages.toList())
-                        },
-                        onReasoningDelta = { delta ->
-                            synchronized(_messages) {
-                                val idx = _messages.indexOfLast { it.id == msgId }
-                                if (idx >= 0) {
-                                    _messages[idx] = _messages[idx].copy(
-                                        reasoningContent = (_messages[idx].reasoningContent ?: "") + delta
-                                    )
-                                }
-                            }
-                            messagesLiveData.postValue(_messages.toList())
-                        }
-                    )
-
-                    if (finalMsg.content.isBlank() && finalMsg.reasoningContent.isNullOrBlank()) {
-                        throw Exception("响应内容为空")
-                    }
-                    synchronized(_messages) {
-                        val idx = _messages.indexOfLast { it.id == msgId }
-                        if (idx >= 0) {
-                            _messages[idx] = finalMsg.copy(isStreaming = false)
-                        } else {
-                            _messages.add(finalMsg.copy(role = "assistant"))
-                        }
-                    }
-                }
+                setStatus(STATUS_THINKING)
+                val tools = if (AiConfig.toolEnabled) AiToolDef.allTools else null
+                requestWithToolsStreaming(_messages.toList(), tools)
             } catch (e: Exception) {
                 synchronized(_messages) {
                     _messages.add(ChatMessage(role = "assistant", content = "请求失败: ${e.message}"))
                 }
             } finally {
                 setGenerating(false)
+                setStatus(STATUS_IDLE)
                 syncCache()
                 messagesLiveData.postValue(_messages.toList())
             }
@@ -554,6 +519,154 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     }
 
     /**
+     * 流式工具循环（统一路径）
+     *
+     * 每一轮都是 SSE 流式请求：
+     * 1. 新建占位消息（isStreaming=true），立刻显示三点动画
+     * 2. 发起流式请求，onDelta 实时追加到占位消息
+     * 3. 流式结束后检查是否含 tool_calls
+     * 4. 有 → 执行工具 → 追加 tool 消息 → 下一轮流式
+     * 5. 无 → 完成
+     *
+     * tools=null 时纯流式输出，不检查工具调用
+     */
+    private suspend fun requestWithToolsStreaming(
+        chatMessages: List<ChatMessage>,
+        tools: List<Map<String, Any>>?
+    ): List<ChatMessage> {
+        val currentMessages = chatMessages.toMutableList()
+        val newMessages = mutableListOf<ChatMessage>()
+
+        repeat(MAX_TOOL_ROUNDS) {
+            val msgId = msgIdCounter.incrementAndGet()
+
+            // 1. 放占位消息，显示三点动画
+            val placeholder = ChatMessage(id = msgId, role = "assistant", content = "", isStreaming = true)
+            synchronized(_messages) {
+                _messages.add(placeholder)
+            }
+            newMessages.add(placeholder)
+            messagesLiveData.postValue(_messages.toList())
+
+            setStatus(STATUS_THINKING)
+
+            // 2. 流式请求
+            val response = requestOpenAiMessageStreaming(
+                currentMessages, msgId,
+                onDelta = { delta ->
+                    synchronized(_messages) {
+                        val idx = _messages.indexOfLast { it.id == msgId }
+                        if (idx >= 0) {
+                            _messages[idx] = _messages[idx].copy(
+                                content = _messages[idx].content + delta
+                            )
+                            val newIdx = newMessages.indexOfLast { n -> n.id == msgId }
+                            if (newIdx >= 0) {
+                                newMessages[newIdx] = newMessages[newIdx].copy(
+                                    content = newMessages[newIdx].content + delta
+                                )
+                            }
+                        }
+                    }
+                    messagesLiveData.postValue(_messages.toList())
+                },
+                onReasoningDelta = { delta ->
+                    synchronized(_messages) {
+                        val idx = _messages.indexOfLast { it.id == msgId }
+                        if (idx >= 0) {
+                            _messages[idx] = _messages[idx].copy(
+                                reasoningContent = (_messages[idx].reasoningContent ?: "") + delta
+                            )
+                            val newIdx = newMessages.indexOfLast { n -> n.id == msgId }
+                            if (newIdx >= 0) {
+                                newMessages[newIdx] = newMessages[newIdx].copy(
+                                    reasoningContent = (newMessages[newIdx].reasoningContent ?: "") + delta
+                                )
+                            }
+                        }
+                    }
+                    messagesLiveData.postValue(_messages.toList())
+                },
+                tools = tools
+            )
+
+            // 3. 更新占位为非流式
+            synchronized(_messages) {
+                val idx = _messages.indexOfLast { it.id == msgId }
+                if (idx >= 0) {
+                    _messages[idx] = _messages[idx].copy(isStreaming = false)
+                }
+            }
+            val newIdx = newMessages.indexOfLast { n -> n.id == msgId }
+            if (newIdx >= 0) {
+                newMessages[newIdx] = response.copy(isStreaming = false)
+            }
+            messagesLiveData.postValue(_messages.toList())
+
+            // 4. 没有工具或没有工具调用 → 结束
+            if (tools.isNullOrEmpty() || response.toolCalls.isNullOrEmpty()) {
+                if (response.content.isBlank() && response.reasoningContent.isNullOrBlank()) {
+                    // 非空检查，只在无工具时做
+                    if (tools.isNullOrEmpty()) throw Exception("响应内容为空")
+                }
+                return newMessages
+            }
+
+            // 5. 有工具调用 → 执行
+            setStatus(STATUS_TOOL_RUNNING)
+            currentMessages.add(response.copy(role = "assistant"))
+
+            data class ToolCallResult(
+                val toolCallId: String,
+                val result: ToolExecuteResult
+            )
+
+            val toolCallResults = response.toolCalls.map { toolCall ->
+                val args = try {
+                    GSON.fromJsonObject<Map<String, Any>>(toolCall.function.arguments)
+                        .getOrThrow() ?: emptyMap()
+                } catch (_: Exception) {
+                    emptyMap<String, Any>()
+                }
+                ToolCallResult(
+                    toolCallId = toolCall.id,
+                    result = ToolRouter.execute(toolCall.function.name, args)
+                )
+            }
+
+            // 批量确认
+            val batchItems = toolCallResults.filter { it.result is ToolExecuteResult.BatchConfirmation }
+            var batchConfirmed = true
+            if (batchItems.isNotEmpty()) {
+                val descriptions = batchItems.map { (it.result as ToolExecuteResult.BatchConfirmation).description }
+                batchConfirmed = requestBatchConfirmation(descriptions)
+            }
+
+            // 追加 tool 消息
+            for ((toolCallId, toolResult) in toolCallResults) {
+                val resultJson = when (toolResult) {
+                    is ToolExecuteResult.Data -> toolResult.json
+                    is ToolExecuteResult.BatchConfirmation -> {
+                        if (batchConfirmed) toolResult.action()
+                        else """{"cancelled":true,"message":"用户取消了批量操作"}"""
+                    }
+                }
+                val toolMsg = ChatMessage(role = "tool", content = resultJson, toolCallId = toolCallId)
+                currentMessages.add(toolMsg)
+                synchronized(_messages) { _messages.add(toolMsg) }
+                newMessages.add(toolMsg)
+            }
+            messagesLiveData.postValue(_messages.toList())
+
+            // 下一轮流式
+            setStatus(STATUS_THINKING)
+        }
+
+        newMessages.add(ChatMessage(role = "assistant", content = "工具调用轮次已达上限，请重新提问。"))
+        return newMessages
+    }
+
+    /**
      * 向 Activity 发起单个确认请求（用于删除等高风险操作），挂起等待用户选择
      */
     private suspend fun requestConfirmation(description: String): Boolean {
@@ -632,6 +745,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             .build()
 
         val aiHttpClient = okHttpClient.newBuilder()
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
             .callTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
             .build()
@@ -689,7 +803,8 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         chatMessages: List<ChatMessage>,
         msgId: Long,
         onDelta: (String) -> Unit,
-        onReasoningDelta: (String) -> Unit
+        onReasoningDelta: (String) -> Unit,
+        tools: List<Map<String, Any>>? = null
     ): ChatMessage = withContext(Dispatchers.IO) {
         val apiKey = AiConfig.apiKey
         val model = AiConfig.model
@@ -729,6 +844,9 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             "messages" to messagesJsonList,
             "stream" to true
         )
+        if (!tools.isNullOrEmpty()) {
+            requestBodyMap["tools"] = tools as Any
+        }
 
         val jsonBody = GSON.toJson(requestBodyMap)
         val body = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
@@ -742,11 +860,22 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             .build()
 
         val aiHttpClient = okHttpClient.newBuilder()
+            .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(120, TimeUnit.SECONDS)
             .build()
 
         val accumulated = StringBuilder()
         val accumulatedReasoning = StringBuilder()
+
+        // 用于拼接流式 tool_calls（多个 chunk 分片到达）
+        data class StreamingToolCall(
+            val index: Int,
+            val id: StringBuilder = StringBuilder(),
+            val functionName: StringBuilder = StringBuilder(),
+            val arguments: StringBuilder = StringBuilder()
+        )
+        val streamingToolCalls = mutableMapOf<Int, StreamingToolCall>()
+        var finishReason: String? = null
 
         withContext(Dispatchers.IO) {
             try {
@@ -776,6 +905,28 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                                 accumulatedReasoning.append(reasoningDelta)
                                 onReasoningDelta(reasoningDelta)
                             }
+
+                            // 记录 finish_reason（最后一个 chunk 才有）
+                            val fr = firstChoice["finish_reason"] as? String
+                            if (fr != null) finishReason = fr
+
+                            // 检测流式 tool_calls
+                            val toolCallsDelta = delta["tool_calls"] as? List<Map<*, *>>
+                            if (!toolCallsDelta.isNullOrEmpty()) {
+                                for (tc in toolCallsDelta) {
+                                    val index = (tc["index"] as? Number)?.toInt() ?: continue
+                                    val current = streamingToolCalls.getOrPut(index) {
+                                        StreamingToolCall(index = index)
+                                    }
+                                    val tid = tc["id"] as? String
+                                    val func = tc["function"] as? Map<*, *>
+                                    val fname = func?.get("name") as? String
+                                    val fargs = func?.get("arguments") as? String
+                                    if (tid != null) current.id.append(tid)
+                                    if (fname != null) current.functionName.append(fname)
+                                    if (fargs != null) current.arguments.append(fargs)
+                                }
+                            }
                         } catch (_: Exception) { }
                     }
                 }
@@ -784,11 +935,25 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
             }
         }
 
+        // 拼接 tool_calls（如果有）
+        val toolCalls = if (streamingToolCalls.isNotEmpty() || finishReason == "tool_calls") {
+            streamingToolCalls.entries.sortedBy { it.key }.map { (_, stc) ->
+                ToolCall(
+                    id = stc.id.toString(),
+                    function = FunctionCall(
+                        name = stc.functionName.toString(),
+                        arguments = stc.arguments.toString()
+                    )
+                )
+            }.ifEmpty { null }
+        } else null
+
         return@withContext ChatMessage(
             id = msgId,
             role = "assistant",
             content = accumulated.toString(),
-            reasoningContent = accumulatedReasoning.toString().ifBlank { null }
+            reasoningContent = accumulatedReasoning.toString().ifBlank { null },
+            toolCalls = toolCalls
         )
     }
 
@@ -867,7 +1032,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 )
                 rawSummaries.add(response)
             } catch (e: Exception) {
-                // 跳过失败的批次，不污染合并输入
+                rawSummaries.add("【批次 ${batchStart / batchSize + 1} 提取失败：${e.message}】")
             }
         }
 

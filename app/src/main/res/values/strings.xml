@@ -105,7 +105,7 @@
         \u3000\u3000 This is an open source reading software newly developed by Kotlin, welcome to join us.
     </string>
     <string name="app_share_description">
-        Legado (YueDu 3.0) download link：\n https://github.com/Jingshiro/legado/releases
+        Legado (YueDu 3.0) download link：\n https://github.com/abab1125/legado/releases
     </string>
     <string name="version_name">Version %s</string>
     <string name="pt_background_verification">Background-verification</string>
@@ -801,7 +801,7 @@
     <string name="alipay_red_envelope_qr_code">AliPay red envelope QR code</string>
     <string name="alipay_payment_qr_code">AliPay QR code</string>
     <string name="qq_collection_qr_code">QQ Collection QR code</string>
-    <string name="contributors_summary">gedoor,Invinciblelee,Xwite etc. Checking in github for details</string>
+    <string name="contributors_summary">abab1125,Invinciblelee,Xwite etc. Checking in github for details</string>
     <string name="clear_cache_summary">Clear the cache of the downloaded books and fonts</string>
     <string name="default_cover">Default cover</string>
     <string name="restore_ignore">Bypass list</string>
@@ -1388,9 +1388,9 @@
     <string name="history">历史记录</string>
     <string name="app_name_sigma">阅读Sigma</string>
     <string name="about_description_sigma">\u3000\u3000阅读Sigma继承自legado，旨在原版基础上完善和增加功能，欢迎您的加入。</string>
-    <string name="contributors_summary_sigma">二改自Luoyacheng版阅读Sigma，感谢gedoor、Luoyacheng、Hoirs和Xwite等前辈们的开源分享，详情请在Github中查看</string>
+    <string name="contributors_summary_sigma">二改自Luoyacheng版阅读Sigma，感谢abab1125、Luoyacheng、Hoirs和Xwite等前辈们的开源分享，详情请在Github中查看</string>
     <string name="app_share_description_sigma">
-        阅读 Sigma 下载地址：\nhttps://github.com/Jingshiro/legado/releases
+        阅读 Sigma 下载地址：\nhttps://github.com/abab1125/legado/releases
     </string>
     <string name="sure_cache_book">是否确认开始缓存？</string>
     <string name="non_printable_set">不可视字符设定</string>

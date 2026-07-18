@@ -87,7 +87,7 @@ class AboutFragment : PreferenceFragment() {
      */
     private fun checkUpdate() {
         waitDialog.show()
-        AppUpdate.giteeUpdate.run {
+        AppUpdate.gitHubUpdate.run {
             check(lifecycleScope)
                 .onSuccess {
                     showDialogFragment(
@@ -98,7 +98,7 @@ class AboutFragment : PreferenceFragment() {
                 }.onFinally {
                     waitDialog.dismiss()
                 }
-        } ?: waitDialog.dismiss()
+        }
     }
 
 

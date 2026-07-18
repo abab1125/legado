@@ -11,6 +11,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -31,6 +33,7 @@ class ChatAdapter(
 ) : ListAdapter<ChatMessage, ChatAdapter.ChatViewHolder>(DIFF_CALLBACK) {
 
     private var markwon: Markwon? = null
+    private val dotAnimators = mutableMapOf<Int, ValueAnimator>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
         val binding = ItemAiChatBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -82,7 +85,26 @@ class ChatAdapter(
         } else {
             holder.binding.llAiMsg.visible()
             holder.binding.llUserMsg.gone()
-            markwon?.setMarkdown(holder.binding.tvAiContent, msg.content ?: "")
+            holder.binding.cardAiBubble.visibility = View.GONE
+            holder.binding.loadingDots.visibility = View.GONE
+            holder.binding.llAiActions.visibility = View.GONE
+
+            if (msg.isStreaming && msg.content.isNullOrBlank()) {
+                // 流式开始，还没有内容 → 显示三点动画
+                holder.binding.loadingDots.visibility = View.VISIBLE
+                startDotAnimation(holder)
+            } else {
+                // 有内容（流式或完成）
+                if (msg.isStreaming) stopDotAnimation(holder)
+                holder.binding.cardAiBubble.visibility = View.VISIBLE
+                markwon?.setMarkdown(holder.binding.tvAiContent, msg.content ?: "")
+
+                // 流式结束后显示操作栏
+                if (!msg.isStreaming) {
+                    holder.binding.llAiActions.visibility = View.VISIBLE
+                }
+            }
+
             if (AiConfig.aiAvatar.isNotBlank()) {
                 ImageViewCompat.setImageTintList(holder.binding.ivAiAvatar, null)
                 ImageLoader.load(context, encodeAvatarUrl(AiConfig.aiAvatar)).into(holder.binding.ivAiAvatar)
@@ -151,6 +173,39 @@ class ChatAdapter(
             fillAfter = true
         }
         view.startAnimation(anim)
+    }
+
+    private fun startDotAnimation(holder: ChatViewHolder) {
+        val pos = holder.bindingAdapterPosition
+        if (pos == RecyclerView.NO_POSITION) return
+        // 取消已有动画
+        stopDotAnimation(holder)
+        val dots = listOf(
+            holder.binding.dot1,
+            holder.binding.dot2,
+            holder.binding.dot3
+        )
+        dots.forEachIndexed { index, dot ->
+            val anim = ObjectAnimator.ofFloat(dot, "alpha", 0.3f, 1.0f).apply {
+                duration = 700
+                startDelay = (index * 200).toLong()
+                repeatCount = ValueAnimator.INFINITE
+                repeatMode = ValueAnimator.REVERSE
+                interpolator = android.view.animation.AccelerateDecelerateInterpolator()
+                start()
+            }
+            dotAnimators[pos] = anim
+        }
+    }
+
+    private fun stopDotAnimation(holder: ChatViewHolder) {
+        val pos = holder.bindingAdapterPosition
+        dotAnimators.remove(pos)?.cancel()
+    }
+
+    override fun onViewDetachedFromWindow(holder: ChatViewHolder) {
+        super.onViewDetachedFromWindow(holder)
+        stopDotAnimation(holder)
     }
 
     class ChatViewHolder(val binding: ItemAiChatBinding) : RecyclerView.ViewHolder(binding.root)

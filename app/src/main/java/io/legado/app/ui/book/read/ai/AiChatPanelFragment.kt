@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
  */
 class AiChatPanelFragment : BaseFragment(R.layout.activity_ai_chat_panel) {
 
-    override val binding by viewBinding(ActivityAiChatPanelBinding::bind)
+    val binding by viewBinding(ActivityAiChatPanelBinding::bind)
     private val viewModel by lazy { AiChatViewModel(requireContext().applicationContext as android.app.Application) }
 
     private val adapter by lazy {

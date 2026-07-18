@@ -171,7 +171,7 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
 
             R.id.menu_write_desk -> {
                 // 写作台：跳转入口，不占 ViewPager 分页
-                startActivity<WriteDeskActivity>()
+                this@MainActivity.startActivity<WriteDeskActivity>()
             }
 
             R.id.menu_my_config ->

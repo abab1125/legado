@@ -52,6 +52,9 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
         )
     }
 
+    /** 当前引用的参考信息列表 */
+    private val currentReferences = mutableListOf<ReferenceItem>()
+
     /** 是否为独立模式（从"我的"页面进入，无书籍上下文） */
     private val isStandalone: Boolean
         get() = intent.getBooleanExtra("isStandalone", false) || ReadBook.book == null

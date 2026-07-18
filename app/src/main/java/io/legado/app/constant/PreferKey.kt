@@ -232,6 +232,7 @@ object PreferKey {
 
     const val bottomIconBookshelf = "bottomIconBookshelf"
     const val bottomIconExplore = "bottomIconExplore"
+    const val bottomIconRss = "bottomIconRss"
     const val bottomIconWriteDesk = "bottomIconWriteDesk"
     const val bottomIconMy = "bottomIconMy"
     const val showWebServiceWarning = "showWebServiceWarning"

@@ -520,13 +520,17 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
                 callback(false)
             }
         }.apply {
-            setOnShowListener {
+            setOnShowListener { d ->
+                val dialog = d as? android.app.Dialog ?: return@setOnShowListener
                 val primary = io.legado.app.lib.theme.ThemeStore.primaryColor(this@AiChatActivity)
-                (it as? android.app.Dialog)?.let { d ->
-                    d.findViewById<android.widget.Button?>(android.R.id.button1)
-                        ?.setTextColor(primary)
-                    d.findViewById<android.widget.Button?>(android.R.id.button2)
-                        ?.setTextColor(primary)
+                dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE)?.apply {
+                    setTextColor(android.graphics.Color.WHITE)
+                    setBackgroundColor(primary)
+                    setPadding((16 * resources.displayMetrics.density).toInt(), 0, (16 * resources.displayMetrics.density).toInt(), 0)
+                }
+                dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE)?.apply {
+                    setTextColor(primary)
+                    setTypeface(typeface, android.graphics.Typeface.BOLD)
                 }
             }
         }

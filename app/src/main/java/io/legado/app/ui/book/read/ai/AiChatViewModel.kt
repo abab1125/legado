@@ -787,6 +787,16 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
             // 5. 有工具调用 → 执行
             setStatus(STATUS_TOOL_RUNNING)
+            // 插入可见的工具状态消息（聊天流内灰条，绕过 LiveData 时序问题）
+            val toolNames = response.toolCalls.map { it.function.name }.distinct()
+            val statusMsgId = System.nanoTime()
+            synchronized(_messages) {
+                _messages.add(ChatMessage(
+                    id = statusMsgId, role = "system", type = "tool_status",
+                    content = "🔧 正在调用：${toolNames.joinToString("、")}"
+                ))
+            }
+            messagesLiveData.postValue(_messages.toList())
             // 本轮 get_book_content 调用数（用于进度 1/N）
             val bookContentCalls = response.toolCalls.filter { it.function.name == "get_book_content" }
             val totalReads = bookContentCalls.size
@@ -861,6 +871,15 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 currentMessages.add(toolMsg)
                 synchronized(_messages) { _messages.add(toolMsg) }
                 newMessages.add(toolMsg)
+            }
+            // 更新工具状态消息为完成态
+            synchronized(_messages) {
+                val sIdx = _messages.indexOfLast { it.id == statusMsgId }
+                if (sIdx >= 0) {
+                    _messages[sIdx] = _messages[sIdx].copy(
+                        content = "✓ 已调用：${toolNames.joinToString("、")}"
+                    )
+                }
             }
             messagesLiveData.postValue(_messages.toList())
 
@@ -1636,7 +1655,9 @@ data class ChatMessage(
     val toolCallId: String? = null,
     val toolCalls: List<ToolCall>? = null,
     val reasoningContent: String? = null,
-    val isStreaming: Boolean = false
+    val isStreaming: Boolean = false,
+    /** normal=普通消息；tool_status=工具执行状态（居中灰条，不渲染气泡） */
+    val type: String = "normal"
 )
 
 data class ToolCall(

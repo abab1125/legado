@@ -48,6 +48,22 @@ class ChatAdapter(
             markwon = Markwon.create(context)
         }
 
+        // 工具状态消息：居中灰条，不渲染气泡
+        if (msg.type == "tool_status") {
+            holder.binding.llUserMsg.gone()
+            holder.binding.llAiMsg.visible()
+            holder.binding.cardAiBubble.visibility = View.GONE
+            holder.binding.loadingDots.visibility = View.GONE
+            holder.binding.llAiActions.visibility = View.GONE
+            holder.binding.llReasoning.gone()
+            holder.binding.tvAiContent.visible()
+            holder.binding.tvAiContent.textAlignment = View.TEXT_ALIGNMENT_CENTER
+            holder.binding.tvAiContent.setTextColor(android.graphics.Color.parseColor("#888888"))
+            holder.binding.tvAiContent.textSize = 12f
+            holder.binding.tvAiContent.text = msg.content ?: ""
+            return
+        }
+
         if (msg.role == "user") {
             holder.binding.llUserMsg.visible()
             holder.binding.llAiMsg.gone()

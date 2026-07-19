@@ -521,7 +521,7 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
             }
         }.apply {
             setOnShowListener { d ->
-                val dialog = d as? android.app.Dialog ?: return@setOnShowListener
+                val dialog = d as? androidx.appcompat.app.AlertDialog ?: return@setOnShowListener
                 val primary = io.legado.app.lib.theme.ThemeStore.primaryColor(this@AiChatActivity)
                 dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE)?.apply {
                     setTextColor(android.graphics.Color.WHITE)

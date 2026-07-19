@@ -4,8 +4,10 @@ import androidx.annotation.Keep
 import io.legado.app.utils.GSON
 import io.legado.app.utils.fromJsonArray
 import io.legado.app.utils.getPrefBoolean
+import io.legado.app.utils.getPrefInt
 import io.legado.app.utils.getPrefString
 import io.legado.app.utils.putPrefBoolean
+import io.legado.app.utils.putPrefInt
 import io.legado.app.utils.putPrefString
 import splitties.init.appCtx
 

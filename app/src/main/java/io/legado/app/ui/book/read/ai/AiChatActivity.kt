@@ -160,7 +160,7 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
 
         binding.btnSend.setOnClickListener {
             if (viewModel.isGeneratingLiveData.value == true) {
-                toastOnUi("正在生成中...")
+                viewModel.stopGenerating()
                 return@setOnClickListener
             }
             val text = binding.etInput.text.toString()
@@ -518,6 +518,16 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
             }
             negativeButton("全部拒绝") {
                 callback(false)
+            }
+        }.apply {
+            setOnShowListener {
+                val primary = io.legado.app.lib.theme.ThemeStore.primaryColor(this@AiChatActivity)
+                (it as? android.app.Dialog)?.let { d ->
+                    d.findViewById<android.widget.Button?>(android.R.id.button1)
+                        ?.setTextColor(primary)
+                    d.findViewById<android.widget.Button?>(android.R.id.button2)
+                        ?.setTextColor(primary)
+                }
             }
         }
     }

@@ -185,6 +185,20 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
     private val isGenerating = AtomicBoolean(false)
 
+    // 当前生成任务引用，供停止按钮取消
+    private var currentJob: io.legado.app.help.coroutine.Coroutine<Unit>? = null
+    private var currentCall: okhttp3.Call? = null
+
+    /** 用户主动终止生成：取消网络请求与协程 */
+    fun stopGenerating() {
+        currentCall?.cancel()
+        currentCall = null
+        currentJob?.cancel()
+        currentJob = null
+        setGenerating(false)
+        setStatus(STATUS_IDLE)
+    }
+
     private fun setGenerating(generating: Boolean) {
         isGenerating.set(generating)
         isGeneratingLiveData.postValue(generating)
@@ -434,7 +448,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         syncCache()
         messagesLiveData.postValue(_messages.toList())
 
-        execute {
+        currentJob = execute {
             try {
                 val stablePrefix = buildStablePrefix()
                 synchronized(_messages) {
@@ -690,6 +704,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         val recentCalls = mutableListOf<String>()
 
         repeat(maxRounds) { round ->
+            if (!isGenerating.get()) return@repeat  // 用户已终止
             val msgId = msgIdCounter.incrementAndGet()
 
             // 1. 放占位消息，显示三点动画
@@ -1120,7 +1135,9 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
         withContext(Dispatchers.IO) {
             try {
-                val response = aiHttpClient.newCall(request).execute()
+                val call = aiHttpClient.newCall(request)
+                currentCall = call
+                val response = call.execute()
                 val body = response.body ?: throw Exception("响应体为空")
                 val reader = body.charStream().buffered()
                 var line: String?

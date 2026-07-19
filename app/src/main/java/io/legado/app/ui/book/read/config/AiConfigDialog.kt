@@ -72,6 +72,7 @@ class AiConfigDialog : BaseDialogFragment(R.layout.dialog_ai_config) {
         binding.etUserAvatar.setText(AiConfig.userAvatar)
         binding.etAiAvatar.setText(AiConfig.aiAvatar)
         binding.swtToolEnabled.isChecked = AiConfig.toolEnabled
+        binding.etToolMaxRounds.setText(AiConfig.toolMaxRounds.toString())
 
         // Restore persona mode and data
         currentMode = if (AiConfig.personaMode == "custom") "custom" else "template"
@@ -121,6 +122,8 @@ class AiConfigDialog : BaseDialogFragment(R.layout.dialog_ai_config) {
             AiConfig.userAvatar = binding.etUserAvatar.text?.toString() ?: ""
             AiConfig.aiAvatar = binding.etAiAvatar.text?.toString() ?: ""
             AiConfig.toolEnabled = binding.swtToolEnabled.isChecked
+            val rounds = binding.etToolMaxRounds.text?.toString()?.toIntOrNull()?.coerceAtLeast(1) ?: 5
+            AiConfig.toolMaxRounds = rounds
 
             // Save persona based on current mode
             AiConfig.personaMode = currentMode

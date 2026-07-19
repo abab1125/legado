@@ -31,7 +31,8 @@ import android.util.LruCache
 class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
     companion object {
-        private const val MAX_TOOL_ROUNDS = 90
+        // 工具调用循环上限改为可配置（AiConfig.toolMaxRounds，默认 5），见下方取值。
+        private const val MAX_TOOL_ROUNDS_FALLBACK = 5
 
         /** 状态枚举：UI 根据此值显示不同提示 */
         const val STATUS_IDLE = 0
@@ -283,6 +284,17 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                     if (chapterSize > 0) append("总章节数：$chapterSize\n")
                     val durChapterTitle = book.durChapterTitle
                     if (!durChapterTitle.isNullOrBlank()) append("当前阅读章节：$durChapterTitle（第${book.durChapterIndex + 1}章）\n")
+                    // 书籍目录索引：每章 index(0-based) + 标题，便于 AI 自主调用 get_book_content 取正文
+                    val chapterList = appDb.bookChapterDao.getChapterList(book.bookUrl, 0, (chapterSize - 1).coerceAtLeast(0))
+                    if (chapterList.isNotEmpty()) {
+                        append("\n【书籍目录（chapterIndex 从 0 开始，调用 get_book_content 取正文）】\n")
+                        for (ch in chapterList) {
+                            append("${ch.index}. ${ch.title}\n")
+                        }
+                    }
+                    if (AiConfig.toolEnabled) {
+                        append("\n【取章节正文方式】：默认不附带章节正文。当用户问到具体章节内容时，请直接调用 get_book_content(bookUrl=\"${book.bookUrl}\", chapterIndex=对应索引) 获取正文，再归纳回答；不要反问用户是否需要调用。章节索引见上方目录。\n")
+                    }
                 }
             }
         }
@@ -395,16 +407,6 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
         execute {
             try {
-                val contextBlock = buildContextBlock(start, end, references)
-                if (contextBlock != null) {
-                    synchronized(_messages) {
-                        val idx = _messages.indexOfLast { it.role == "user" }
-                        if (idx >= 0) {
-                            val message = _messages[idx]
-                            _messages[idx] = message.copy(content = "${message.content}\n$contextBlock")
-                        }
-                    }
-                }
                 val stablePrefix = buildStablePrefix()
                 synchronized(_messages) {
                     if (_messages.isNotEmpty() && _messages.first().role == "system") {
@@ -555,11 +557,26 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     ): List<ChatMessage> {
         val currentMessages = chatMessages.toMutableList()
         val newMessages = mutableListOf<ChatMessage>()
-        repeat(MAX_TOOL_ROUNDS) {
+        val maxRounds = AiConfig.toolMaxRounds
+        val recentCalls = mutableListOf<String>() // 重复调用检测
+        repeat(maxRounds) { round ->
             val response = requestOpenAiMessage(currentMessages, tools)
             if (response.toolCalls.isNullOrEmpty()) {
                 // 返回完整 ChatMessage，保留 reasoningContent
                 newMessages.add(response.copy(role = "assistant"))
+                return newMessages
+            }
+            // 重复调用保护：归一化 (name+args) 短窗口内重复则提前终止，避免无意义空转
+            val callKeys = response.toolCalls.map { tc ->
+                val args = try { GSON.fromJsonObject<Map<String, Any>>(tc.function.arguments).getOrNull() ?: emptyMap() } catch (_: Exception) { emptyMap<String, Any>() }
+                tc.function.name + "::" + args.entries.sortedBy { it.key }.joinToString(",") { "${it.key}=${it.value}" }
+            }
+            val duplicate = callKeys.all { key -> recentCalls.count { it == key } >= 2 }
+            recentCalls.addAll(callKeys)
+            if (recentCalls.size > maxRounds * 2) recentCalls.removeAt(0)
+            if (duplicate) {
+                // 模型在重复调用相同工具，无进展 → 提前终止，由已有结果回答
+                newMessages.add(ChatMessage(role = "assistant", content = "已多次重复调用相同工具，停止工具循环。基于已获取的内容回答："))
                 return newMessages
             }
             // 追加 assistant message（含 tool_calls；reasoning_content 在序列化时一并回传）
@@ -637,8 +654,10 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
     ): List<ChatMessage> {
         val currentMessages = chatMessages.toMutableList()
         val newMessages = mutableListOf<ChatMessage>()
+        val maxRounds = AiConfig.toolMaxRounds
+        val recentCalls = mutableListOf<String>()
 
-        repeat(MAX_TOOL_ROUNDS) {
+        repeat(maxRounds) { round ->
             val msgId = msgIdCounter.incrementAndGet()
 
             // 1. 放占位消息，显示三点动画
@@ -715,6 +734,19 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
             // 5. 有工具调用 → 执行
             setStatus(STATUS_TOOL_RUNNING)
+            // 重复调用保护：归一化 (name+args) 短窗口内重复则提前终止
+            val callKeys = response.toolCalls.map { tc ->
+                val args = try { GSON.fromJsonObject<Map<String, Any>>(tc.function.arguments).getOrNull() ?: emptyMap() } catch (_: Exception) { emptyMap<String, Any>() }
+                tc.function.name + "::" + args.entries.sortedBy { it.key }.joinToString(",") { "${it.key}=${it.value}" }
+            }
+            val duplicate = callKeys.all { key -> recentCalls.count { it == key } >= 2 }
+            recentCalls.addAll(callKeys)
+            if (recentCalls.size > maxRounds * 2) recentCalls.removeAt(0)
+            if (duplicate) {
+                // 模型重复调用相同工具，无进展 → 终止循环，直接出最终回答
+                newMessages.add(ChatMessage(role = "assistant", content = "已多次重复调用相同工具，停止工具循环。基于已获取的内容回答："))
+                return newMessages
+            }
             currentMessages.add(response.copy(role = "assistant"))
 
             data class ToolCallResult(

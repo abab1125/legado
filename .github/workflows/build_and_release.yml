@@ -35,6 +35,29 @@ jobs:
         run: |
           echo "" > app/src/main/assets/18PlusList.txt
 
+      - name: Generate Changelog (overwrite, keep only latest release)
+        run: |
+          VERSION="${{ env.VERSION }}"
+          DATE=$(TZ=Asia/Shanghai date +%Y-%m-%d)
+          # 自上次发版 tag 起的 commit 摘要（若无 tag 则取最近 20 条）
+          LOG=$(git log --no-merges --pretty=format:"- %s" $(git describe --tags --abbrev=0 2>/dev/null || echo HEAD~20)..HEAD 2>/dev/null | head -30)
+          if [ -z "$LOG" ]; then LOG=$(git log --no-merges -10 --pretty=format:"- %s"); fi
+          {
+            echo "# 更新日志"
+            echo ""
+            echo "## 最近一次更新 · $VERSION（$DATE）"
+            echo ""
+            echo "$LOG"
+            echo ""
+            echo "---"
+            echo ""
+            echo "【温馨提醒】 _更新前一定要做好备份，以免数据丢失！_"
+            echo ""
+            echo "- 阅读只是一个转码工具，不提供内容。"
+            echo "- 正文出现缺字漏字、内容缺失、排版错乱等情况，有可能是净化规则或简繁转换出现问题。"
+            echo "- 本项目不提供任何书籍资源，不内置任何内容，因使用本软件产生的一切法律责任和后果由使用者自行承担。"
+          } > app/src/main/assets/updateLog.md
+
       - name: Configure Keystore
         run: |
           cp .github/workflows/legado.jks app/legado.jks

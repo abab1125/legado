@@ -33,6 +33,7 @@ object AiConfig {
     private const val KEY_AI_AVATAR = "ai_avatar"
     private const val KEY_USER_AVATAR = "user_avatar"
     private const val KEY_AI_TOOL_ENABLED = "ai_tool_enabled"
+    private const val KEY_AI_TOOL_MAX_ROUNDS = "ai_tool_max_rounds"
 
     var apiUrl: String
         get() = appCtx.getPrefString(KEY_AI_API_URL, "https://api.openai.com/v1/chat/completions") ?: ""
@@ -132,6 +133,16 @@ object AiConfig {
         get() = appCtx.getPrefBoolean(KEY_AI_TOOL_ENABLED, true)
         set(value) {
             appCtx.putPrefBoolean(KEY_AI_TOOL_ENABLED, value)
+        }
+
+    /**
+     * 工具调用循环最大轮数。读书交互不需要复杂多轮，默认 5（比 Hermes 的 90 激进收紧）。
+     * 页面可设置修改；达上限后终止 agent 循环，避免死循环。
+     */
+    var toolMaxRounds: Int
+        get() = appCtx.getPrefInt(KEY_AI_TOOL_MAX_ROUNDS, 5).coerceAtLeast(1)
+        set(value) {
+            appCtx.putPrefInt(KEY_AI_TOOL_MAX_ROUNDS, value.coerceAtLeast(1))
         }
 
     // ===== 梨园 Liyuan RP 连接配置 =====

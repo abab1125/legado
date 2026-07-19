@@ -315,7 +315,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                         }
                     }
                     if (AiConfig.toolEnabled) {
-                        append("\n【取章节正文方式】：默认不附带章节正文。当用户问到具体章节内容时，请直接调用 get_book_content(bookUrl=\"${book.bookUrl}\", chapterIndex=对应索引) 获取正文，再归纳回答；不要反问用户是否需要调用。章节索引见上方目录。\n")
+                        append("\n【取章节正文方式】：默认不附带章节正文。当用户问到具体章节内容（如\"前三章\"\"第2-4章\"）时，请【一次性】调用 get_book_content(bookUrl=\"${book.bookUrl}\", startIndex=起始索引, endIndex=结束索引) 取完整范围正文，再归纳回答；不要为每章各发一次调用，也不要反问用户是否需要调用。章节索引见上方目录（0-based）。\n")
                     }
                 }
             }
@@ -415,6 +415,13 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         if (!isGenerating.compareAndSet(false, true)) return
         isGeneratingLiveData.postValue(true)
         setStatus(STATUS_SENDING)
+        // /new 命令：重置对话（本地无长记忆，重置后不保留旧内容）
+        if (userText.trim() == "/new") {
+            clearMessages()
+            setGenerating(false)
+            setStatus(STATUS_IDLE)
+            return
+        }
         if (userText.isBlank()) {
             setGenerating(false)
             setStatus(STATUS_IDLE)
@@ -803,7 +810,7 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                     doneReads++
                     val len = (result as? ToolExecuteResult.Data)?.json
                         ?.let { runCatching { (GSON.fromJsonObject<Map<String, Any>>(it).getOrNull())?.get("data") as? Map<*, *> }.getOrNull() }
-                        ?.let { (it?.get("contentLength") as? Number)?.toInt() ?: 0 } ?: 0
+                        ?.let { (it?.get("totalContentLength") as? Number)?.toInt() ?: 0 } ?: 0
                     readChars += len
                     if (totalReads > 1) {
                         AiToolStatusBus.postToolActivity(

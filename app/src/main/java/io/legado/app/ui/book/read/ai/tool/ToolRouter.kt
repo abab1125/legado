@@ -209,27 +209,51 @@ object ToolRouter {
 
     private fun getBookContent(args: Map<*, *>): String {
         val bookUrl = args["bookUrl"] as? String ?: return """{"error":"bookUrl 参数不能为空"}"""
-        val chapterIndex = (args["chapterIndex"] as? Number)?.toInt() ?: return """{"error":"chapterIndex 参数不能为空"}"""
         val maxChars = ((args["maxChars"] as? Number)?.toInt() ?: 2000).coerceIn(1, 8000)
         val book = appDb.bookDao.getBook(bookUrl) ?: return """{"error":"书架中未找到该书籍"}"""
-        val chapter = appDb.bookChapterDao.getChapter(bookUrl, chapterIndex) ?: return """{"error":"未找到该章节，请先确认章节索引正确"}"""
-        val rawContent = BookHelp.getContent(book, chapter) ?: return """{"error":"章节内容未缓存，请在阅读界面打开该章节后再试"}"""
-        // 灵犀式状态卡：开始读取时显示正在调用
+        // 范围解析：优先 startIndex/endIndex，否则单章 chapterIndex
+        val startIndex = (args["startIndex"] as? Number)?.toInt()
+        val endIndex = (args["endIndex"] as? Number)?.toInt()
+        val singleIndex = (args["chapterIndex"] as? Number)?.toInt()
+        val range = when {
+            startIndex != null && endIndex != null -> startIndex..endIndex
+            singleIndex != null -> singleIndex..singleIndex
+            else -> return """{"error":"必须提供 chapterIndex（单章）或 startIndex+endIndex（多章）"}"""
+        }
+        val chapters = range.mapNotNull { idx -> appDb.bookChapterDao.getChapter(bookUrl, idx)?.let { idx to it } }
+        if (chapters.isEmpty()) return """{"error":"未找到对应章节，请先确认章节索引正确"}"""
+        // 灵犀式状态卡：开始读取
+        val rangeLabel = if (range.first == range.last) "第${range.first + 1}章" else "第${range.first + 1}-${range.last + 1}章"
         io.legado.app.ui.book.read.ai.AiToolStatusBus.postToolActivity(
             "tool_start", "get_book_content",
-            "正在调用 get_book_content（${chapter.title}）…"
+            "正在读取 $rangeLabel…"
         )
-        val truncated = rawContent.length > maxChars
-        val content = if (truncated) rawContent.take(maxChars) else rawContent
-        // 灵犀式状态卡：读取章节 N 字
+        val items = chapters.map { (idx, ch) ->
+            val rawContent = BookHelp.getContent(book, ch)
+                ?: return """{"error":"章节「${ch.title}」内容未缓存，请在阅读界面打开该章节后再试"}"""
+            val truncated = rawContent.length > maxChars
+            val content = if (truncated) rawContent.take(maxChars) else rawContent
+            mapOf(
+                "chapterIndex" to idx,
+                "chapterTitle" to ch.title,
+                "contentLength" to rawContent.length,
+                "content" to content,
+                "truncated" to truncated
+            )
+        }
+        val totalChars = items.sumOf { (it["contentLength"] as? Int) ?: 0 }
+        // 灵犀式状态卡：完成（带范围 + 总字数）
         io.legado.app.ui.book.read.ai.AiToolStatusBus.postToolActivity(
             "tool_end", "get_book_content",
-            "已读「${chapter.title}」（${rawContent.length} 字）"
+            "已读 $rangeLabel（${items.size} 章，${totalChars} 字）"
         )
         return GSON.toJson(mapOf("success" to true, "data" to mapOf(
-            "bookName" to book.name, "chapterTitle" to chapter.title,
-            "chapterIndex" to chapterIndex, "contentLength" to rawContent.length,
-            "content" to content, "truncated" to truncated)))
+            "bookName" to book.name,
+            "range" to "${range.first}-${range.last}",
+            "chapterCount" to items.size,
+            "totalContentLength" to totalChars,
+            "chapters" to items
+        )))
     }
 
     private fun searchOnlineBook(args: Map<*, *>): String {

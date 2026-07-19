@@ -140,12 +140,14 @@ object AiToolDef {
             // ===== 新增工具（P0：核心阅读体验）=====
             tool(
                 "get_book_content",
-                "获取指定书籍某章节的正文内容。内容默认截断为前2000字，可调节（最大8000字）。",
-                required = listOf("bookUrl", "chapterIndex"),
+                "获取指定书籍的章节正文。支持两种方式：①单章：传 chapterIndex（0-based）；②多章（推荐，一次调用拿多章）：传 startIndex 和 endIndex（含两端，0-based），模型会一次性返回该范围内所有章节正文，不要为每章各发一次调用。内容默认每章截断前2000字，可调节（最大8000字）。",
+                required = listOf("bookUrl"),
                 properties = mapOf(
                     "bookUrl" to prop("string", "书籍的唯一标识 URL（从 get_bookshelf 获取 bookUrl 字段，如不存在请用书名从书架查找）"),
-                    "chapterIndex" to prop("integer", "章节索引，从 0 开始"),
-                    "maxChars" to prop("integer", "返回最大字符数，默认 2000，最大 8000")
+                    "chapterIndex" to prop("integer", "章节索引，从 0 开始。仅取单章时传此参数"),
+                    "startIndex" to prop("integer", "多章范围起始索引（0-based，含），与 endIndex 配合使用一次取多章"),
+                    "endIndex" to prop("integer", "多章范围结束索引（0-based，含），与 startIndex 配合使用一次取多章"),
+                    "maxChars" to prop("integer", "每章返回最大字符数，默认 2000，最大 8000")
                 )
             ),
             tool(

@@ -214,12 +214,17 @@ object ToolRouter {
         val book = appDb.bookDao.getBook(bookUrl) ?: return """{"error":"书架中未找到该书籍"}"""
         val chapter = appDb.bookChapterDao.getChapter(bookUrl, chapterIndex) ?: return """{"error":"未找到该章节，请先确认章节索引正确"}"""
         val rawContent = BookHelp.getContent(book, chapter) ?: return """{"error":"章节内容未缓存，请在阅读界面打开该章节后再试"}"""
+        // 灵犀式状态卡：开始读取时显示正在调用
+        io.legado.app.ui.book.read.ai.AiToolStatusBus.postToolActivity(
+            "tool_start", "get_book_content",
+            "正在调用 get_book_content（${chapter.title}）…"
+        )
         val truncated = rawContent.length > maxChars
         val content = if (truncated) rawContent.take(maxChars) else rawContent
         // 灵犀式状态卡：读取章节 N 字
         io.legado.app.ui.book.read.ai.AiToolStatusBus.postToolActivity(
-            "tool_end", "read_chapter",
-            "读取「${chapter.title}」（${rawContent.length} 字）"
+            "tool_end", "get_book_content",
+            "已读「${chapter.title}」（${rawContent.length} 字）"
         )
         return GSON.toJson(mapOf("success" to true, "data" to mapOf(
             "bookName" to book.name, "chapterTitle" to chapter.title,

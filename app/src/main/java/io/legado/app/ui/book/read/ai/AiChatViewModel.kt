@@ -34,6 +34,22 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         // 工具调用循环上限改为可配置（AiConfig.toolMaxRounds，默认 5），见下方取值。
         private const val MAX_TOOL_ROUNDS_FALLBACK = 5
 
+        /**
+         * 阅读场景默认【不暴露】给模型的工具。代码全部保留（ToolRouter/AiToolDef 不动），
+         * 仅默认不发送这些 tools schema；以后想恢复，从本集合移除名字即可。
+         * 依据：书源/RSS 管理、评分/标记阅读状态、写笔记想法、主题配色、替换规则、备份导出，
+         * 在阅读 AI 默认场景不需要，去掉可大幅减少上下文与误调用。
+         */
+        private val DISABLED_TOOLS_BY_DEFAULT = setOf(
+            "get_book_sources", "enable_book_source", "update_book_source_group",
+            "delete_book_source", "save_book_source",
+            "get_rss_sources", "enable_rss_source", "delete_rss_source", "get_source_groups",
+            "rate_book", "mark_book_status", "set_book_note",
+            "get_replace_rules", "save_replace_rule", "delete_replace_rule",
+            "get_theme_configs", "save_theme_config", "delete_theme_config", "apply_theme_config",
+            "manage_webdav", "export_to_obsidian"
+        )
+
         /** 状态枚举：UI 根据此值显示不同提示 */
         const val STATUS_IDLE = 0
         const val STATUS_SENDING = 1
@@ -257,6 +273,12 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
         val prefix = withContext(Dispatchers.IO) {
             buildString {
                 append("【人设与要求】\n")
+                // 注入用户在设置页维护的提示词模板（persona）；为空时给最小兜底，避免人设空白
+                val persona = AiConfig.persona.trim()
+                if (persona.isNotBlank()) {
+                    append(persona)
+                    append("\n")
+                }
                 if (AiConfig.toolEnabled) {
                     append("\n\n【工具使用指南】\n")
                     append("你可以调用工具来查询和管理用户的书架、书源、阅读记录等数据。\n")
@@ -417,7 +439,10 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 }
 
                 setStatus(STATUS_THINKING)
-                val tools = if (AiConfig.toolEnabled) AiToolDef.allTools else null
+                // 暴露白名单工具：默认不发送 DISABLED_TOOLS_BY_DEFAULT 中的工具（代码保留，可恢复）
+                val tools = if (AiConfig.toolEnabled) {
+                    AiToolDef.allTools.filter { (it["function"] as? Map<*, *>)?.get("name") !in DISABLED_TOOLS_BY_DEFAULT }
+                } else null
                 requestWithToolsStreaming(_messages.toList(), tools)
             } catch (e: Exception) {
                 synchronized(_messages) {
@@ -710,16 +735,22 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 tools = tools
             )
 
-            // 3. 更新占位为非流式
+            // 3. 更新占位为非流式；纯工具调用轮（无文本）则移除空气泡，避免残留空气泡
+            val hasToolOnly = !response.toolCalls.isNullOrEmpty() && response.content.isBlank() && response.reasoningContent.isNullOrBlank()
             synchronized(_messages) {
                 val idx = _messages.indexOfLast { it.id == msgId }
                 if (idx >= 0) {
-                    _messages[idx] = _messages[idx].copy(isStreaming = false)
+                    if (hasToolOnly) {
+                        _messages.removeAt(idx)
+                    } else {
+                        _messages[idx] = _messages[idx].copy(isStreaming = false)
+                    }
                 }
             }
             val newIdx = newMessages.indexOfLast { n -> n.id == msgId }
             if (newIdx >= 0) {
-                newMessages[newIdx] = response.copy(isStreaming = false)
+                if (hasToolOnly) newMessages.removeAt(newIdx)
+                else newMessages[newIdx] = response.copy(isStreaming = false)
             }
             messagesLiveData.postValue(_messages.toList())
 
@@ -734,6 +765,11 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
 
             // 5. 有工具调用 → 执行
             setStatus(STATUS_TOOL_RUNNING)
+            // 本轮 get_book_content 调用数（用于进度 1/N）
+            val bookContentCalls = response.toolCalls.filter { it.function.name == "get_book_content" }
+            val totalReads = bookContentCalls.size
+            var doneReads = 0
+            var readChars = 0
             // 重复调用保护：归一化 (name+args) 短窗口内重复则提前终止
             val callKeys = response.toolCalls.map { tc ->
                 val args = try { GSON.fromJsonObject<Map<String, Any>>(tc.function.arguments).getOrNull() ?: emptyMap() } catch (_: Exception) { emptyMap<String, Any>() }
@@ -761,9 +797,24 @@ class AiChatViewModel(application: Application) : BaseViewModel(application) {
                 } catch (_: Exception) {
                     emptyMap<String, Any>()
                 }
+                val result = ToolRouter.execute(toolCall.function.name, args)
+                // 进度累计：get_book_content 完成时更新状态卡（字数 + 进度）
+                if (toolCall.function.name == "get_book_content") {
+                    doneReads++
+                    val len = (result as? ToolExecuteResult.Data)?.json
+                        ?.let { runCatching { (GSON.fromJsonObject<Map<String, Any>>(it).getOrNull())?.get("data") as? Map<*, *> }.getOrNull() }
+                        ?.let { (it?.get("contentLength") as? Number)?.toInt() ?: 0 } ?: 0
+                    readChars += len
+                    if (totalReads > 1) {
+                        AiToolStatusBus.postToolActivity(
+                            "tool_progress", "get_book_content",
+                            "已读 $readChars 字（${doneReads}/${totalReads}）"
+                        )
+                    }
+                }
                 ToolCallResult(
                     toolCallId = toolCall.id,
-                    result = ToolRouter.execute(toolCall.function.name, args)
+                    result = result
                 )
             }
 

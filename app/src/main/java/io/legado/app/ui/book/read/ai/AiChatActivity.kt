@@ -415,7 +415,8 @@ class AiChatActivity : BaseActivity<ActivityAiChatBinding>(false) {
             indicator.visibility = View.VISIBLE
             spinner.visibility = View.GONE
             text.text = when (activity.kind) {
-                "tool_start" -> "⏳ ${activity.detail}"
+                "tool_start" -> "🔧 ${activity.detail}"
+                "tool_progress" -> "📖 ${activity.detail}"
                 "tool_end" -> "✓ ${activity.detail}"
                 else -> activity.detail
             }
